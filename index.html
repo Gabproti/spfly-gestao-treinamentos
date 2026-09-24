@@ -179,6 +179,8 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 .login-brand{position:relative;min-height:485px;padding:52px 40px;background:linear-gradient(150deg,#171b1e,#252a2d);color:#fff;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
 .login-brand:after{content:"";position:absolute;width:420px;height:82px;left:-110px;bottom:55px;background:linear-gradient(90deg,#f4511366,#f4511300);border-radius:25px;transform:rotate(-42deg)}
 .login-brand .brand-wordmark{font-size:55px;position:relative;z-index:1}.login-brand small{display:block;letter-spacing:.18em;font-size:11px;margin-top:5px;color:#d9dfe2}
+.login-brand .spfly-logo{display:block;width:min(100%,300px);height:auto;max-width:none;max-height:none;margin:0 0 5px;position:relative;z-index:1}
+#setPasswordCard>img,#profileCard>img{width:250px;max-width:100%;height:auto;max-height:none;padding:10px;background:#1d2225;border-radius:10px}
 .login-brand h2{font-size:29px;line-height:1.15;margin:0 0 12px;position:relative;z-index:1}.login-brand p{font-size:14px;line-height:1.5;color:#c4ccd1;text-align:left;margin:0;position:relative;z-index:1}
 .login-main{padding:52px 44px;display:flex;flex-direction:column;justify-content:center}.login-main .eyebrow{color:#e45115;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.login-main h1{font-size:29px;text-align:left;margin:9px 0 8px;color:#172233}.login-main>p{text-align:left;margin:0 0 14px;color:#687789;font-size:14px}
 #loginCard label{font-weight:700;color:#2c3843}#loginCard input{height:46px;border-color:#d9e1e8}#loginCard input:focus{outline:2px solid #f4511350;border-color:#f45113}
@@ -197,6 +199,7 @@ body{background:#f7f9fc;color:#172233}
 .brand-wordmark{font-size:43px;line-height:1;font-weight:1000;letter-spacing:-.085em;font-style:italic;color:#fff;text-shadow:0 3px 0 #0005;white-space:nowrap}
 .brand-arrow{display:inline-block;color:#f45113;font-size:34px;transform:rotate(-14deg);margin-left:4px;text-shadow:none}
 .brand small{font-size:10px;letter-spacing:.17em;color:#e2e5e7;font-weight:600}
+.brand .spfly-logo{display:block;width:100%;height:auto;max-width:228px;object-fit:contain}
 .ui-icon{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .nav-section{margin:0}.nav-btn{height:54px;margin:3px 0;padding:0 14px;justify-content:flex-start;gap:16px;font-size:15px;font-weight:500;border-radius:9px;color:#edf0f2}
 .nav-btn:hover,.nav-btn.active{background:linear-gradient(100deg,#ff5516,#ec4a0c 70%,#ab390f);box-shadow:0 8px 22px #0003;color:#fff}
@@ -236,7 +239,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 <body>
 <div class="auth-screen" id="authScreen">
   <div class="auth-card" id="loginCard">
-    <div class="login-brand"><div><div class="brand-wordmark">SPFLY<span class="brand-arrow">➜</span></div><small>GESTÃO DE TREINAMENTOS</small></div><div><h2>Treinamentos em um só lugar.</h2><p>Organize pessoas, acompanhe a agenda e registre cada etapa da capacitação.</p></div></div>
+    <div class="login-brand"><div><img class="spfly-logo" src="spfly_logo.png?v=7" alt="SPFLY Logística"><small>GESTÃO DE TREINAMENTOS</small></div><div><h2>Treinamentos em um só lugar.</h2><p>Organize pessoas, acompanhe a agenda e registre cada etapa da capacitação.</p></div></div>
     <div class="login-main"><span class="eyebrow">Portal SPFLY</span><h1>Bem-vindo de volta</h1><p>Entre com sua conta para acessar o portal.</p>
       <form id="loginForm">
         <label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="seu.email@empresa.com" required>
@@ -248,7 +251,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     </div>
   </div>
   <div class="auth-card" id="setPasswordCard" hidden>
-    <img src="spfly_logo.png" alt="SPFLY">
+    <img src="spfly_logo.png?v=7" alt="SPFLY Logística">
     <h1 id="passwordSetupTitle">Definir senha</h1><p id="passwordSetupDescription">Crie a senha da sua conta.</p>
     <form id="setPasswordForm">
       <label for="newPassword">Nova senha</label><input id="newPassword" type="password" autocomplete="new-password" minlength="12" required>
@@ -258,7 +261,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="auth-message" id="setPasswordMessage" role="status"></div>
   </div>
   <div class="auth-card" id="profileCard" hidden>
-    <img src="spfly_logo.png" alt="SPFLY">
+    <img src="spfly_logo.png?v=7" alt="SPFLY Logística">
     <h1>Seu cadastro</h1><p>Informe seu nome para identificarmos você no portal.</p>
     <form id="profileForm">
       <label for="profileFullName">Nome completo</label><input id="profileFullName" autocomplete="name" maxlength="120" required>
@@ -279,7 +282,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <symbol id="icon-pin" viewBox="0 0 24 24"><path d="M12 22s7-7 7-13a7 7 0 0 0-14 0c0 6 7 13 7 13z"/><circle cx="12" cy="9" r="2"/></symbol>
 </svg>
 <aside class="sidebar">
-  <div class="brand"><div class="brand-wordmark" aria-label="SPFLY">SPFLY<span class="brand-arrow">➜</span></div><small>GESTÃO DE TREINAMENTOS</small></div>
+  <div class="brand"><img class="spfly-logo" src="spfly_logo.png?v=7" alt="SPFLY Logística"><small>GESTÃO DE TREINAMENTOS</small></div>
   <div class="nav-section">
     <button class="nav-btn active" data-page="dashboard"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-home"/></svg><span class="nav-label">Início</span></button>
     <button class="nav-btn" data-page="pageEmployees"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Funcionários</span></button>
