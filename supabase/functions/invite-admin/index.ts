@@ -15,19 +15,23 @@ export default {
 
     const { data: admin, error: adminError } = await ctx.supabase
       .from('admin_users')
-      .select('id')
+      .select('id, access_role')
       .eq('id', callerId)
       .eq('active', true)
       .maybeSingle()
 
-    if (adminError || !admin) {
+    if (adminError || admin?.access_role !== 'admin') {
       return Response.json({ error: 'Somente administradores podem enviar convites.' }, { status: 403 })
     }
 
     let email = ''
+    let role = ''
+    let pages: string[] = []
     try {
       const body = await request.json()
       email = String(body.email || '').trim().toLowerCase()
+      role = String(body.role || 'admin')
+      pages = Array.isArray(body.pages) ? body.pages : []
     } catch {
       return Response.json({ error: 'Dados inválidos.' }, { status: 400 })
     }
@@ -35,6 +39,11 @@ export default {
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return Response.json({ error: 'Informe um e-mail válido.' }, { status: 400 })
     }
+    const allowed = new Set(['dashboard', 'employees', 'trainings', 'reports'])
+    if (!['admin', 'rh', 'usuario'].includes(role) || pages.some(page => typeof page !== 'string' || !allowed.has(page)) || (role === 'usuario' && pages.length === 0)) {
+      return Response.json({ error: 'Perfil ou telas inválidos.' }, { status: 400 })
+    }
+    pages = role === 'usuario' ? [...new Set(pages)] : []
 
     const { data: invited, error: inviteError } = await ctx.supabaseAdmin.auth.admin
       .inviteUserByEmail(email, { redirectTo: SITE_URL })
@@ -48,6 +57,8 @@ export default {
       email,
       invited_by: callerId,
       active: true,
+      access_role: role,
+      allowed_pages: pages,
     })
 
     if (insertError) {
