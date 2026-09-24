@@ -4,6 +4,7 @@
 create table if not exists public.admin_users (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
+  full_name text,
   active boolean not null default true,
   invited_by uuid references auth.users(id),
   created_at timestamptz not null default now()
@@ -12,6 +13,7 @@ create table if not exists public.admin_users (
 alter table public.admin_users enable row level security;
 revoke all on public.admin_users from anon, authenticated;
 grant select on public.admin_users to authenticated;
+grant update (full_name) on public.admin_users to authenticated;
 
 create or replace function public.is_admin()
 returns boolean
@@ -30,6 +32,11 @@ grant execute on function public.is_admin() to authenticated;
 create policy admin_users_read on public.admin_users
 for select to authenticated
 using (id = (select auth.uid()) or public.is_admin());
+
+create policy admin_users_update_own_name on public.admin_users
+for update to authenticated
+using (id = (select auth.uid()) and active = true)
+with check (id = (select auth.uid()) and active = true);
 
 create table if not exists public.app_state (
   id integer primary key default 1 check (id = 1),
