@@ -161,10 +161,43 @@ body.dark .dashboard-calendar .calendar-grid{background:var(--surface)}body.dark
 body.dark .table-count{background:#22272c;border-color:#343a40;color:#cbd2d8}.dark .training-list-table tbody td{background:#181c20;border-color:#30363d}.dark .training-list-table tbody tr:hover td{background:#24201d;border-color:#4b3a31}.dark .training-list-table .row-main{color:#f2f4f6}.dark .participant-pill{background:#34251e;color:#ffad86}
 @media(max-width:1050px){.training-agenda-layout{grid-template-columns:1fr}.training-day-panel{min-height:300px}}
 body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head strong,body.dark .commitment-head h2,body.dark .commitment-name,body.dark .dashboard-next-head h3,body.dark .next-name,body.dark .summary-value{color:#f3f5f7}body.dark .dashboard-calendar,body.dark .dashboard-calendar .calendar-day,body.dark .dashboard-commitments,body.dark .commitment-item,body.dark .summary-card{background:#181c20;border-color:#30363d}body.dark .dashboard-calendar .calendar-grid{background:#181c20}body.dark .dashboard-calendar .calendar-legend{background:#15181b;border-color:#30363d}body.dark .dashboard-calendar .calendar-day.selected{background:#32221b}body.dark .dashboard-calendar .calendar-day.today{background:#30221c}body.dark .dashboard-commitments{background:linear-gradient(180deg,#2b201b 0%,#181c20 38%);border-color:#4a3830}body.dark .next-item{border-color:#2d3339}body.dark .dashboard-next{border-color:#30363d}@media(max-width:1100px){.dashboard-agenda-layout{grid-template-columns:1.15fr .85fr}.dashboard-summary{grid-template-columns:repeat(2,1fr)}}@media(max-width:760px){.dashboard-page-head{flex-direction:column}.dashboard-agenda-layout{grid-template-columns:1fr}.dashboard-summary{grid-template-columns:1fr 1fr}.dashboard-calendar .calendar-day{min-height:72px}}
+/* A interface só aparece depois que o servidor confirmar a conta administradora. */
+.app{display:none}.app.authenticated{display:flex}
+.auth-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:#f5f6f7}
+.auth-card{width:min(100%,440px);padding:32px;border-radius:18px;background:#fff;box-shadow:0 15px 50px #17212b20;border:1px solid #e7ebef}
+.auth-card img{display:block;max-width:180px;max-height:95px;object-fit:contain;margin:0 auto 20px}
+.auth-card h1{font-size:24px;margin:0 0 8px;text-align:center}.auth-card p{color:#68737e;line-height:1.45;text-align:center}
+.auth-card label{display:block;font-size:13px;font-weight:700;margin:16px 0 6px}.auth-card input{width:100%;padding:12px;border:1px solid #cfd6dd;border-radius:9px;font:inherit}
+.auth-card .btn{width:100%;justify-content:center;margin-top:20px}.auth-message{min-height:22px;margin-top:14px;font-size:13px;text-align:center;color:#bf3c29}
+.auth-message.success{color:#197346}.auth-card[hidden],.auth-screen[hidden]{display:none}
+.admin-form{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.admin-form .field{flex:1;min-width:220px}.admin-form .btn{height:42px}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card" id="loginCard">
+    <img src="spfly_logo.png" alt="SPFLY">
+    <h1>Gestão de Treinamentos</h1>
+    <p>Acesso exclusivo para administradores autorizados.</p>
+    <form id="loginForm">
+      <label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="username" required>
+      <label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" required>
+      <button class="btn btn-primary" type="submit">Entrar</button>
+    </form>
+    <div class="auth-message" id="loginMessage" role="status"></div>
+  </div>
+  <div class="auth-card" id="setPasswordCard" hidden>
+    <img src="spfly_logo.png" alt="SPFLY">
+    <h1>Definir senha</h1><p>Crie a senha da sua conta de administrador.</p>
+    <form id="setPasswordForm">
+      <label for="newPassword">Nova senha</label><input id="newPassword" type="password" autocomplete="new-password" minlength="12" required>
+      <label for="confirmPassword">Confirmar senha</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required>
+      <button class="btn btn-primary" type="submit">Salvar senha</button>
+    </form>
+    <div class="auth-message" id="setPasswordMessage" role="status"></div>
+  </div>
+</div>
+<div class="app" id="app">
 <aside class="sidebar">
   <div class="brand"><img src="spfly_logo.png" alt="SPFLY Logística 20 anos"></div>
   <div class="nav-section">
@@ -177,17 +210,27 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
     </div>
     <button class="nav-btn" data-menu="menuRegisters">⚙ <span>Cadastros</span><span>⌄</span></button>
     <div class="subnav" id="menuRegisters"><button onclick="openRegisterList('Setores')">Setores</button><button onclick="openRegisterList('Cargos')">Cargos</button></div>
-    <button class="nav-btn">⚙ <span>Configurações</span><span></span></button>
+    <button class="nav-btn" data-page="pageAdmins">⚙ <span>Administradores</span><span></span></button>
   </div>
 </aside>
 
 <main class="main">
 <header class="topbar">
   <input class="search" id="globalSearch" placeholder="Buscar no sistema...">
-  <div class="user"><button id="themeToggle" class="btn btn-secondary" style="padding:8px 10px" onclick="toggleDarkMode()">🌙</button><span>🔔</span><div class="avatar">GF</div><div><strong>Gabriel Ferreira</strong><br><span class="muted">Administrador</span></div></div>
+  <div class="user"><button id="themeToggle" class="btn btn-secondary" style="padding:8px 10px" onclick="toggleDarkMode()">🌙</button><div><strong id="currentAdminEmail"></strong><br><span class="muted">Administrador</span></div><button class="btn btn-secondary" onclick="SPFLY_AUTH.logout()">Sair</button></div>
 </header>
 
 <section class="content">
+<div id="pageAdmins" class="page">
+  <div class="header-row"><div><h1>Administradores</h1><div class="muted">Convide outros administradores para acessar os dados compartilhados.</div></div></div>
+  <div class="card form-card">
+    <h2>Convidar administrador</h2>
+    <form id="inviteAdminForm" class="admin-form"><div class="field"><label for="inviteAdminEmail">E-mail</label><input id="inviteAdminEmail" type="email" required placeholder="nome@empresa.com"></div><button class="btn btn-primary" type="submit">Enviar convite</button></form>
+    <p class="muted">O convidado receberá um link para definir a senha. Somente contas autorizadas terão acesso aos registros.</p>
+    <div id="inviteAdminMessage" role="status"></div>
+    <h2 style="margin-top:28px">Contas administrativas</h2><div id="adminList" class="muted">Carregando...</div>
+  </div>
+</div>
 <div id="dashboard" class="page active">
   <div class="dashboard-page-head">
     <div><h1>Calendário de <span class="title-orange">Treinamentos</span></h1><div class="muted">Visualize todos os treinamentos (cadastrados, concluídos e cancelados) e clique na data para ver os detalhes.</div></div>
@@ -289,29 +332,12 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 <div class="modal" id="modal"><div class="modal-box"><div class="modal-head"><h2 id="modalTitle">Detalhes</h2><button class="close" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
 
 <script>
-const demoEmployees=[
-{id:1,mat:"00125",name:"João da Silva",cpf:"123.456.789-00",sector:"Operacional",role:"Motorista",status:"Ativo"},
-{id:2,mat:"00126",name:"Maria Souza",cpf:"987.654.321-00",sector:"Administrativo",role:"Assistente",status:"Ativo"},
-{id:3,mat:"00127",name:"Carlos Oliveira",cpf:"456.789.123-00",sector:"Logística",role:"Conferente",status:"Ativo"},
-{id:4,mat:"00128",name:"Ana Paula Lima",cpf:"321.654.987-00",sector:"Financeiro",role:"Analista",status:"Ativo"},
-{id:5,mat:"00129",name:"Pedro Santos",cpf:"654.123.789-00",sector:"Operacional",role:"Motorista",status:"Ativo"},
-{id:6,mat:"00130",name:"Juliana Alves",cpf:"789.321.654-00",sector:"RH",role:"Analista",status:"Ativo"},
-{id:7,mat:"00131",name:"Ricardo Mendes",cpf:"147.258.369-00",sector:"Comercial",role:"Supervisor",status:"Ativo"},
-{id:8,mat:"00132",name:"Fernanda Costa",cpf:"369.147.258-00",sector:"Operacional",role:"Auxiliar",status:"Ativo"},
-{id:9,mat:"00133",name:"Lucas Ferreira",cpf:"258.369.147-00",sector:"TI",role:"Analista",status:"Ativo"},
-{id:10,mat:"00134",name:"Camila Rocha",cpf:"951.753.852-00",sector:"Administrativo",role:"Assistente",status:"Ativo"}
-];
-const demoTrainings=[
-{id:1,date:"23/09/2026",name:"Integração de Novos Funcionários",cat:"Integração",resp:"RH",participants:[1,2,3,5],doc:"lista_presenca_23-09-2026.pdf",docs:["lista_presenca_23-09-2026.pdf"],contentDocs:["material_integracao.pdf"],workload:"4",time:"08:00 - 12:00",modality:"Local",base:"MATRIZ",place:"MATRIZ",obs:"Lista assinada arquivada digitalmente."},
-{id:2,date:"18/09/2026",name:"Segurança do Trabalho (NR-12)",cat:"Segurança",resp:"João Pereira",participants:[1,3,5,8],doc:"lista_nr12_18-09-2026.pdf",docs:["lista_nr12_18-09-2026.pdf"],contentDocs:[],workload:"8",time:"08:00 - 17:00",modality:"Local",base:"FILIAL ITA",place:"FILIAL ITA",obs:""},
-{id:3,date:"10/09/2026",name:"LGPD e Privacidade",cat:"Comportamental",resp:"RH",participants:[2,6,7],doc:"lista_lgpd_10-09-2026.jpg",docs:["lista_lgpd_10-09-2026.jpg"],contentDocs:["apresentacao_lgpd.pptx"],workload:"2",time:"14:00 - 16:00",modality:"Online",base:"",place:"Online",onlineInfo:"Microsoft Teams",obs:""}
-];
-let employees=JSON.parse(localStorage.getItem("spfly_employees")||"null")||demoEmployees;
-let trainings=JSON.parse(localStorage.getItem("spfly_trainings")||"null")||demoTrainings;
+let employees=[];
+let trainings=[];
 let selectedParticipants=new Set();
 let currentStep=1;
 
-function persist(){localStorage.setItem("spfly_employees",JSON.stringify(employees));localStorage.setItem("spfly_trainings",JSON.stringify(trainings));}
+function persist(){return window.SPFLY_AUTH.persist(employees,trainings);}
 function showPage(id){
  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
  const page=document.getElementById(id);
@@ -321,6 +347,7 @@ function showPage(id){
  if(id==="pageReportEmployee")fillReportEmployees();
  if(id==="pageReportSector")renderSectorReport();
  if(id==="pageReportTraining")renderTrainingReport();
+ if(id==="pageAdmins")window.SPFLY_AUTH.renderAdmins();
  if(id==="dashboard")renderDashboard();
  applyTheme();
 }
@@ -385,19 +412,19 @@ function renderDashboardTrainingCalendar(){
 function renderEmployees(){
  const q=(document.getElementById("employeeSearch")?.value||"").toLowerCase(), s=document.getElementById("sectorFilter")?.value||"", st=document.getElementById("statusFilter")?.value||"";
  const rows=employees.filter(e=>(!q||[e.name,e.cpf,e.mat].some(x=>x.toLowerCase().includes(q)))&&(!s||e.sector===s)&&(!st||e.status===st));
- document.getElementById("employeeTable").innerHTML=rows.map(e=>`<tr><td>${e.mat}</td><td><strong>${e.name}</strong></td><td>${e.cpf}</td><td>${e.sector}</td><td>${e.role}</td><td><span class="badge ${e.status==="Ativo"?"badge-green":"badge-red"}">${e.status}</span></td><td><button class="btn btn-secondary" onclick="viewEmployee(${e.id})">Visualizar</button></td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhum funcionário encontrado.</td></tr>`;
+ document.getElementById("employeeTable").innerHTML=rows.map(e=>`<tr><td>${esc(e.mat)}</td><td><strong>${esc(e.name)}</strong></td><td>${esc(e.cpf)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge ${e.status==="Ativo"?"badge-green":"badge-red"}">${esc(e.status)}</span></td><td><button class="btn btn-secondary" onclick="viewEmployee(${Number(e.id)})">Visualizar</button></td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhum funcionário encontrado.</td></tr>`;
 }
-function saveEmployee(){
+async function saveEmployee(){
  const name=document.getElementById("efName").value.trim(), cpf=document.getElementById("efCpf").value.trim(), mat=document.getElementById("efMat").value.trim();
  if(!name||!cpf||!mat){alert("Preencha Nome, CPF e Matrícula.");return}
  if(employees.some(e=>e.cpf===cpf||e.mat===mat)){alert("CPF ou matrícula já cadastrados.");return}
  employees.push({id:Date.now(),mat,name,cpf,sector:document.getElementById("efSector").value,role:document.getElementById("efRole").value||"Não informado",status:"Ativo"});
- persist(); document.querySelectorAll("#newEmployee input").forEach(i=>i.value=""); showPage("pageEmployees");
+ if(!await persist())return; document.querySelectorAll("#newEmployee input").forEach(i=>i.value=""); showPage("pageEmployees");
 }
 function viewEmployee(id){
  const e=employees.find(x=>x.id===id), hist=trainings.filter(t=>t.participants.includes(id));
  document.getElementById("modalTitle").textContent=e.name;
- document.getElementById("modalBody").innerHTML=`<p><strong>CPF:</strong> ${e.cpf} &nbsp; <strong>Matrícula:</strong> ${e.mat}</p><p><strong>Setor:</strong> ${e.sector} &nbsp; <strong>Cargo:</strong> ${e.role}</p><hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${t.date}</td><td>${t.name}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${t.id})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
+ document.getElementById("modalBody").innerHTML=`<p><strong>CPF:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p><hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
  document.getElementById("modal").classList.add("open");
 }
 function closeModal(){document.getElementById("modal").classList.remove("open")}
@@ -516,72 +543,64 @@ function renderTrainingDetail(id){
  ${!locked?`<div class="upload" style="margin-top:12px"><strong>📎 Anexar conteúdo do treinamento</strong><span class="muted">PDF, PowerPoint, Word, Excel, imagens ou ZIP.</span><br><input id="contentFile" type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" multiple style="margin-top:15px"></div>`:""}
  <div class="field" style="margin-top:15px"><label>Observações</label><textarea id="detailObs" ${locked?"disabled":""}>${esc(t.obs||"")}</textarea></div>${!locked?`<div class="actions"><button class="btn btn-primary" onclick="saveTrainingDocument(${id})">Salvar documentação</button></div>`:""}</div></div>
  <div class="card" style="margin-top:18px"><div class="table-head"><strong>Participantes (${t.participants?.length||0})</strong>${!locked?`<button class="btn btn-primary" onclick="openParticipantEditor(${id})">+ Informar participantes</button>`:""}</div>
- <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th><th>Cargo</th><th>Presença</th><th>Ação</th></tr></thead><tbody>${t.participants?.length?t.participants.map(pid=>{const e=employees.find(x=>x.id===pid);return e?`<tr><td>${e.mat}</td><td>${e.name}</td><td>${e.sector}</td><td>${e.role}</td><td><span class="badge badge-green">Presente</span></td><td>${locked?"🔒":`<button class="btn btn-danger" onclick="removeParticipant(${id},${e.id})">Remover</button>`}</td></tr>`:""}).join(""):`<tr><td colspan="6" class="empty">Nenhum participante informado.</td></tr>`}</tbody></table></div>
+ <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th><th>Cargo</th><th>Presença</th><th>Ação</th></tr></thead><tbody>${t.participants?.length?t.participants.map(pid=>{const e=employees.find(x=>x.id===pid);return e?`<tr><td>${esc(e.mat)}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge badge-green">Presente</span></td><td>${locked?"🔒":`<button class="btn btn-danger" onclick="removeParticipant(${Number(id)},${Number(e.id)})">Remover</button>`}</td></tr>`:""}).join(""):`<tr><td colspan="6" class="empty">Nenhum participante informado.</td></tr>`}</tbody></table></div>
  ${st==="Cancelado"?`<div class="cancel-box" style="margin-top:18px"><strong>✕ Motivo do cancelamento</strong><p style="margin:8px 0 0">${esc(t.cancelReason||"Não informado")}</p>${t.cancelledAt?`<div class="help" style="margin-top:6px">Cancelado em ${new Date(t.cancelledAt).toLocaleString("pt-BR")}</div>`:""}</div>`:""}
  <div class="card" style="margin-top:18px"><h3>Finalização</h3><p class="muted">Após o treinamento presencial, informe os participantes e anexe pelo menos um comprovante antes de finalizar.</p><div class="actions">${st!=="Ministrado"&&st!=="Cancelado"?`<button class="btn btn-primary" onclick="finalizeTraining(${id})">✓ Finalizar treinamento e marcar como ministrado</button><button class="btn btn-danger" onclick="cancelTraining(${id})">✕ Cancelar treinamento</button>`:`<span class="badge ${st==='Ministrado'?'badge-green':'badge-red'}" style="padding:10px 14px">${st==='Ministrado'?'Concluído e bloqueado':'Cancelado e bloqueado'}</span>`}</div></div>`;
  toggleEditLocationFields();
 }
-function saveTrainingInfo(id){
+async function saveTrainingInfo(id){
  const t=trainings.find(x=>x.id===id);
  const start=document.getElementById("editStartTime").value,end=document.getElementById("editEndTime").value;
  if(!validateTrainingTimes(start,end))return;
- t.name=document.getElementById("editName").value.trim();t.cat=document.getElementById("editCat").value;const d=document.getElementById("editDate").value;t.date=d?d.split("-").reverse().join("/"):"—";t.startTime=normalizeTime(start);t.endTime=normalizeTime(end);t.time=buildTimeRange(t.startTime,t.endTime);t.workload=document.getElementById("editWorkload").value;t.modality=document.querySelector('input[name="editModality"]:checked')?.value||"Local";t.base=t.modality==="Local"?(document.getElementById("editBase")?.value||""):"";t.onlineInfo=t.modality==="Online"?(document.getElementById("editOnlineInfo")?.value.trim()||""):"";t.place=t.modality==="Local"?t.base:"Online";t.resp=document.getElementById("editResp").value;t.desc=document.getElementById("editDesc").value;persist();renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Informações atualizadas.");
+ t.name=document.getElementById("editName").value.trim();t.cat=document.getElementById("editCat").value;const d=document.getElementById("editDate").value;t.date=d?d.split("-").reverse().join("/"):"—";t.startTime=normalizeTime(start);t.endTime=normalizeTime(end);t.time=buildTimeRange(t.startTime,t.endTime);t.workload=document.getElementById("editWorkload").value;t.modality=document.querySelector('input[name="editModality"]:checked')?.value||"Local";t.base=t.modality==="Local"?(document.getElementById("editBase")?.value||""):"";t.onlineInfo=t.modality==="Online"?(document.getElementById("editOnlineInfo")?.value.trim()||""):"";t.place=t.modality==="Local"?t.base:"Online";t.resp=document.getElementById("editResp").value;t.desc=document.getElementById("editDesc").value;if(!await persist())return;renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Informações atualizadas.");
 }
-async function fileToDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});}
 async function saveTrainingDocument(id){
  const t=trainings.find(x=>x.id===id), input=document.getElementById("detailFile"), contentInput=document.getElementById("contentFile"), files=[...(input?.files||[])], contentFiles=[...(contentInput?.files||[])];
  for(const f of files){const e=f.name.split(".").pop().toLowerCase();if(!["pdf","jpg","jpeg","png"].includes(e)){alert("Formato de comprovante não permitido: "+f.name);return}}
  for(const f of contentFiles){const e=f.name.split(".").pop().toLowerCase();if(!["pdf","ppt","pptx","doc","docx","xls","xlsx","jpg","jpeg","png","zip"].includes(e)){alert("Formato de conteúdo não permitido: "+f.name);return}}
- t.docs=Array.isArray(t.docs)?t.docs:[]; t.docFiles=Array.isArray(t.docFiles)?t.docFiles:[];
- for(const f of files){if(!t.docs.includes(f.name))t.docs.push(f.name);if(!t.docFiles.some(x=>x.name===f.name)){const item={name:f.name,type:f.type||"",dataUrl:null};if(f.size<=2500000)item.dataUrl=await fileToDataUrl(f);t.docFiles.push(item);}}
- t.doc=t.docs[0]||t.doc||""; if(t.docFiles[0]){t.docData=t.docFiles[0].dataUrl;t.docType=t.docFiles[0].type;}
- t.contentDocs=Array.isArray(t.contentDocs)?t.contentDocs:[]; t.contentFiles=Array.isArray(t.contentFiles)?t.contentFiles:[];
- for(const f of contentFiles){if(!t.contentDocs.includes(f.name))t.contentDocs.push(f.name);if(!t.contentFiles.some(x=>x.name===f.name)){const item={name:f.name,type:f.type||"",dataUrl:null};if(f.size<=2500000)item.dataUrl=await fileToDataUrl(f);t.contentFiles.push(item);}}
- t.contentDoc=t.contentDocs[0]||t.contentDoc||"";
- t.obs=document.getElementById("detailObs")?.value||"";
- try{persist();renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Documentação salva.");}catch(err){alert("Não foi possível salvar os arquivos no armazenamento local. Tente arquivos menores.");}
+ try{
+  t.docs=Array.isArray(t.docs)?t.docs:[]; t.docFiles=Array.isArray(t.docFiles)?t.docFiles:[];
+  for(const f of files){if(!t.docFiles.some(x=>x.name===f.name)){const item=await SPFLY_AUTH.uploadFile(f);t.docFiles.push(item);t.docs.push(f.name);}}
+  t.doc=t.docs[0]||t.doc||"";
+  t.contentDocs=Array.isArray(t.contentDocs)?t.contentDocs:[]; t.contentFiles=Array.isArray(t.contentFiles)?t.contentFiles:[];
+  for(const f of contentFiles){if(!t.contentFiles.some(x=>x.name===f.name)){const item=await SPFLY_AUTH.uploadFile(f);t.contentFiles.push(item);t.contentDocs.push(f.name);}}
+  t.contentDoc=t.contentDocs[0]||t.contentDoc||"";
+  t.obs=document.getElementById("detailObs")?.value||"";
+  if(!await persist())return;
+  renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Documentação salva.");
+ }catch(err){alert("Não foi possível enviar os arquivos: "+err.message);}
 }
 
-function previewTrainingContent(id,index=0){
+async function previewTrainingContent(id,index=0){
  const t=trainings.find(x=>x.id===id), files=Array.isArray(t?.contentFiles)?t.contentFiles:[]; const item=files[index]||{name:(t?.contentDocs?.[index]||t?.contentDoc),dataUrl:t?.contentData,type:t?.contentType||""}; if(!item?.name){alert("Este treinamento não possui material anexado.");return}
- let viewer=`<div class="notice"><strong>📚 ${esc(item.name)}</strong></div>`;
- if(item.dataUrl && item.type?.startsWith("image/")) viewer+=`<img src="${item.dataUrl}" alt="${esc(item.name)}" style="max-width:100%;max-height:65vh;display:block;margin:auto;border-radius:8px">`;
- else if(item.dataUrl && item.type==="application/pdf") viewer+=`<iframe src="${item.dataUrl}" style="width:100%;height:65vh;border:1px solid var(--border);border-radius:8px"></iframe>`;
- else if(item.dataUrl) viewer+=`<div class="empty"><p>Este formato não possui visualização incorporada.</p><a class="btn btn-primary" href="${item.dataUrl}" download="${esc(item.name)}">Baixar material</a></div>`;
- else viewer+=`<div class="empty"><div style="font-size:52px">📚</div><p>Material registrado pelo nome. O arquivo poderá ser aberto diretamente quando o sistema estiver conectado ao armazenamento da plataforma.</p></div>`;
- document.getElementById("modalTitle").textContent="Material do treinamento — "+t.name;document.getElementById("modalBody").innerHTML=viewer;document.getElementById("modal").classList.add("open");
+ await SPFLY_AUTH.previewFile(item,"Material do treinamento — "+t.name);
 }
-function previewTrainingDocument(id,index=0){
+async function previewTrainingDocument(id,index=0){
  const t=trainings.find(x=>x.id===id), files=Array.isArray(t?.docFiles)?t.docFiles:[]; const item=files[index]||{name:(t?.docs?.[index]||t?.doc),dataUrl:t?.docData,type:t?.docType||""};
  if(!item?.name){alert("Este treinamento não possui anexo.");return}
- let viewer=`<div class="notice"><strong>📎 ${esc(item.name)}</strong></div>`;
- if(item.dataUrl && item.type?.startsWith("image/")) viewer+=`<img src="${item.dataUrl}" alt="${esc(item.name)}" style="max-width:100%;max-height:65vh;display:block;margin:auto;border-radius:8px">`;
- else if(item.dataUrl && item.type==="application/pdf") viewer+=`<iframe src="${item.dataUrl}" style="width:100%;height:65vh;border:1px solid var(--border);border-radius:8px"></iframe>`;
- else if(item.dataUrl) viewer+=`<div class="empty"><p>Este formato não possui visualização incorporada.</p><a class="btn btn-primary" href="${item.dataUrl}" download="${esc(item.name)}">Baixar anexo</a></div>`;
- else viewer+=`<div class="empty"><div style="font-size:52px">📄</div><p>O anexo está registrado pelo nome, mas esta versão anterior não armazenou o arquivo para visualização.</p></div>`;
- document.getElementById("modalTitle").textContent="Lista de presença — "+t.name;document.getElementById("modalBody").innerHTML=viewer;document.getElementById("modal").classList.add("open");
+ await SPFLY_AUTH.previewFile(item,"Lista de presença — "+t.name);
 }
-function finalizeTraining(id){
+async function finalizeTraining(id){
  const t=trainings.find(x=>x.id===id); if(!t)return;
  if(!t.participants?.length){alert("Informe pelo menos um participante antes de finalizar o treinamento.");return}
  const docs=(t.docs&&t.docs.length)?t.docs:(t.doc?[t.doc]:[]); if(!docs.length){alert("Anexe pelo menos uma lista de presença ou foto do treinamento antes de finalizar.");return}
  if(!confirm("Confirmar a finalização? O treinamento será marcado como MINISTRADO e ficará bloqueado para edição."))return;
- t.docs=docs;t.doc=docs[0];t.status="Ministrado";t.editMode=false;t.deliveredAt=new Date().toISOString();t.finalizedAt=new Date().toISOString();persist();renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Treinamento finalizado e marcado como CONCLUÍDO.");
+ t.docs=docs;t.doc=docs[0];t.status="Ministrado";t.editMode=false;t.deliveredAt=new Date().toISOString();t.finalizedAt=new Date().toISOString();if(!await persist())return;renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Treinamento finalizado e marcado como CONCLUÍDO.");
 }
 function markTrainingAsDelivered(id){finalizeTraining(id)}
-function cancelTraining(id){
+async function cancelTraining(id){
  const t=trainings.find(x=>x.id===id);
  if(getTrainingStatus(t)==="Ministrado"){alert("Um treinamento concluído não pode ser cancelado.");return}
  const reason=prompt("Informe o motivo do cancelamento:");
  if(reason===null)return;if(!reason.trim()){alert("Informe o motivo do cancelamento.");return}
  t.status="Cancelado";t.cancelReason=reason.trim();t.cancelledAt=new Date().toISOString();t.editMode=false;
- persist();renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Treinamento cancelado.");
+ if(!await persist())return;renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Treinamento cancelado.");
 }
-function requestTrainingEdit(id){
- const t=trainings.find(x=>x.id===id),reason=prompt("Informe o motivo da alteração:");if(reason===null)return;if(!reason.trim()){alert("Informe o motivo.");return}t.editMode=true;t.lastEditReason=reason.trim();t.lastEditAt=new Date().toISOString();persist();renderTrainingDetail(id);alert("Edição liberada. Depois, clique em 'Bloquear edição'.");
+async function requestTrainingEdit(id){
+ const t=trainings.find(x=>x.id===id),reason=prompt("Informe o motivo da alteração:");if(reason===null)return;if(!reason.trim()){alert("Informe o motivo.");return}t.editMode=true;t.lastEditReason=reason.trim();t.lastEditAt=new Date().toISOString();if(!await persist())return;renderTrainingDetail(id);alert("Edição liberada. Depois, clique em 'Bloquear edição'.");
 }
-function lockTraining(id){const t=trainings.find(x=>x.id===id);t.editMode=false;persist();renderTrainingDetail(id);alert("Treinamento bloqueado novamente.")}
-function removeParticipant(tid,pid){const t=trainings.find(x=>x.id===tid);if(getTrainingStatus(t)==="Ministrado"&&!t.editMode){alert("Treinamento bloqueado para edição.");return}t.participants=t.participants.filter(x=>x!==pid);persist();renderTrainingDetail(tid);renderDashboard();}
+async function lockTraining(id){const t=trainings.find(x=>x.id===id);t.editMode=false;if(!await persist())return;renderTrainingDetail(id);alert("Treinamento bloqueado novamente.")}
+async function removeParticipant(tid,pid){const t=trainings.find(x=>x.id===tid);if(getTrainingStatus(t)==="Ministrado"&&!t.editMode){alert("Treinamento bloqueado para edição.");return}t.participants=t.participants.filter(x=>x!==pid);if(!await persist())return;renderTrainingDetail(tid);renderDashboard();}
 function openRegisterList(tipo){
  const items=tipo==="Setores"?[...new Set(employees.map(e=>e.sector).filter(Boolean))]:[...new Set(employees.map(e=>e.role).filter(Boolean))];
  document.getElementById("modalTitle").textContent=tipo;
@@ -597,27 +616,27 @@ function nextStep(n){
 function renderParticipants(){
  const q=(document.getElementById("participantSearch")?.value||"").toLowerCase(), s=document.getElementById("participantSector")?.value||"";
  const rows=employees.filter(e=>(!q||e.name.toLowerCase().includes(q)||e.mat.includes(q))&&(!s||e.sector===s));
- document.getElementById("participantTable").innerHTML=rows.map(e=>`<tr><td><input type="checkbox" ${selectedParticipants.has(e.id)?"checked":""} onchange="toggleParticipant(${e.id},this.checked)"></td><td>${e.mat}</td><td>${e.name}</td><td>${e.sector}</td><td>${e.role}</td></tr>`).join("");
+ document.getElementById("participantTable").innerHTML=rows.map(e=>`<tr><td><input type="checkbox" ${selectedParticipants.has(e.id)?"checked":""} onchange="toggleParticipant(${Number(e.id)},this.checked)"></td><td>${esc(e.mat)}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td></tr>`).join("");
  document.getElementById("selectedCount").textContent=`${selectedParticipants.size} selecionado(s)`;
 }
 function toggleParticipant(id,on){on?selectedParticipants.add(id):selectedParticipants.delete(id);document.getElementById("selectedCount").textContent=`${selectedParticipants.size} selecionado(s)`}
 function renderFile(){
  const f=document.getElementById("docFile").files[0], el=document.getElementById("filePreview");
- el.innerHTML=f?`<div class="file-box"><span>📄 <strong>${f.name}</strong> <span class="muted">(${Math.round(f.size/1024)} KB)</span></span><span>${f.type||"arquivo"}</span></div>`:"";
+ el.innerHTML=f?`<div class="file-box"><span>📄 <strong>${esc(f.name)}</strong> <span class="muted">(${Math.round(f.size/1024)} KB)</span></span><span>${esc(f.type||"arquivo")}</span></div>`:"";
 }
-document.getElementById("docFile").addEventListener("change",renderFile);
+document.getElementById("docFile")?.addEventListener("change",renderFile);
 toggleTrainingLocationFields();
 function renderReview(){
  const f=document.getElementById("docFile").files[0], ps=[...selectedParticipants].map(id=>employees.find(e=>e.id===id)).filter(Boolean);
- document.getElementById("review").innerHTML=`<div class="notice">Confira os dados antes de finalizar. Os funcionários selecionados serão registrados como presentes.</div><div class="card"><p><strong>Treinamento:</strong> ${document.getElementById("tfName").value}</p><p><strong>Data:</strong> ${document.getElementById("tfDate").value||"Não informada"} &nbsp; <strong>Horário:</strong> ${buildTimeRange(document.getElementById("tfStartTime").value,document.getElementById("tfEndTime").value)||"—"}</p><p><strong>Local:</strong> ${document.getElementById("tfPlace").value||"—"} &nbsp; <strong>Responsável:</strong> ${document.getElementById("tfResp").value||"—"}</p><p><strong>Participantes:</strong> ${ps.length}</p><p><strong>Lista assinada:</strong> ${f?f.name:"Não anexada"}</p></div><h3>Participantes</h3><table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th></tr></thead><tbody>${ps.map(e=>`<tr><td>${e.mat}</td><td>${e.name}</td><td>${e.sector}</td></tr>`).join("")}</tbody></table>`;
+ document.getElementById("review").innerHTML=`<div class="notice">Confira os dados antes de finalizar. Os funcionários selecionados serão registrados como presentes.</div><div class="card"><p><strong>Treinamento:</strong> ${esc(document.getElementById("tfName").value)}</p><p><strong>Data:</strong> ${esc(document.getElementById("tfDate").value||"Não informada")} &nbsp; <strong>Horário:</strong> ${esc(buildTimeRange(document.getElementById("tfStartTime").value,document.getElementById("tfEndTime").value)||"—")}</p><p><strong>Local:</strong> ${esc(document.getElementById("tfPlace")?.value||"—")} &nbsp; <strong>Responsável:</strong> ${esc(document.getElementById("tfResp").value||"—")}</p><p><strong>Participantes:</strong> ${ps.length}</p><p><strong>Lista assinada:</strong> ${esc(f?f.name:"Não anexada")}</p></div><h3>Participantes</h3><table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th></tr></thead><tbody>${ps.map(e=>`<tr><td>${esc(e.mat)}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td></tr>`).join("")}</tbody></table>`;
 }
-function registerTraining(){
+async function registerTraining(){
  const name=document.getElementById("tfName").value.trim(), d=document.getElementById("tfDate").value, modality=document.querySelector('input[name="tfModality"]:checked')?.value||"Local", start=document.getElementById("tfStartTime").value,end=document.getElementById("tfEndTime").value;
  if(!name){alert("Informe o nome do treinamento.");return} if(!d){alert("Informe a data do treinamento.");return} if(!validateTrainingTimes(start,end))return; if(!document.getElementById("tfWorkload").value){alert("Informe a carga horária do curso.");return}
  const parts=d.split("-").reverse().join("/"), base=modality==="Local"?document.getElementById("tfBase").value:"", onlineInfo=modality==="Online"?(document.getElementById("tfOnlineInfo").value.trim()||""):"";
  const startTime=normalizeTime(start),endTime=normalizeTime(end);
  trainings.push({id:Date.now(),date:parts,name,cat:document.getElementById("tfCat").value,resp:document.getElementById("tfResp").value,startTime,endTime,time:buildTimeRange(startTime,endTime),workload:document.getElementById("tfWorkload").value,modality,base,onlineInfo,place:modality==="Local"?base:"Online",desc:document.getElementById("tfDesc").value,participants:[],docs:[],doc:"",contentDocs:[],contentDoc:"",obs:"",status:"Cadastrado",editMode:false});
- persist();clearNewTraining();showPage("pageTrainings");renderTrainings();renderDashboard();alert("Treinamento cadastrado. Após ministrá-lo, abra o registro para informar participantes e anexar a comprovação.");
+ if(!await persist())return;clearNewTraining();showPage("pageTrainings");renderTrainings();renderDashboard();alert("Treinamento cadastrado. Após ministrá-lo, abra o registro para informar participantes e anexar a comprovação.");
 }
 function clearNewTraining(){["tfName","tfDate","tfWorkload","tfResp","tfDesc","tfOnlineInfo"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});document.getElementById("tfStartTime").value="08:00";document.getElementById("tfEndTime").value="12:00";document.getElementById("tfCat").value="Integração";document.getElementById("tfBase").value="MATRIZ";document.querySelector('input[name="tfModality"][value="Local"]').checked=true;toggleTrainingLocationFields()}
 function openParticipantEditor(id){
@@ -626,12 +645,12 @@ function openParticipantEditor(id){
  document.getElementById("modalBody").innerHTML=`<div class="filters"><input id="modalParticipantSearch" placeholder="Pesquisar funcionário..." oninput="renderModalParticipants(${id})"><select id="modalParticipantSector" onchange="renderModalParticipants(${id})"><option value="">Todos os setores</option>${[...new Set(employees.map(e=>e.sector).filter(Boolean))].map(s=>`<option>${esc(s)}</option>`).join("")}</select></div><div class="muted" id="modalSelectedCount" style="margin-bottom:10px"></div><div style="max-height:420px;overflow:auto"><table><thead><tr><th></th><th>Matrícula</th><th>Nome</th><th>Setor</th><th>Cargo</th></tr></thead><tbody id="modalParticipantTable"></tbody></table></div><div class="actions"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveParticipantEditor(${id})">Salvar participantes</button></div>`;
  document.getElementById("modal").classList.add("open");renderModalParticipants(id);
 }
-function renderModalParticipants(id){const q=(document.getElementById("modalParticipantSearch")?.value||"").toLowerCase(),s=document.getElementById("modalParticipantSector")?.value||"";const rows=employees.filter(e=>(!q||e.name.toLowerCase().includes(q)||String(e.mat).includes(q))&&(!s||e.sector===s));document.getElementById("modalParticipantTable").innerHTML=rows.map(e=>`<tr><td><input type="checkbox" ${selectedParticipants.has(e.id)?"checked":""} onchange="toggleModalParticipant(${e.id},this.checked)"></td><td>${e.mat}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td></tr>`).join("");document.getElementById("modalSelectedCount").textContent=`${selectedParticipants.size} selecionado(s)`}
+function renderModalParticipants(id){const q=(document.getElementById("modalParticipantSearch")?.value||"").toLowerCase(),s=document.getElementById("modalParticipantSector")?.value||"";const rows=employees.filter(e=>(!q||e.name.toLowerCase().includes(q)||String(e.mat).includes(q))&&(!s||e.sector===s));document.getElementById("modalParticipantTable").innerHTML=rows.map(e=>`<tr><td><input type="checkbox" ${selectedParticipants.has(e.id)?"checked":""} onchange="toggleModalParticipant(${Number(e.id)},this.checked)"></td><td>${esc(e.mat)}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td></tr>`).join("");document.getElementById("modalSelectedCount").textContent=`${selectedParticipants.size} selecionado(s)`}
 function toggleModalParticipant(id,on){on?selectedParticipants.add(id):selectedParticipants.delete(id);document.getElementById("modalSelectedCount").textContent=`${selectedParticipants.size} selecionado(s)`}
-function saveParticipantEditor(id){const t=trainings.find(x=>x.id===id);t.participants=[...selectedParticipants];persist();closeModal();renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Participantes atualizados.")}
+async function saveParticipantEditor(id){const t=trainings.find(x=>x.id===id);t.participants=[...selectedParticipants];if(!await persist())return;closeModal();renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Participantes atualizados.")}
 function finishTraining(){registerTraining()}
 function fillReportEmployees(){
- const s=document.getElementById("reportEmpSelect"); s.innerHTML='<option value="">Selecione um funcionário</option>'+employees.map(e=>`<option value="${e.id}">${e.name} — ${e.mat}</option>`).join("");
+ const s=document.getElementById("reportEmpSelect"); s.innerHTML='<option value="">Selecione um funcionário</option>'+employees.map(e=>`<option value="${Number(e.id)}">${esc(e.name)} — ${esc(e.mat)}</option>`).join("");
 }
 function reportKpi(title,value,icon){return `<div class="card kpi"><div><div class="num">${value}</div><div class="label">${title}</div></div><div class="icon">${icon}</div></div>`}
 function renderEmployeeReport(){
@@ -657,7 +676,10 @@ function previewEmployeeAttachment(trainingId){ previewTrainingDocument(training
 
 document.getElementById("globalSearch").addEventListener("keydown",e=>{if(e.key==="Enter"){const q=e.target.value.trim();if(q){document.getElementById("employeeSearch").value=q;showPage("pageEmployees")}}});
 applyTheme();
-showPage("dashboard");
+// A inicialização fica em auth.js após a confirmação do administrador.
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
 </body>
 </html>

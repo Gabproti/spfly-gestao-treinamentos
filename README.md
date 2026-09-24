@@ -1,18 +1,31 @@
-# SPFLY | Gestão de Treinamentos — V3.15
+# SPFLY | Gestão de Treinamentos — versão com administradores
 
-Versão de teste da plataforma de gestão de treinamentos. O site usa apenas HTML, JavaScript e uma imagem, e pode ser publicado no GitHub Pages.
+Esta versão mantém o GitHub Pages para a interface e usa Supabase para login, dados compartilhados e anexos privados.
 
-## Publicar no GitHub Pages
+## Instalação
 
-1. Crie um repositório público no GitHub.
-2. Envie os arquivos desta pasta para a raiz do repositório. O arquivo `index.html` deve ficar na raiz, ao lado de `spfly_logo.png`.
-3. Em **Settings > Pages**, escolha **Deploy from a branch**, a branch `main` e a pasta `/(root)`. Salve.
-4. Abra a URL mostrada na mesma tela e teste a plataforma com dados fictícios.
+1. No Supabase SQL Editor, execute `supabase/schema.sql`.
+2. Em Authentication > URL Configuration, defina Site URL e Redirect URL como `https://gabproti.github.io/spfly-gestao-treinamentos/`.
+3. Em Authentication > Providers > Email, desative o cadastro público de novos usuários. O acesso aos dados também é bloqueado por RLS para qualquer conta fora de `admin_users`.
+4. Em Authentication > Users, envie um convite para o primeiro administrador.
+5. No SQL Editor, execute `supabase/bootstrap-admin.sql` depois de substituir `SEU_EMAIL_AQUI` pelo e-mail do convidado. Confirme que uma linha foi adicionada.
+6. Em Edge Functions, publique `supabase/functions/invite-admin/index.ts` como função `invite-admin` com verificação de JWT ativada.
+7. Envie `index.html`, `auth.js`, `config.js`, `spfly_logo.png` e `.nojekyll` para a raiz do repositório GitHub Pages.
+8. O primeiro administrador abre o e-mail de convite, define a senha no site e entra. Na página **Administradores**, pode convidar outros administradores.
 
-## Limitação desta versão
+## Segurança e dados
 
-Funcionários, treinamentos e anexos são armazenados no `localStorage` do navegador. Os dados não são compartilhados entre usuários ou dispositivos, podem ser perdidos quando o armazenamento do navegador é apagado e não constituem um banco de dados ou backup central. O GitHub Pages hospeda a interface, mas não fornece autenticação nem persistência compartilhada.
+- `config.js` contém apenas a chave **publishable**. Nunca coloque uma `secret key`, `service_role` ou senha de banco no repositório ou no navegador.
+- Os registros e anexos só podem ser lidos por administradores ativos segundo as políticas RLS em `supabase/schema.sql`.
+- Cada gravação usa uma versão para detectar alterações simultâneas. Se outro administrador alterou os dados primeiro, a tela recarrega os dados do servidor em vez de sobrescrevê-los.
+- Esta versão começa com o banco vazio. Os dados de demonstração da versão anterior não são importados. O armazenamento local do navegador anterior não é apagado.
+- Os anexos novos ficam em um bucket privado. O limite é de 10 MB por arquivo.
 
-Esta publicação é adequada para testar a interface. Antes de usar dados reais de funcionários ou operar a gestão de treinamentos em equipe, será necessário implementar autenticação, banco de dados e armazenamento de arquivos com controles de acesso.
+## Arquivos do projeto
 
-O código inclui registros de demonstração exibidos quando não há dados salvos no navegador.
+- `index.html`: interface existente com login e gestão de administradores.
+- `auth.js`: autenticação e conexão com banco/arquivos.
+- `config.js`: URL e chave pública do projeto.
+- `supabase/schema.sql`: tabelas, políticas e bucket privado.
+- `supabase/bootstrap-admin.sql`: autorização inicial de uma conta.
+- `supabase/functions/invite-admin/index.ts`: convite feito por um administrador autenticado.
