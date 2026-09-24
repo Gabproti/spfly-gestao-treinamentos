@@ -11,6 +11,7 @@
   --green:#1f9d63; --red:#d94b4b; --blue:#3478c8; --primary:var(--orange); --soft:#fff4ef; --surface:#fff; --muted:var(--gray);
 }
 *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light);color:#1f252b}
+[hidden]{display:none!important}
 button,input,select,textarea{font:inherit} button{cursor:pointer}
 .app{display:flex;min-height:100vh}
 .sidebar{width:250px;background:linear-gradient(180deg,#101214,#1c2024);color:#fff;padding:18px 14px;position:fixed;inset:0 auto 0 0;z-index:10}
@@ -173,24 +174,82 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 .admin-form{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.admin-form .field{flex:1;min-width:220px}.admin-form .btn{height:42px}
 .status-dot-mini.black{background:#202326;box-shadow:0 0 0 1px #aab2ba}
 .file-box .file-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.auth-screen{background:radial-gradient(circle at 15% 10%,#ffe0d1 0,transparent 30%),linear-gradient(135deg,#f6f8fb,#e8edf2);padding:24px}
+#loginCard{width:min(100%,880px);max-width:none;padding:0;display:grid;grid-template-columns:.94fr 1fr;overflow:hidden;border:1px solid #e4e9ee;box-shadow:0 24px 70px #15222d25}
+.login-brand{position:relative;min-height:485px;padding:52px 40px;background:linear-gradient(150deg,#171b1e,#252a2d);color:#fff;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.login-brand:after{content:"";position:absolute;width:420px;height:82px;left:-110px;bottom:55px;background:linear-gradient(90deg,#f4511366,#f4511300);border-radius:25px;transform:rotate(-42deg)}
+.login-brand .brand-wordmark{font-size:55px;position:relative;z-index:1}.login-brand small{display:block;letter-spacing:.18em;font-size:11px;margin-top:5px;color:#d9dfe2}
+.login-brand h2{font-size:29px;line-height:1.15;margin:0 0 12px;position:relative;z-index:1}.login-brand p{font-size:14px;line-height:1.5;color:#c4ccd1;text-align:left;margin:0;position:relative;z-index:1}
+.login-main{padding:52px 44px;display:flex;flex-direction:column;justify-content:center}.login-main .eyebrow{color:#e45115;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.login-main h1{font-size:29px;text-align:left;margin:9px 0 8px;color:#172233}.login-main>p{text-align:left;margin:0 0 14px;color:#687789;font-size:14px}
+#loginCard label{font-weight:700;color:#2c3843}#loginCard input{height:46px;border-color:#d9e1e8}#loginCard input:focus{outline:2px solid #f4511350;border-color:#f45113}
+.password-wrap{position:relative}.password-wrap input{padding-right:86px!important}.password-wrap button{position:absolute;right:7px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#d44d16;font-size:12px;font-weight:700;padding:8px;cursor:pointer}
+.login-options{display:flex;justify-content:flex-end;margin-top:12px}.login-options button{border:0;background:none;color:#d44d16;font-size:13px;font-weight:700;cursor:pointer;padding:3px 0}.login-options button:hover{text-decoration:underline}
+.access-form select,.access-row select{height:42px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--surface);color:inherit}.access-pages{margin-top:17px;padding:15px;border:1px solid var(--border);border-radius:10px;background:var(--light)}.access-pages[hidden]{display:none}.access-checks{display:flex;flex-wrap:wrap;gap:10px;margin-top:11px}.access-checks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:12px}.access-checks input{accent-color:var(--orange)}.access-row{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:10px;background:var(--surface)}.access-row-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.access-row .access-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.access-row .access-checks{margin:0}.access-row .btn{padding:9px 12px}
+#loginCard .btn-primary{height:47px;background:linear-gradient(100deg,#ff5c18,#ec4a0c);box-shadow:0 8px 22px #f4511328}#loginCard .auth-message{text-align:left}
+@media(max-width:700px){#loginCard{display:block}.login-brand{min-height:155px;padding:24px}.login-brand .brand-wordmark{font-size:38px}.login-brand h2,.login-brand p{display:none}.login-main{padding:28px 24px}.login-main h1{font-size:24px}}
+/* Identidade visual da agenda: referência fornecida pelo usuário. */
+body{background:#f7f9fc;color:#172233}
+.sidebar{width:272px;padding:0 16px 170px;background:linear-gradient(155deg,#171b1d 0%,#202527 68%,#171b1d 100%);overflow:hidden;display:flex;flex-direction:column}
+.sidebar:before,.sidebar:after{content:"";position:absolute;pointer-events:none;transform:rotate(-42deg);background:linear-gradient(90deg,#f05a2840,#f05a2812);border-radius:22px}
+.sidebar:before{width:360px;height:68px;left:-130px;bottom:145px}.sidebar:after{width:350px;height:58px;left:35px;bottom:105px;background:linear-gradient(90deg,#f05a282e,#f05a2808)}
+.sidebar>*{position:relative;z-index:1}
+.brand{min-height:112px;margin:0 -16px 14px;padding:15px 22px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-bottom:1px solid #ffffff1b}
+.brand-wordmark{font-size:43px;line-height:1;font-weight:1000;letter-spacing:-.085em;font-style:italic;color:#fff;text-shadow:0 3px 0 #0005;white-space:nowrap}
+.brand-arrow{display:inline-block;color:#f45113;font-size:34px;transform:rotate(-14deg);margin-left:4px;text-shadow:none}
+.brand small{font-size:10px;letter-spacing:.17em;color:#e2e5e7;font-weight:600}
+.ui-icon{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.nav-section{margin:0}.nav-btn{height:54px;margin:3px 0;padding:0 14px;justify-content:flex-start;gap:16px;font-size:15px;font-weight:500;border-radius:9px;color:#edf0f2}
+.nav-btn:hover,.nav-btn.active{background:linear-gradient(100deg,#ff5516,#ec4a0c 70%,#ab390f);box-shadow:0 8px 22px #0003;color:#fff}
+.nav-icon{width:26px;height:26px;flex:0 0 26px;stroke-width:1.7}.nav-label{flex:1}.nav-chevron{font-size:18px;color:#dce0e3}
+.subnav{padding-left:45px}.subnav button{font-size:13px}
+.sidebar-footer{position:absolute;z-index:2;left:0;right:0;bottom:0;padding:14px 19px 18px;background:#1a1f21e8;border-top:1px solid #ffffff22}
+.sidebar-profile,.sidebar-logout{border:0;background:none;color:#fff;display:flex;align-items:center;text-align:left;cursor:pointer}
+.sidebar-profile{width:100%;gap:12px;padding:0 0 10px}.sidebar-profile .avatar{background:#424a50;width:44px;height:44px;flex:0 0 44px}.sidebar-profile strong{display:block;font-size:13px;font-weight:700}.sidebar-profile small{display:block;color:#aeb7be;font-size:12px;margin-top:4px}
+.sidebar-logout{gap:13px;padding:7px 13px;color:#e1e5e8;font-size:14px}.sidebar-logout:hover,.sidebar-profile:hover{color:#fff}
+.main{margin-left:272px;width:calc(100% - 272px);min-width:0}.topbar{height:76px;padding:0 28px;background:#fff;box-shadow:0 1px 0 #e4e9ee}
+.topbar-search{width:min(420px,45%);position:relative}.topbar-search>span{position:absolute;left:15px;top:50%;transform:translateY(-53%);font-size:29px;color:#596878;pointer-events:none}.topbar-search .search{width:100%;height:46px;padding:10px 14px 10px 47px;background:#fff;border-color:#dce4ec;font-size:14px}
+.user{gap:18px}.user #themeToggle{width:44px;height:44px;padding:0;border:1px solid #dce4ec;background:#fff;color:#526173;font-size:24px;line-height:1}
+.topbar-profile{display:flex;align-items:center;gap:12px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;padding:0}.topbar-profile .avatar{width:44px;height:44px;background:#35424c;font-size:13px}.topbar-profile strong{display:block;font-size:14px;color:#172233}.topbar-profile small{display:block;font-size:12px;color:#687789;margin-top:3px}
+.content{max-width:none;margin:0;padding:16px 20px 32px}.dashboard-page-head{align-items:center;margin:0 8px 18px}.dashboard-page-head h1{font-size:34px;line-height:1.15;letter-spacing:-.035em}.dashboard-page-head .muted{font-size:14px;line-height:1.45}.dashboard-page-head .btn-primary{height:49px;padding:0 20px;background:#fa500f;border-radius:9px;font-size:14px}
+.dashboard-agenda-layout{grid-template-columns:minmax(0,1.17fr) minmax(430px,1fr);gap:16px;align-items:stretch}
+.dashboard-calendar,.dashboard-commitments{border-radius:14px;box-shadow:0 5px 20px #16233008}
+.dashboard-calendar .calendar-head{padding:15px 16px 12px;gap:9px}.dashboard-calendar .calendar-head strong{font-size:21px;text-transform:none}.dashboard-calendar .calendar-head .btn-secondary{width:44px;height:44px;border:1px solid #dce4ec;border-radius:9px;color:#172233;background:#fff}.dashboard-calendar .calendar-head .btn-secondary:nth-child(4){min-width:75px;background:#fff8f4;border-color:#ffccb5;color:#df4a0f}
+.dashboard-calendar .calendar-legend{background:#fff;border:0;padding:8px 20px 13px;justify-content:space-between;gap:8px;font-size:13px}.dashboard-calendar .status-dot{width:14px;height:14px;margin-right:7px}.dashboard-calendar .dot-black{background:#202326}
+.dashboard-calendar .calendar-grid{padding:0 16px 16px;gap:6px}.dashboard-calendar .cal-weekday{background:#f4f7fa;padding:9px 2px;border-radius:7px;color:#596879;font-size:11px}
+.dashboard-calendar .calendar-day{min-height:80px;padding:10px;border-radius:10px;border-color:#dfe7ef}.dashboard-calendar .calendar-day.occupied:before{display:none}.dashboard-calendar .calendar-day.occupied{background:#fff;border-color:#dfe7ef}.dashboard-calendar .calendar-day.occupied:hover{border-color:#ffb28d}
+.dashboard-calendar .calendar-day.muted{opacity:1;background:#f7f9fb;border-color:#e5ebf1}.dashboard-calendar .calendar-day.muted .day-num{color:#98a4af}
+.dashboard-calendar .calendar-day.selected,.dashboard-calendar .calendar-day.today.selected{background:linear-gradient(145deg,#ff611c,#f04a0b);border-color:#f04a0b;box-shadow:0 6px 17px #f05a2838}.dashboard-calendar .calendar-day.selected .day-num,.dashboard-calendar .calendar-day.today.selected .day-num{background:none;box-shadow:none;color:#fff;width:auto;height:auto;font-size:22px}
+.dashboard-calendar .calendar-day.today:not(.selected){background:#fff3ed;border-color:#ffb38e}.dashboard-calendar .calendar-day.today:not(.selected) .day-num{background:none;color:#ea4d11;box-shadow:none;width:auto;height:auto}
+.dashboard-calendar .calendar-day .day-count{display:none}.dashboard-calendar .status-dots{position:absolute;bottom:10px;left:11px;margin:0;gap:6px}.dashboard-calendar .status-dot-mini{width:10px;height:10px}.dashboard-calendar .calendar-day.selected .status-dot-mini{box-shadow:0 0 0 2px #fff}
+.dashboard-summary{margin:0;padding:14px 14px 16px;border-top:1px solid #e9eef2;gap:5px}.summary-card{border:0;box-shadow:none;padding:3px 6px;gap:8px;min-width:0}.summary-icon{width:40px;height:40px;flex:0 0 40px;font-size:21px}.summary-value{font-size:18px}.summary-label{font-size:11px;line-height:1.15}
+.summary-icon .ui-icon{width:22px;height:22px}.commitment-icon .ui-icon{width:27px;height:27px}
+.dashboard-commitments{padding:16px;background:linear-gradient(165deg,#fffaf7,#fff 46%);min-width:0}.commitment-head{padding-bottom:15px;margin-bottom:12px;gap:12px}.commitment-icon{width:54px;height:54px;flex:0 0 54px;border-radius:10px;background:linear-gradient(145deg,#ff641e,#ef4b0b);font-size:28px}.commitment-head h2{font-size:20px;line-height:1.2}.commitment-head p{font-size:13px;margin-top:4px}.commitment-head-actions .btn{white-space:nowrap;border:1px solid #ffb78d;background:#fff;color:#e64c10;font-size:12px}
+.commitment-list{max-height:none;overflow:visible}.commitment-item{min-height:130px;align-items:center;padding:15px 17px 15px 22px;box-shadow:0 3px 12px #1d2d390a}.commitment-item:before{top:0;bottom:0;width:4px}.commitment-time{font-size:13px}.commitment-name{font-size:15px}.commitment-meta,.commitment-participants{font-size:12px}.commitment-status .badge{white-space:nowrap}
+.dashboard-next{margin-top:17px;padding-top:14px}.dashboard-next-head h3{font-size:19px}.next-item{grid-template-columns:88px minmax(0,1fr) auto;gap:9px;min-height:62px;padding:7px 4px}.next-name{font-size:13px}.next-place{font-size:11px}
+body.dark .topbar-profile strong{color:#f3f5f7}body.dark .topbar-search .search,body.dark .user #themeToggle{background:#181c20;color:#e8edf2;border-color:#394149}body.dark .dashboard-calendar .calendar-legend{background:#181c20}body.dark .dashboard-calendar .cal-weekday{background:#22282e}body.dark .dashboard-calendar .calendar-day.occupied{background:#181c20;border-color:#30363d}body.dark .dashboard-calendar .calendar-day.selected,body.dark .dashboard-calendar .calendar-day.today.selected{background:linear-gradient(145deg,#ff611c,#f04a0b);border-color:#f04a0b}body.dark .dashboard-calendar .calendar-day.selected .day-num{color:#fff}body.dark .dashboard-summary{border-color:#30363d}body.dark .summary-card{background:transparent}body.dark .dashboard-commitments{background:linear-gradient(165deg,#2b201b,#181c20 46%)}
+body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
+@media(max-width:1300px){.dashboard-agenda-layout{grid-template-columns:minmax(0,1fr) minmax(360px,.85fr)}.dashboard-calendar .calendar-day{min-height:70px}.dashboard-summary{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1050px){.dashboard-agenda-layout{grid-template-columns:1fr}.dashboard-summary{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:700px){.sidebar{position:relative;width:100%;height:auto;padding:0 12px 10px;overflow:visible}.sidebar:before,.sidebar:after,.sidebar-footer{display:none}.brand{min-height:68px;margin:0 -12px 4px;padding:9px}.brand-wordmark{font-size:31px}.brand-arrow{font-size:25px}.brand small{font-size:8px}.nav-section{display:flex;gap:4px;overflow-x:auto;padding-bottom:5px}.nav-btn{min-width:max-content;width:auto;height:43px;padding:0 10px;gap:6px;font-size:12px}.nav-icon{width:18px;height:18px;flex-basis:18px}.nav-chevron,.subnav{display:none}.main{margin-left:0;width:100%}.topbar{height:64px;padding:0 12px}.topbar-search{width:48%}.topbar-search .search{height:40px;font-size:12px}.topbar-profile .avatar{width:36px;height:36px}.topbar-profile strong{font-size:12px}.topbar-profile small{font-size:10px}.user{gap:8px}.user #themeToggle{width:37px;height:37px}.content{padding:16px 12px}.dashboard-page-head{margin:0 0 15px;gap:12px}.dashboard-page-head h1{font-size:26px}.dashboard-page-head .btn-primary{height:42px}.dashboard-summary{grid-template-columns:repeat(2,1fr)}.dashboard-calendar .calendar-day{min-height:57px;padding:5px}.dashboard-calendar .calendar-grid{padding:0 7px 10px;gap:3px}.dashboard-calendar .calendar-legend{font-size:10px;padding:6px 8px 10px}.dashboard-calendar .status-dot{width:9px;height:9px}.dashboard-calendar .status-dots{left:5px;bottom:5px;gap:3px}.dashboard-calendar .status-dot-mini{width:7px;height:7px}.dashboard-calendar .calendar-head{padding:10px 8px}.dashboard-calendar .calendar-head strong{font-size:15px}.dashboard-calendar .calendar-head .btn-secondary{width:33px;min-width:33px;height:34px;padding:0 5px}.dashboard-calendar .calendar-head .btn-secondary:nth-child(4){min-width:48px;font-size:11px}.dashboard-calendar .calendar-day.selected .day-num{font-size:16px}}
 </style>
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
   <div class="auth-card" id="loginCard">
-    <img src="spfly_logo.png" alt="SPFLY">
-    <h1>Gestão de Treinamentos</h1>
-    <p>Acesso exclusivo para administradores autorizados.</p>
-    <form id="loginForm">
-      <label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="username" required>
-      <label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" required>
-      <button class="btn btn-primary" type="submit">Entrar</button>
-    </form>
-    <div class="auth-message" id="loginMessage" role="status"></div>
+    <div class="login-brand"><div><div class="brand-wordmark">SPFLY<span class="brand-arrow">➜</span></div><small>GESTÃO DE TREINAMENTOS</small></div><div><h2>Treinamentos em um só lugar.</h2><p>Organize pessoas, acompanhe a agenda e registre cada etapa da capacitação.</p></div></div>
+    <div class="login-main"><span class="eyebrow">Portal SPFLY</span><h1>Bem-vindo de volta</h1><p>Entre com sua conta para acessar o portal.</p>
+      <form id="loginForm">
+        <label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="seu.email@empresa.com" required>
+        <label for="loginPassword">Senha</label><div class="password-wrap"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" id="toggleLoginPassword" aria-label="Mostrar senha">Mostrar</button></div>
+        <div class="login-options"><button type="button" id="forgotPassword">Esqueci minha senha</button></div>
+        <button class="btn btn-primary" type="submit">Entrar no portal</button>
+      </form>
+      <div class="auth-message" id="loginMessage" role="status"></div>
+    </div>
   </div>
   <div class="auth-card" id="setPasswordCard" hidden>
     <img src="spfly_logo.png" alt="SPFLY">
-    <h1>Definir senha</h1><p>Crie a senha da sua conta de administrador.</p>
+    <h1 id="passwordSetupTitle">Definir senha</h1><p id="passwordSetupDescription">Crie a senha da sua conta.</p>
     <form id="setPasswordForm">
       <label for="newPassword">Nova senha</label><input id="newPassword" type="password" autocomplete="new-password" minlength="12" required>
       <label for="confirmPassword">Confirmar senha</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required>
@@ -209,43 +268,54 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
   </div>
 </div>
 <div class="app" id="app">
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="icon-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="icon-users" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2zM17 4a3 3 0 0 1 0 6m1 5a5 5 0 0 1 3 5v1"/></symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18m-13 4h2m4 0h2m-8 4h2"/></symbol>
+  <symbol id="icon-chart" viewBox="0 0 24 24"><path d="M4 20V11m5 9V7m5 13v-5m5 5V4M2 20h20M4 8l5-4 5 6 5-7"/></symbol>
+  <symbol id="icon-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 2 4 3 9 3s9-1 9-3V5M3 12c0 2 4 3 9 3s9-1 9-3"/></symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l.7 2.4 1.8.8 2.2-1.2 2.8 2.8-1.2 2.2.8 1.8L23 11v4l-2.4.7-.8 1.8 1.2 2.2-2.8 2.8-2.2-1.2-1.8.8L14 23h-4l-.7-2.4-1.8-.8-2.2 1.2-2.8-2.8 1.2-2.2-.8-1.8L1 15v-4l2.4-.7.8-1.8L3 6.3l2.8-2.8L8 4.7l1.8-.8z" transform="translate(0 -1) scale(.96)"/></symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="icon-pin" viewBox="0 0 24 24"><path d="M12 22s7-7 7-13a7 7 0 0 0-14 0c0 6 7 13 7 13z"/><circle cx="12" cy="9" r="2"/></symbol>
+</svg>
 <aside class="sidebar">
-  <div class="brand"><img src="spfly_logo.png" alt="SPFLY Logística 20 anos"></div>
+  <div class="brand"><div class="brand-wordmark" aria-label="SPFLY">SPFLY<span class="brand-arrow">➜</span></div><small>GESTÃO DE TREINAMENTOS</small></div>
   <div class="nav-section">
-    <button class="nav-btn active" data-page="dashboard">⌂ <span>Início</span><span></span></button>
-    <button class="nav-btn" data-page="pageEmployees">♙ <span>Funcionários</span><span></span></button>
-    <button class="nav-btn" data-page="pageTrainings">▣ <span>Treinamentos</span><span></span></button>
-    <button class="nav-btn" data-menu="reports">▤ <span>Relatórios</span><span>⌄</span></button>
+    <button class="nav-btn active" data-page="dashboard"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-home"/></svg><span class="nav-label">Início</span></button>
+    <button class="nav-btn" data-page="pageEmployees"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Funcionários</span></button>
+    <button class="nav-btn" data-page="pageTrainings"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg><span class="nav-label">Treinamentos</span></button>
+    <button class="nav-btn" data-menu="reports"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg><span class="nav-label">Relatórios</span><span class="nav-chevron">⌄</span></button>
     <div class="subnav" id="reports">
       <button data-page="pageReportEmployee">Por Funcionário</button><button data-page="pageReportTraining">Por Treinamento</button><button data-page="pageReportSector">Por Setor</button>
     </div>
-    <button class="nav-btn" data-menu="menuRegisters">⚙ <span>Cadastros</span><span>⌄</span></button>
+    <button class="nav-btn" data-menu="menuRegisters"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-database"/></svg><span class="nav-label">Cadastros</span><span class="nav-chevron">⌄</span></button>
     <div class="subnav" id="menuRegisters"><button onclick="openRegisterList('Setores')">Setores</button><button onclick="openRegisterList('Cargos')">Cargos</button></div>
-    <button class="nav-btn" data-page="pageAdmins">⚙ <span>Administradores</span><span></span></button>
+    <button class="nav-btn" data-page="pageAdmins"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span class="nav-label">Acessos</span></button>
   </div>
+  <div class="sidebar-footer"><button class="sidebar-profile" onclick="SPFLY_AUTH.editProfile()" aria-label="Meu cadastro"><span class="avatar" id="sidebarAdminInitials">AD</span><span><strong id="sidebarAdminName">Administrador</strong><small id="sidebarAccessRole">Administrador</small></span></button><button class="sidebar-logout" onclick="SPFLY_AUTH.logout()">↪ <span>Sair</span></button></div>
 </aside>
 
 <main class="main">
 <header class="topbar">
-  <input class="search" id="globalSearch" placeholder="Buscar no sistema...">
-  <div class="user"><button id="themeToggle" class="btn btn-secondary" style="padding:8px 10px" onclick="toggleDarkMode()">🌙</button><div><strong id="currentAdminName"></strong><br><span class="muted">Administrador</span></div><button class="btn btn-secondary" onclick="SPFLY_AUTH.editProfile()">Meu cadastro</button><button class="btn btn-secondary" onclick="SPFLY_AUTH.logout()">Sair</button></div>
+  <div class="topbar-search"><span aria-hidden="true">⌕</span><input class="search" id="globalSearch" placeholder="Buscar no sistema..."></div>
+  <div class="user"><button id="themeToggle" class="btn btn-secondary" onclick="toggleDarkMode()" aria-label="Alternar tema">☾</button><button class="topbar-profile" onclick="SPFLY_AUTH.editProfile()" aria-label="Meu cadastro"><span class="avatar" id="topbarAdminInitials">AD</span><span><strong id="currentAdminName"></strong><small id="topbarAccessRole">Administrador</small></span></button></div>
 </header>
 
 <section class="content">
 <div id="pageAdmins" class="page">
-  <div class="header-row"><div><h1>Administradores</h1><div class="muted">Convide outros administradores para acessar os dados compartilhados.</div></div></div>
+  <div class="header-row"><div><h1>Gestão de acessos</h1><div class="muted">Convide administradores, RH e usuários. Defina as telas liberadas para cada usuário.</div></div></div>
   <div class="card form-card">
-    <h2>Convidar administrador</h2>
-    <form id="inviteAdminForm" class="admin-form"><div class="field"><label for="inviteAdminEmail">E-mail</label><input id="inviteAdminEmail" type="email" required placeholder="nome@empresa.com"></div><button class="btn btn-primary" type="submit">Enviar convite</button></form>
-    <p class="muted">O convidado receberá um link para definir a senha. Somente contas autorizadas terão acesso aos registros.</p>
+    <h2>Convidar pessoa</h2>
+    <form id="inviteAdminForm" class="access-form"><div class="admin-form"><div class="field"><label for="inviteAdminEmail">E-mail</label><input id="inviteAdminEmail" type="email" required placeholder="nome@empresa.com"></div><div class="field"><label for="inviteRole">Perfil</label><select id="inviteRole" onchange="SPFLY_AUTH.updateInviteRole()"><option value="admin">Administrador</option><option value="rh">RH</option><option value="usuario">Usuário</option></select></div><button class="btn btn-primary" type="submit">Enviar convite</button></div><div id="invitePages" class="access-pages" hidden><strong>Telas permitidas para este usuário</strong><div class="access-checks"><label><input type="checkbox" value="dashboard"> Início</label><label><input type="checkbox" value="employees"> Funcionários</label><label><input type="checkbox" value="trainings"> Treinamentos</label><label><input type="checkbox" value="reports"> Relatórios</label></div><p class="help">Funcionários e Treinamentos permitem consulta e edição. Início e Relatórios são telas de consulta.</p></div></form>
+    <p class="muted">Administrador acessa tudo. RH acessa Funcionários e Treinamentos. Usuário acessa apenas as telas marcadas.</p>
     <div id="inviteAdminMessage" role="status"></div>
-    <h2 style="margin-top:28px">Contas administrativas</h2><div id="adminList" class="muted">Carregando...</div>
+    <h2 style="margin-top:28px">Pessoas com acesso</h2><div id="adminList" class="muted">Carregando...</div>
   </div>
 </div>
 <div id="dashboard" class="page active">
   <div class="dashboard-page-head">
     <div><h1>Calendário de <span class="title-orange">Treinamentos</span></h1><div class="muted">Visualize todos os treinamentos (cadastrados, concluídos e cancelados) e clique na data para ver os detalhes.</div></div>
-    <button class="btn btn-primary" onclick="showPage('pageNewTraining')">+ Novo Treinamento</button>
+    <button class="btn btn-primary" data-requires-page="pageTrainings" onclick="showPage('pageNewTraining')">+ Novo Treinamento</button>
   </div>
   <div class="dashboard-agenda-layout">
     <div>
@@ -253,8 +323,8 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
         <div class="calendar-head"><button class="btn btn-secondary" onclick="changeDashboardCalendarMonth(-1)">‹</button><strong id="dashboardCalendarTitle"></strong><button class="btn btn-secondary" onclick="changeDashboardCalendarMonth(1)">›</button><button class="btn btn-secondary" onclick="goDashboardCalendarToday()">Hoje</button></div>
         <div class="calendar-legend"><span><i class="status-dot dot-orange"></i> Cadastrado</span><span><i class="status-dot dot-green"></i> Concluído</span><span><i class="status-dot dot-black"></i> Cancelado</span><span><i class="status-dot dot-today"></i> Hoje</span></div>
         <div class="calendar-grid" id="dashboardTrainingCalendar"></div>
+        <div class="dashboard-summary" id="dashboardSummary"></div>
       </div>
-      <div class="dashboard-summary" id="dashboardSummary"></div>
     </div>
     <aside class="dashboard-commitments" id="dashboardCommitments"></aside>
   </div>
@@ -263,8 +333,8 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 <div id="pageEmployees" class="page">
   <div class="header-row"><div><h1>Lista de Funcionários</h1><div class="muted">Gerencie os colaboradores da empresa.</div></div><button class="btn btn-primary" onclick="showPage('pageNewEmployee')">+ Novo Funcionário</button></div>
   <div class="card">
-    <div class="filters"><input id="employeeSearch" placeholder="Pesquisar por nome, CPF ou matrícula..." oninput="renderEmployees()"><select id="sectorFilter" onchange="renderEmployees()"><option value="">Todos os setores</option><option>Operacional</option><option>Administrativo</option><option>Logística</option><option>RH</option><option>TI</option></select><select id="statusFilter" onchange="renderEmployees()"><option value="">Todos os status</option><option>Ativo</option><option>Inativo</option></select></div>
-    <table><thead><tr><th>Matrícula</th><th>Nome</th><th>CPF</th><th>Setor</th><th>Cargo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="employeeTable"></tbody></table>
+    <div class="filters"><input id="employeeSearch" placeholder="Pesquisar por nome, documento ou matrícula..." oninput="renderEmployees()"><select id="sectorFilter" onchange="renderEmployees()"><option value="">Todos os setores</option><option>Operacional</option><option>Administrativo</option><option>Logística</option><option>RH</option><option>TI</option></select><select id="statusFilter" onchange="renderEmployees()"><option value="">Todos os status</option><option>Ativo</option><option>Inativo</option></select></div>
+    <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Documento</th><th>Setor</th><th>Cargo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="employeeTable"></tbody></table>
   </div>
 </div>
 
@@ -272,7 +342,8 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
   <div class="header-row"><div><h1>Novo Funcionário</h1><div class="muted">Cadastre um novo colaborador.</div></div></div>
   <div class="card form-card"><div class="form-grid">
     <div class="field full"><label>Nome completo *</label><input id="efName"></div>
-    <div class="field"><label>CPF *</label><input id="efCpf" placeholder="000.000.000-00"></div>
+    <div class="field"><label for="efDocumentType">Tipo de documento *</label><select id="efDocumentType" onchange="updateEmployeeDocumentType()"><option value="CPF">CPF</option><option value="CNPJ">CNPJ</option></select></div>
+    <div class="field"><label for="efCpf" id="efDocumentLabel">CPF *</label><input id="efCpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" oninput="formatEmployeeDocumentInput()"></div>
     <div class="field"><label>Matrícula *</label><input id="efMat"></div>
     <div class="field"><label>Data de nascimento</label><input id="efBirth" type="date"></div>
     <div class="field"><label>Data de admissão</label><input id="efHire" type="date"></div>
@@ -350,9 +421,12 @@ let currentStep=1;
 
 function persist(){return window.SPFLY_AUTH.persist(employees,trainings);}
 function showPage(id){
+ if(window.SPFLY_AUTH?.canPage && !window.SPFLY_AUTH.canPage(id)){alert("Esta tela não está liberada para o seu perfil.");return false}
  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
  const page=document.getElementById(id);
  if(page) page.classList.add("active");
+ const parent=id==="pageNewEmployee"?"pageEmployees":(["pageNewTraining","pageTrainingDetail"].includes(id)?"pageTrainings":id);
+ document.querySelectorAll(".nav-btn").forEach(button=>button.classList.toggle("active",button.dataset.page===parent||(parent?.startsWith("pageReport")&&button.dataset.menu==="reports")));
  if(id==="pageEmployees")renderEmployees();
  if(id==="pageTrainings")renderTrainings();
  if(id==="pageReportEmployee")fillReportEmployees();
@@ -361,6 +435,7 @@ function showPage(id){
  if(id==="pageAdmins")window.SPFLY_AUTH.renderAdmins();
  if(id==="dashboard")renderDashboard();
  applyTheme();
+ return true;
 }
 document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
 document.querySelectorAll("[data-menu]").forEach(b=>b.addEventListener("click",()=>document.getElementById(b.dataset.menu).classList.toggle("open")));
@@ -368,12 +443,12 @@ document.querySelectorAll("[data-menu]").forEach(b=>b.addEventListener("click",(
 function applyTheme(){
  const dark=localStorage.getItem("spfly_theme")==="dark";
  document.body.classList.toggle("dark",dark);
- const b=document.getElementById("themeToggle");if(b)b.textContent=dark?"☀️":"🌙";
+ const b=document.getElementById("themeToggle");if(b)b.textContent=dark?"☼":"☾";
 }
 function toggleDarkMode(){
  const dark=document.body.classList.toggle("dark");
  localStorage.setItem("spfly_theme",dark?"dark":"light");
- const b=document.getElementById("themeToggle");if(b)b.textContent=dark?"☀️":"🌙";
+ const b=document.getElementById("themeToggle");if(b)b.textContent=dark?"☼":"☾";
 }
 function parseDateBR(value){
  const p=String(value||"").split("/"); if(p.length!==3)return null; const d=new Date(Number(p[2]),Number(p[1])-1,Number(p[0])); d.setHours(0,0,0,0); return isNaN(d)?null:d;
@@ -383,25 +458,27 @@ let dashboardCalendarInitialized=false;
 let dashboardSelectedDate="";
 function renderDashboard(){
  const today=new Date(); today.setHours(0,0,0,0);
- // A agenda inicial usa a próxima data futura, mas o calendário e o painel do dia exibem TODOS os status.
- const base=trainings.filter(t=>{const d=parseDateBR(t.date);return d&&d>=today;}).sort((a,b)=>(parseDateBR(a.date)?.getTime()||0)-(parseDateBR(b.date)?.getTime()||0));
- if(!dashboardCalendarInitialized){dashboardCalendarInitialized=true;if(base.length){dashboardSelectedDate=dateKeyBR(base[0].date);const d=parseDateBR(base[0].date);dashboardCalendarCursor=new Date(d.getFullYear(),d.getMonth(),1);}}
+ // A agenda abre no dia atual; os próximos treinamentos continuam visíveis ao lado.
+ if(!dashboardCalendarInitialized){dashboardCalendarInitialized=true;dashboardSelectedDate=dateKeyBR(today.toLocaleDateString("pt-BR"));dashboardCalendarCursor=new Date(today.getFullYear(),today.getMonth(),1);}
  renderDashboardTrainingCalendar();
- renderDashboardCommitments(base);
+ renderDashboardCommitments();
  renderDashboardSummary();
 }
 function renderDashboardSummary(){
- const el=document.getElementById("dashboardSummary");if(!el)return;const y=dashboardCalendarCursor.getFullYear(),m=dashboardCalendarCursor.getMonth();const monthItems=trainings.filter(t=>{const d=parseDateBR(t.date);return d&&d.getFullYear()===y&&d.getMonth()===m});const days=new Set(monthItems.map(t=>dateKeyBR(t.date))).size;const workload=monthItems.reduce((sum,t)=>sum+(Number(t.workload)||0),0);const bases=new Set(monthItems.map(t=>t.modality==="Online"?"Online":(t.base||t.place||"Não informado"))).size;el.innerHTML=`<div class="summary-card"><div class="summary-icon">▣</div><div><div class="summary-value">${days}</div><div class="summary-label">Dias com treinamentos</div></div></div><div class="summary-card"><div class="summary-icon">♙</div><div><div class="summary-value">${monthItems.length}</div><div class="summary-label">Treinamentos no mês</div></div></div><div class="summary-card"><div class="summary-icon">◷</div><div><div class="summary-value">${workload%1===0?workload:workload.toFixed(1)}h</div><div class="summary-label">Carga horária total</div></div></div><div class="summary-card"><div class="summary-icon">⌂</div><div><div class="summary-value">${bases}</div><div class="summary-label">Bases diferentes</div></div></div>`;
+ const el=document.getElementById("dashboardSummary");if(!el)return;const y=dashboardCalendarCursor.getFullYear(),m=dashboardCalendarCursor.getMonth();const monthItems=trainings.filter(t=>{const d=parseDateBR(t.date);return d&&d.getFullYear()===y&&d.getMonth()===m});const days=new Set(monthItems.map(t=>dateKeyBR(t.date))).size;const workload=monthItems.reduce((sum,t)=>sum+(Number(t.workload)||0),0);const bases=new Set(monthItems.map(t=>t.modality==="Online"?"Online":(t.base||t.place||"Não informado"))).size;el.innerHTML=`<div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-calendar"/></svg></div><div><div class="summary-value">${days}</div><div class="summary-label">Dias com treinamentos</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-users"/></svg></div><div><div class="summary-value">${monthItems.length}</div><div class="summary-label">Treinamentos no mês</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-clock"/></svg></div><div><div class="summary-value">${workload%1===0?workload:workload.toFixed(1)}h</div><div class="summary-label">Carga horária total</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-pin"/></svg></div><div><div class="summary-value">${bases}</div><div class="summary-label">Bases diferentes</div></div></div>`;
 }
-function renderDashboardCommitments(base){
+function renderDashboardCommitments(){
  const panel=document.getElementById("dashboardCommitments"); if(!panel)return;
- let items=[]; let title="Próximos treinamentos"; let subtitle="Agenda de treinamentos";
- if(dashboardSelectedDate){items=trainings.filter(t=>dateKeyBR(t.date)===dashboardSelectedDate).sort((a,b)=>(a.startTime||"99:99").localeCompare(b.startTime||"99:99"));title=formatKeyDateLong(dashboardSelectedDate);subtitle=`${items.length} treinamento${items.length!==1?"s":""} no dia`;} else {items=base.slice(0,4);subtitle=`${items.length} próximo${items.length!==1?"s":""} treinamento${items.length!==1?"s":""}`;}
- const cards=items.length?items.map(t=>`<div class="commitment-item" onclick="openTrainingDetail(${t.id})"><div><div class="commitment-time">◷ ${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div><div class="commitment-name">${esc(t.name)}</div><div class="commitment-meta">⌂ ${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div><div class="commitment-participants">♙ ${t.participants?.length||0} participante${(t.participants?.length||0)!==1?"s":""}</div></div><div class="commitment-status"><span class="badge ${statusBadgeClass(getTrainingStatus(t))}">${displayTrainingStatus(getTrainingStatus(t))}</span><div class="commitment-arrow">›</div></div></div>`).join(""): `<div class="commitment-empty"><div><div class="empty-icon">📅</div><strong>Nenhum treinamento nesta data</strong><div style="margin-top:6px">Clique em outra data do calendário para consultar os compromissos.</div></div></div>`;
- const nextCutoff=dashboardSelectedDate?(parseDateBR(dashboardSelectedDate)||new Date()):new Date(0); const next=trainings.filter(t=>{const d=parseDateBR(t.date);return d&&d>nextCutoff&&getTrainingStatus(t)!=="Cancelado"}).sort((a,b)=>(parseDateBR(a.date)?.getTime()||0)-(parseDateBR(b.date)?.getTime()||0)).slice(0,4);
- const action=dashboardSelectedDate?`<button class="btn btn-secondary" onclick="goDashboardCalendarToday()">Ver dia de hoje</button>`:`<button class="btn btn-secondary" onclick="showPage('pageTrainings')">Ver todos</button>`;
- const nextHtml=`<div class="dashboard-next"><div class="dashboard-next-head"><h3>Próximos treinamentos</h3><button class="btn btn-secondary" onclick="showPage('pageTrainings')">Ver todos</button></div>${next.length?next.map(t=>`<div class="next-item" onclick="openTrainingDetail(${t.id})"><div><div class="next-date">${esc(t.date)}</div><div class="next-time">${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div></div><div><div class="next-name">${esc(t.name)}</div><div class="next-place">${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div></div><div><span class="badge ${statusBadgeClass(getTrainingStatus(t))}">${displayTrainingStatus(getTrainingStatus(t))}</span><div class="next-arrow">›</div></div></div>`).join(""):"<div class='muted' style='padding:10px 2px'>Nenhum próximo treinamento.</div>"}</div>`;
- panel.innerHTML=`<div class="commitment-head"><div class="commitment-icon">▣</div><div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div><div class="commitment-head-actions">${action}</div></div><div class="commitment-list">${cards}</div>${nextHtml}`;
+ const trainingAccess=!window.SPFLY_AUTH?.canPage||window.SPFLY_AUTH.canPage("pageTrainings");
+ const todayKey=dateKeyBR(new Date().toLocaleDateString("pt-BR"));
+ const activeKey=dashboardSelectedDate||todayKey;
+ const items=trainings.filter(t=>dateKeyBR(t.date)===activeKey).sort((a,b)=>(a.startTime||"99:99").localeCompare(b.startTime||"99:99"));
+ const title=formatKeyDateLong(activeKey),subtitle=`${items.length} treinamento${items.length!==1?"s":""} no dia`;
+ const cards=items.length?items.map(t=>{const count=t.participantCount??t.participants?.length??0;return `<div class="commitment-item" ${trainingAccess?`onclick="openTrainingDetail(${t.id})"`:""}><div><div class="commitment-time">◷ ${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div><div class="commitment-name">${esc(t.name)}</div><div class="commitment-meta">⌂ ${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div><div class="commitment-participants">♙ ${count} participante${count!==1?"s":""}</div></div><div class="commitment-status"><span class="badge ${statusBadgeClass(getTrainingStatus(t))}">${displayTrainingStatus(getTrainingStatus(t))}</span>${trainingAccess?'<div class="commitment-arrow">›</div>':''}</div></div>`}).join(""): `<div class="commitment-empty"><div><div class="empty-icon">📅</div><strong>Nenhum treinamento nesta data</strong><div style="margin-top:6px">Clique em outra data do calendário para consultar os compromissos.</div></div></div>`;
+ const nextCutoff=new Date(activeKey+"T00:00:00"); const next=trainings.filter(t=>{const d=parseDateBR(t.date);return d&&d>nextCutoff&&getTrainingStatus(t)!=="Cancelado"}).sort((a,b)=>(parseDateBR(a.date)?.getTime()||0)-(parseDateBR(b.date)?.getTime()||0)).slice(0,4);
+ const action=`<button class="btn btn-secondary" onclick="goDashboardCalendarToday()">Ver dia de hoje</button>`;
+ const nextHtml=`<div class="dashboard-next"><div class="dashboard-next-head"><h3>Próximos treinamentos</h3>${trainingAccess?'<button class="btn btn-secondary" onclick="showPage(\'pageTrainings\')">Ver todos</button>':''}</div>${next.length?next.map(t=>`<div class="next-item" ${trainingAccess?`onclick="openTrainingDetail(${t.id})"`:""}><div><div class="next-date">${esc(t.date)}</div><div class="next-time">${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div></div><div><div class="next-name">${esc(t.name)}</div><div class="next-place">${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div></div><div><span class="badge ${statusBadgeClass(getTrainingStatus(t))}">${displayTrainingStatus(getTrainingStatus(t))}</span>${trainingAccess?'<div class="next-arrow">›</div>':''}</div></div>`).join(""):"<div class='muted' style='padding:10px 2px'>Nenhum próximo treinamento.</div>"}</div>`;
+ panel.innerHTML=`<div class="commitment-head"><div class="commitment-icon"><svg class="ui-icon"><use href="#icon-calendar"/></svg></div><div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div><div class="commitment-head-actions">${action}</div></div><div class="commitment-list">${cards}</div>${nextHtml}`;
 }
 function formatKeyDateLong(key){const p=String(key||"").split("-");if(p.length!==3)return "";const d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));return new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"long",year:"numeric"}).format(d).replace(/^./,c=>c.toUpperCase())}
 function formatKeyDate(key){const p=String(key||"").split("-");return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:""}
@@ -412,11 +489,12 @@ function clearDashboardCalendarDate(){dashboardSelectedDate="";renderDashboard()
 function renderDashboardTrainingCalendar(){
  const el=document.getElementById("dashboardTrainingCalendar"),title=document.getElementById("dashboardCalendarTitle"); if(!el||!title)return;
  const y=dashboardCalendarCursor.getFullYear(),m=dashboardCalendarCursor.getMonth();
- title.textContent=new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric"}).format(dashboardCalendarCursor);
+ title.textContent=new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric"}).format(dashboardCalendarCursor).replace(/^./,c=>c.toUpperCase());
  const first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),prevDays=new Date(y,m,0).getDate();
  const occupied={}; trainings.forEach(t=>{const k=dateKeyBR(t.date);if(k)(occupied[k]??=[]).push(t)});
  let html=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(x=>`<div class="cal-weekday">${x}</div>`).join("");
- for(let i=0;i<42;i++){const n=i-start+1;let day=n,yy=y,mm=m;if(n<1){day=prevDays+n;mm=m-1;if(mm<0){mm=11;yy=y-1}}else if(n>days){day=n-days;mm=m+1;if(mm>11){mm=0;yy=y+1}}const key=`${yy}-${String(mm+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`,items=occupied[key]||[],muted=mm!==m,sel=dashboardSelectedDate===key,today=dateKeyBR(new Date().toLocaleDateString("pt-BR"))===key;const statusDots=[...new Set(items.map(t=>getTrainingStatus(t)))].map(st=>st==="Ministrado"?"green":st==="Cancelado"?"black":"orange");html+=`<div class="calendar-day ${muted?"muted":""} ${items.length?"occupied":""} ${sel?"selected":""} ${today?"today":""}" ${muted?"":`onclick="selectDashboardCalendarDate('${key}')"`}><div class="day-num">${day}</div>${items.length?`<div class="day-count">${items.length} treinamento${items.length>1?"s":""}</div><div class="status-dots">${statusDots.map(c=>`<i class="status-dot-mini ${c}"></i>`).join("")}</div>`:""}</div>`}
+ const visibleDays=Math.ceil((start+days)/7)*7;
+ for(let i=0;i<visibleDays;i++){const n=i-start+1;let day=n,yy=y,mm=m;if(n<1){day=prevDays+n;mm=m-1;if(mm<0){mm=11;yy=y-1}}else if(n>days){day=n-days;mm=m+1;if(mm>11){mm=0;yy=y+1}}const key=`${yy}-${String(mm+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`,items=occupied[key]||[],muted=mm!==m,sel=dashboardSelectedDate===key,today=dateKeyBR(new Date().toLocaleDateString("pt-BR"))===key;const statusDots=[...new Set(items.map(t=>getTrainingStatus(t)))].map(st=>st==="Ministrado"?"green":st==="Cancelado"?"black":"orange");html+=`<div class="calendar-day ${muted?"muted":""} ${items.length?"occupied":""} ${sel?"selected":""} ${today?"today":""}" ${muted?"":`onclick="selectDashboardCalendarDate('${key}')"`}><div class="day-num">${day}</div>${items.length?`<div class="day-count">${items.length} treinamento${items.length>1?"s":""}</div><div class="status-dots">${statusDots.map(c=>`<i class="status-dot-mini ${c}"></i>`).join("")}</div>`:""}</div>`}
  el.innerHTML=html;
  const list=document.getElementById("dashboardDayList"); if(!list)return;
  if(dashboardSelectedDate){const items=occupied[dashboardSelectedDate]||[];list.innerHTML=`<div class="table-head"><strong>${formatKeyDate(dashboardSelectedDate)} — ${items.length} treinamento${items.length!==1?"s":""}</strong><button class="btn btn-secondary" onclick="clearDashboardCalendarDate()">Limpar data</button></div>`;}else{list.innerHTML='<div class="muted" style="margin-top:10px">Clique em uma data ocupada para filtrar os treinamentos.</div>'}
@@ -426,17 +504,34 @@ function renderEmployees(){
  const rows=employees.filter(e=>(!q||[e.name,e.cpf,e.mat].some(x=>x.toLowerCase().includes(q)))&&(!s||e.sector===s)&&(!st||e.status===st));
  document.getElementById("employeeTable").innerHTML=rows.map(e=>`<tr><td>${esc(e.mat)}</td><td><strong>${esc(e.name)}</strong></td><td>${esc(e.cpf)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge ${e.status==="Ativo"?"badge-green":"badge-red"}">${esc(e.status)}</span></td><td><button class="btn btn-secondary" onclick="viewEmployee(${Number(e.id)})">Visualizar</button></td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhum funcionário encontrado.</td></tr>`;
 }
+function formatBrazilianDocument(value,type){
+ const digits=String(value||"").replace(/\D/g,"").slice(0,type==="CNPJ"?14:11);
+ if(type==="CNPJ")return digits.replace(/^(\d{2})(\d)/,"$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3").replace(/\.(\d{3})(\d)/,".$1/$2").replace(/(\d{4})(\d)/,"$1-$2");
+ return digits.replace(/^(\d{3})(\d)/,"$1.$2").replace(/^(\d{3})\.(\d{3})(\d)/,"$1.$2.$3").replace(/\.(\d{3})(\d)/,".$1-$2");
+}
+function updateEmployeeDocumentType(){
+ const type=document.getElementById("efDocumentType").value,input=document.getElementById("efCpf");
+ document.getElementById("efDocumentLabel").textContent=type+" *";
+ input.placeholder=type==="CNPJ"?"00.000.000/0000-00":"000.000.000-00";
+ input.maxLength=type==="CNPJ"?18:14;
+ input.value=formatBrazilianDocument(input.value,type);
+}
+function formatEmployeeDocumentInput(){
+ const input=document.getElementById("efCpf");input.value=formatBrazilianDocument(input.value,document.getElementById("efDocumentType").value);
+}
 async function saveEmployee(){
- const name=document.getElementById("efName").value.trim(), cpf=document.getElementById("efCpf").value.trim(), mat=document.getElementById("efMat").value.trim();
- if(!name||!cpf||!mat){alert("Preencha Nome, CPF e Matrícula.");return}
- if(employees.some(e=>e.cpf===cpf||e.mat===mat)){alert("CPF ou matrícula já cadastrados.");return}
- employees.push({id:Date.now(),mat,name,cpf,sector:document.getElementById("efSector").value,role:document.getElementById("efRole").value||"Não informado",status:"Ativo"});
- if(!await persist())return; document.querySelectorAll("#newEmployee input").forEach(i=>i.value=""); showPage("pageEmployees");
+ const name=document.getElementById("efName").value.trim(), type=document.getElementById("efDocumentType").value, cpf=formatBrazilianDocument(document.getElementById("efCpf").value,type), mat=document.getElementById("efMat").value.trim();
+ const digits=cpf.replace(/\D/g,"");
+ if(!name||!cpf||!mat){alert("Preencha Nome, documento e Matrícula.");return}
+ if(digits.length!==(type==="CNPJ"?14:11)){alert("Informe um "+type+" completo.");return}
+ if(employees.some(e=>String(e.cpf||"").replace(/\D/g,"")===digits||e.mat===mat)){alert("Documento ou matrícula já cadastrados.");return}
+ employees.push({id:Date.now(),mat,name,cpf,documentType:type,sector:document.getElementById("efSector").value,role:document.getElementById("efRole").value||"Não informado",status:"Ativo"});
+ if(!await persist())return; document.querySelectorAll("#pageNewEmployee input").forEach(i=>i.value="");document.getElementById("efDocumentType").value="CPF";updateEmployeeDocumentType();showPage("pageEmployees");
 }
 function viewEmployee(id){
  const e=employees.find(x=>x.id===id), hist=trainings.filter(t=>t.participants.includes(id));
  document.getElementById("modalTitle").textContent=e.name;
- document.getElementById("modalBody").innerHTML=`<p><strong>CPF:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p><hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
+ document.getElementById("modalBody").innerHTML=`<p><strong>${esc(e.documentType||"CPF")}:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p><hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
  document.getElementById("modal").classList.add("open");
 }
 function closeModal(){document.getElementById("modal").classList.remove("open")}
@@ -506,7 +601,7 @@ function selectCalendarDate(key){calendarSelectedDate=key;const d=new Date(key+"
 function renderTrainingCalendar(){
  const el=document.getElementById("trainingCalendar"),title=document.getElementById("calendarTitle"); if(!el||!title)return;
  const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth();
- title.textContent=new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric"}).format(calendarCursor);
+ title.textContent=new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric"}).format(calendarCursor).replace(/^./,c=>c.toUpperCase());
  const first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),prevDays=new Date(y,m,0).getDate();
  const occupied={}; trainings.forEach(t=>{const k=dateKeyBR(t.date);if(k)(occupied[k]??=[]).push(t)});
  let html=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(x=>`<div class="cal-weekday">${x}</div>`).join("");
@@ -524,7 +619,7 @@ function renderTrainingDayPanel(){
  const cards=items.length?items.map(t=>`<div class="commitment-item" onclick="openTrainingDetail(${t.id})"><div><div class="commitment-time">◷ ${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div><div class="commitment-name">${esc(t.name)}</div><div class="commitment-meta">⌂ ${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div><div class="commitment-participants">♙ ${t.participants?.length||0} participante${(t.participants?.length||0)!==1?"s":""}</div></div><div class="commitment-status"><span class="badge ${statusBadgeClass(getTrainingStatus(t))}">${displayTrainingStatus(getTrainingStatus(t))}</span><div class="commitment-arrow">›</div></div></div>`).join(""):`<div class="commitment-empty"><div><div class="empty-icon">📅</div><strong>Nenhum treinamento nesta data</strong><div style="margin-top:6px">Clique em uma data do calendário para consultar os compromissos.</div></div></div>`;
  panel.innerHTML=`<div class="commitment-head"><div class="commitment-icon">▣</div><div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div><div class="commitment-head-actions"><button class="btn btn-secondary" onclick="goCalendarToday()">Hoje</button></div></div><div class="commitment-list">${cards}</div>`;
 }
-function openTrainingDetail(id){showPage("pageTrainingDetail");renderTrainingDetail(id)}
+function openTrainingDetail(id){if(showPage("pageTrainingDetail"))renderTrainingDetail(id)}
 function renderTrainingDetail(id){
  const t=trainings.find(x=>x.id===id);if(!t)return;const st=getTrainingStatus(t),locked=(st==="Ministrado"||st==="Cancelado")&&!t.editMode;
  document.getElementById("detailTitle").textContent=t.name;
@@ -557,7 +652,7 @@ function renderTrainingDetail(id){
  <div class="card" style="margin-top:18px"><div class="table-head"><strong>Participantes (${t.participants?.length||0})</strong>${!locked?`<button class="btn btn-primary" onclick="openParticipantEditor(${id})">+ Informar participantes</button>`:""}</div>
  <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th><th>Cargo</th><th>Presença</th><th>Ação</th></tr></thead><tbody>${t.participants?.length?t.participants.map(pid=>{const e=employees.find(x=>x.id===pid);return e?`<tr><td>${esc(e.mat)}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge badge-green">Presente</span></td><td>${locked?"🔒":`<button class="btn btn-danger" onclick="removeParticipant(${Number(id)},${Number(e.id)})">Remover</button>`}</td></tr>`:""}).join(""):`<tr><td colspan="6" class="empty">Nenhum participante informado.</td></tr>`}</tbody></table></div>
  ${st==="Cancelado"?`<div class="cancel-box" style="margin-top:18px"><strong>✕ Motivo do cancelamento</strong><p style="margin:8px 0 0">${esc(t.cancelReason||"Não informado")}</p>${t.cancelledAt?`<div class="help" style="margin-top:6px">Cancelado em ${new Date(t.cancelledAt).toLocaleString("pt-BR")}</div>`:""}</div>`:""}
- <div class="card" style="margin-top:18px"><h3>Finalização</h3><p class="muted">Após o treinamento presencial, informe os participantes e anexe pelo menos um comprovante antes de finalizar.</p><div class="actions">${st!=="Ministrado"&&st!=="Cancelado"?`<button class="btn btn-primary" onclick="finalizeTraining(${id})">✓ Finalizar treinamento e marcar como ministrado</button><button class="btn btn-danger" onclick="cancelTraining(${id})">✕ Cancelar treinamento</button>`:`<span class="badge ${st==='Ministrado'?'badge-green':'badge-black'}" style="padding:10px 14px">${st==='Ministrado'?'Concluído e bloqueado':'Cancelado e bloqueado'}</span>`}</div></div>`;
+ <div class="card" style="margin-top:18px"><h3>Status e finalização</h3><p class="muted">Para marcar como concluído, informe participantes e anexe um comprovante. Alterações em registros finalizados exigem liberação da edição.</p>${locked?`<div class="actions"><span class="badge ${st==='Ministrado'?'badge-green':'badge-black'}" style="padding:10px 14px">${st==='Ministrado'?'Concluído e bloqueado':'Cancelado e bloqueado'}</span></div>`:`<div class="field"><label for="editTrainingStatus">Status do treinamento</label><select id="editTrainingStatus"><option value="Cadastrado" ${st==='Cadastrado'?'selected':''}>Cadastrado</option><option value="Ministrado" ${st==='Ministrado'?'selected':''}>Concluído</option><option value="Cancelado" ${st==='Cancelado'?'selected':''}>Cancelado</option></select></div><div class="actions"><button class="btn btn-primary" onclick="changeTrainingStatus(${id})">Salvar status</button></div>`}</div>`;
  toggleEditLocationFields();
 }
 async function saveTrainingInfo(id){
@@ -615,6 +710,24 @@ async function previewTrainingDocument(id,index=0){
  const t=trainings.find(x=>x.id===id), files=Array.isArray(t?.docFiles)?t.docFiles:[]; const item=files[index]||{name:(t?.docs?.[index]||t?.doc),dataUrl:t?.docData,type:t?.docType||""};
  if(!item?.name){alert("Este treinamento não possui anexo.");return}
  await SPFLY_AUTH.previewFile(item,"Lista de presença — "+t.name);
+}
+async function changeTrainingStatus(id){
+ const t=trainings.find(x=>x.id===id);if(!t)return;
+ const oldStatus=getTrainingStatus(t),newStatus=document.getElementById("editTrainingStatus")?.value;
+ if(!["Cadastrado","Ministrado","Cancelado"].includes(newStatus)||newStatus===oldStatus){alert("Selecione um status diferente do atual.");return}
+ if((oldStatus==="Ministrado"||oldStatus==="Cancelado")&&!t.editMode){alert("Libere a edição antes de alterar este status.");return}
+ if(newStatus==="Ministrado"&&(!t.participants?.length||!(t.docs?.length||t.doc))){alert("Para concluir, informe participantes e anexe ao menos um comprovante.");return}
+ const reason=prompt("Informe o motivo da alteração de status:");if(reason===null)return;
+ if(!reason.trim()){alert("Informe o motivo da alteração.");return}
+ if(!confirm(`Alterar o status de ${displayTrainingStatus(oldStatus)} para ${displayTrainingStatus(newStatus)}?`))return;
+ const now=new Date().toISOString();
+ t.statusChanges=[...(t.statusChanges||[]),{from:oldStatus,to:newStatus,reason:reason.trim(),at:now}];
+ t.status=newStatus;t.editMode=false;
+ if(newStatus==="Ministrado"){t.deliveredAt=now;t.finalizedAt=now;t.cancelReason="";t.cancelledAt=""}
+ else if(newStatus==="Cancelado"){t.cancelReason=reason.trim();t.cancelledAt=now;t.deliveredAt="";t.finalizedAt=""}
+ else{t.cancelReason="";t.cancelledAt="";t.deliveredAt="";t.finalizedAt=""}
+ if(!await persist())return;
+ renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Status atualizado.");
 }
 async function finalizeTraining(id){
  const t=trainings.find(x=>x.id===id); if(!t)return;

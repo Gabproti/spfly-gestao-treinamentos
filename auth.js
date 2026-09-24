@@ -7,11 +7,34 @@
   const loginCard = document.getElementById('loginCard');
   const setPasswordCard = document.getElementById('setPasswordCard');
   const profileCard = document.getElementById('profileCard');
-  const inviteFlow = /(?:^|[&#?])type=invite(?:&|$)/.test(window.location.hash + window.location.search);
+  const linkType = (window.location.hash + window.location.search).match(/(?:^|[&#?])type=(invite|recovery)(?:&|$)/)?.[1] || '';
+  let recoveryFlow = linkType === 'recovery';
   let client;
   let version = 0;
   let saving = false;
   let currentUser = null;
+  let currentAccess = null;
+
+  const pageNames = { dashboard: 'dashboard', pageEmployees: 'employees', pageNewEmployee: 'employees',
+    pageTrainings: 'trainings', pageNewTraining: 'trainings', pageTrainingDetail: 'trainings',
+    pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports' };
+  const roleNames = { admin: 'Administrador', rh: 'RH', usuario: 'Usuário' };
+  function canPage(pageId) {
+    if (!currentAccess?.active) return false;
+    if (currentAccess.access_role === 'admin') return true;
+    const page = pageNames[pageId];
+    if (!page) return false;
+    if (currentAccess.access_role === 'rh') return page === 'employees' || page === 'trainings';
+    return currentAccess.access_role === 'usuario' && currentAccess.allowed_pages?.includes(page);
+  }
+  function applyAccess() {
+    document.querySelectorAll('.nav-btn[data-page]').forEach(button => { button.hidden = !canPage(button.dataset.page); });
+    document.querySelectorAll('.nav-btn[data-menu]').forEach(button => {
+      button.hidden = button.dataset.menu === 'reports' ? !canPage('pageReportEmployee') : currentAccess.access_role !== 'admin';
+    });
+    document.querySelectorAll('[data-requires-page]').forEach(button => { button.hidden = !canPage(button.dataset.requiresPage); });
+    document.getElementById('globalSearch').parentElement.hidden = !canPage('pageEmployees');
+  }
 
   function message(id, text, success = false) {
     const element = document.getElementById(id);
@@ -34,6 +57,8 @@
     loginCard.hidden = true;
     setPasswordCard.hidden = false;
     profileCard.hidden = true;
+    document.getElementById('passwordSetupTitle').textContent = recoveryFlow ? 'Redefinir senha' : 'Definir senha';
+    document.getElementById('passwordSetupDescription').textContent = recoveryFlow ? 'Escolha uma nova senha para sua conta.' : 'Crie a senha da sua conta.';
   }
 
   function showProfileSetup(fullName = '') {
@@ -47,12 +72,12 @@
   }
 
   async function loadSharedState() {
-    const { data, error } = await client.from('app_state')
-      .select('version, employees, trainings').eq('id', 1).single();
+    const { data, error } = await client.rpc('load_portal_state');
     if (error) throw error;
-    version = Number(data.version);
-    employees = Array.isArray(data.employees) ? data.employees : [];
-    trainings = Array.isArray(data.trainings) ? data.trainings : [];
+    const state = Array.isArray(data) ? data[0] : data;
+    version = Number(state.version);
+    employees = Array.isArray(state.employees) ? state.employees : [];
+    trainings = Array.isArray(state.trainings) ? state.trainings : [];
   }
 
   async function bootstrap() {
@@ -65,16 +90,17 @@
     }
 
     const { data: admin, error: adminError } = await client.from('admin_users')
-      .select('id, active, full_name').eq('id', user.id).maybeSingle();
+      .select('id, active, full_name, access_role, allowed_pages').eq('id', user.id).maybeSingle();
     if (adminError || !admin?.active) {
       await client.auth.signOut();
       currentUser = null;
-      showLogin('Esta conta não tem acesso de administrador.');
+      showLogin('Esta conta não tem acesso ao portal.');
       return;
     }
 
     currentUser = user;
-    if (inviteFlow) {
+    currentAccess = admin;
+    if (linkType) {
       showPasswordSetup();
       return;
     }
@@ -90,10 +116,22 @@
       return;
     }
 
-    document.getElementById('currentAdminName').textContent = admin.full_name;
+    const displayName = admin.full_name.trim();
+    const initials = displayName.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toLocaleUpperCase('pt-BR');
+    document.getElementById('currentAdminName').textContent = displayName;
+    document.getElementById('sidebarAdminName').textContent = displayName;
+    document.getElementById('topbarAdminInitials').textContent = initials;
+    document.getElementById('sidebarAdminInitials').textContent = initials;
+    document.getElementById('topbarAccessRole').textContent = roleNames[admin.access_role] || 'Usuário';
+    document.getElementById('sidebarAccessRole').textContent = roleNames[admin.access_role] || 'Usuário';
+    applyAccess();
     screen.hidden = true;
     app.classList.add('authenticated');
-    showPage(document.querySelector('.page.active')?.id || 'dashboard');
+    const firstPage = admin.access_role === 'rh' ? 'pageEmployees'
+      : admin.access_role === 'usuario' ? ['dashboard','pageEmployees','pageTrainings','pageReportEmployee'].find(canPage)
+      : 'dashboard';
+    const currentPage = document.querySelector('.page.active')?.id;
+    showPage(currentPage && canPage(currentPage) ? currentPage : firstPage);
   }
 
   async function persist(nextEmployees, nextTrainings) {
@@ -135,25 +173,61 @@
     const container = document.getElementById('adminList');
     container.textContent = 'Carregando...';
     const { data, error } = await client.from('admin_users')
-      .select('email, full_name, active, created_at').order('created_at');
+      .select('id, email, full_name, active, access_role, allowed_pages, created_at').order('created_at');
     if (error) {
-      container.textContent = 'Não foi possível carregar os administradores.';
+      container.textContent = 'Não foi possível carregar os acessos.';
       return;
     }
     container.replaceChildren();
     for (const admin of data || []) {
       const row = document.createElement('div');
-      row.className = 'commitment-item';
-      row.style.marginBottom = '8px';
-      const email = document.createElement('strong');
-      email.textContent = admin.full_name?.trim() ? `${admin.full_name} (${admin.email})` : admin.email + ' — cadastro pendente';
-      const status = document.createElement('span');
-      status.className = 'badge ' + (admin.active ? 'badge-green' : 'badge-red');
-      status.textContent = admin.active ? 'Ativo' : 'Inativo';
-      row.append(email, status);
+      row.className = 'access-row';
+      const header = document.createElement('div');
+      header.className = 'access-row-head';
+      const name = document.createElement('strong');
+      name.textContent = admin.full_name?.trim() ? `${admin.full_name} (${admin.email})` : admin.email + ' — cadastro pendente';
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + (admin.active ? 'badge-green' : 'badge-red');
+      badge.textContent = admin.active ? 'Ativo' : 'Inativo';
+      header.append(name, badge);
+      const controls = document.createElement('div');
+      controls.className = 'access-controls';
+      const role = document.createElement('select');
+      role.setAttribute('aria-label', 'Perfil de ' + admin.email);
+      for (const [value, label] of Object.entries(roleNames)) {
+        const option = document.createElement('option'); option.value = value; option.textContent = label; role.append(option);
+      }
+      role.value = admin.access_role || 'admin';
+      const checks = document.createElement('div');
+      checks.className = 'access-checks';
+      for (const [value, label] of Object.entries({ dashboard:'Início', employees:'Funcionários', trainings:'Treinamentos', reports:'Relatórios' })) {
+        const wrapper = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox'; checkbox.value = value; checkbox.checked = (admin.allowed_pages || []).includes(value);
+        wrapper.append(checkbox, ' ' + label); checks.append(wrapper);
+      }
+      const updateVisibility = () => { checks.hidden = role.value !== 'usuario'; };
+      role.addEventListener('change', updateVisibility); updateVisibility();
+      const save = document.createElement('button');
+      save.type = 'button'; save.className = 'btn btn-secondary'; save.textContent = 'Salvar acesso';
+      save.disabled = admin.id === currentUser?.id || !admin.active;
+      save.addEventListener('click', async () => {
+        const pages = Array.from(checks.querySelectorAll('input:checked')).map(input => input.value);
+        if (role.value === 'usuario' && !pages.length) { alert('Escolha ao menos uma tela.'); return; }
+        save.disabled = true; save.textContent = 'Salvando...';
+        const { error: saveError } = await client.rpc('set_portal_access', { target_id: admin.id, next_role: role.value, next_pages: pages });
+        if (saveError) { alert('Não foi possível salvar o acesso: ' + saveError.message); save.disabled = false; save.textContent = 'Salvar acesso'; return; }
+        await renderAdmins();
+      });
+      controls.append(role, checks, save);
+      row.append(header, controls);
       container.append(row);
     }
     if (!data?.length) container.textContent = 'Nenhuma conta encontrada.';
+  }
+
+  function updateInviteRole() {
+    document.getElementById('invitePages').hidden = document.getElementById('inviteRole').value !== 'usuario';
   }
 
   async function uploadFile(file) {
@@ -236,12 +310,13 @@
   async function logout() {
     await client.auth.signOut();
     currentUser = null;
+    currentAccess = null;
     employees = [];
     trainings = [];
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout };
+  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, updateInviteRole };
 
   if (!window.supabase?.createClient || !config.url || !config.publishableKey) {
     showLogin('Não foi possível carregar a configuração de acesso.');
@@ -249,6 +324,31 @@
   }
 
   client = window.supabase.createClient(config.url, config.publishableKey);
+
+  document.getElementById('toggleLoginPassword').addEventListener('click', () => {
+    const input = document.getElementById('loginPassword');
+    const button = document.getElementById('toggleLoginPassword');
+    const visible = input.type === 'password';
+    input.type = visible ? 'text' : 'password';
+    button.textContent = visible ? 'Ocultar' : 'Mostrar';
+    button.setAttribute('aria-label', visible ? 'Ocultar senha' : 'Mostrar senha');
+  });
+
+  document.getElementById('forgotPassword').addEventListener('click', async () => {
+    const emailInput = document.getElementById('loginEmail');
+    const email = emailInput.value.trim();
+    if (!email || !emailInput.checkValidity()) {
+      message('loginMessage', 'Informe um e-mail válido para receber o link de recuperação.');
+      emailInput.focus();
+      return;
+    }
+    const button = document.getElementById('forgotPassword');
+    button.disabled = true;
+    message('loginMessage', 'Enviando o link de recuperação...');
+    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+    button.disabled = false;
+    message('loginMessage', error ? 'Não foi possível enviar o link: ' + error.message : 'Se houver uma conta para este e-mail, você receberá um link de recuperação.', !error);
+  });
 
   document.getElementById('loginForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -304,14 +404,23 @@
   document.getElementById('inviteAdminForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('inviteAdminEmail').value.trim().toLowerCase();
+    const role = document.getElementById('inviteRole').value;
+    const pages = Array.from(document.querySelectorAll('#invitePages input:checked')).map(input => input.value);
+    if (role === 'usuario' && !pages.length) {
+      document.getElementById('inviteAdminMessage').textContent = 'Escolha ao menos uma tela para o usuário.';
+      return;
+    }
     const button = event.target.querySelector('button[type=submit]');
     button.disabled = true;
     document.getElementById('inviteAdminMessage').textContent = 'Enviando...';
     try {
-      const { data, error } = await client.functions.invoke('invite-admin', { body: { email } });
+      const { data, error } = await client.functions.invoke('invite-admin', { body: { email, role, pages } });
       if (error || data?.error) throw new Error(data?.error || error.message);
       document.getElementById('inviteAdminMessage').textContent = 'Convite enviado para ' + email + '.';
       document.getElementById('inviteAdminEmail').value = '';
+      document.getElementById('inviteRole').value = 'admin';
+      document.querySelectorAll('#invitePages input').forEach(input => { input.checked = false; });
+      updateInviteRole();
       await renderAdmins();
     } catch (error) {
       document.getElementById('inviteAdminMessage').textContent = 'Não foi possível enviar o convite: ' + error.message;
@@ -321,6 +430,11 @@
   });
 
   client.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      recoveryFlow = true;
+      showPasswordSetup();
+      return;
+    }
     if (event === 'SIGNED_OUT') {
       currentUser = null;
       app.classList.remove('authenticated');
@@ -330,11 +444,7 @@
 
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState !== 'visible' || !currentUser || saving) return;
-    const { data, error } = await client.from('app_state').select('version').eq('id', 1).single();
-    if (!error && Number(data.version) !== version) {
-      await loadSharedState();
-      showPage(document.querySelector('.page.active')?.id || 'dashboard');
-    }
+    await bootstrap();
   });
 
   bootstrap().catch((error) => showLogin('Falha na conexão: ' + error.message));
