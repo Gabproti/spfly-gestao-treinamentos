@@ -9,6 +9,7 @@
   const profileCard = document.getElementById('profileCard');
   const linkType = (window.location.hash + window.location.search).match(/(?:^|[&#?])type=(invite|recovery)(?:&|$)/)?.[1] || '';
   let recoveryFlow = linkType === 'recovery';
+  let firstAccessFlow = false;
   let client;
   let version = 0;
   let saving = false;
@@ -20,7 +21,7 @@
     pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports' };
   const roleNames = { admin: 'Administrador', rh: 'RH', usuario: 'Usuário' };
   function canPage(pageId) {
-    if (!currentAccess?.active) return false;
+    if (!currentAccess?.active || currentAccess.must_change_password) return false;
     if (currentAccess.access_role === 'admin') return true;
     const page = pageNames[pageId];
     if (!page) return false;
@@ -57,8 +58,8 @@
     loginCard.hidden = true;
     setPasswordCard.hidden = false;
     profileCard.hidden = true;
-    document.getElementById('passwordSetupTitle').textContent = recoveryFlow ? 'Redefinir senha' : 'Definir senha';
-    document.getElementById('passwordSetupDescription').textContent = recoveryFlow ? 'Escolha uma nova senha para sua conta.' : 'Crie a senha da sua conta.';
+    document.getElementById('passwordSetupTitle').textContent = firstAccessFlow ? 'Trocar senha inicial' : recoveryFlow ? 'Redefinir senha' : 'Definir senha';
+    document.getElementById('passwordSetupDescription').textContent = firstAccessFlow ? 'Para liberar seu acesso, escolha uma senha diferente da inicial, com pelo menos 12 caracteres.' : recoveryFlow ? 'Escolha uma nova senha para sua conta.' : 'Crie a senha da sua conta.';
   }
 
   function showProfileSetup(fullName = '') {
@@ -90,7 +91,7 @@
     }
 
     const { data: admin, error: adminError } = await client.from('admin_users')
-      .select('id, active, full_name, access_role, allowed_pages').eq('id', user.id).maybeSingle();
+      .select('id, active, full_name, access_role, allowed_pages, must_change_password').eq('id', user.id).maybeSingle();
     if (adminError || !admin?.active) {
       await client.auth.signOut();
       currentUser = null;
@@ -100,7 +101,8 @@
 
     currentUser = user;
     currentAccess = admin;
-    if (linkType) {
+    firstAccessFlow = Boolean(admin.must_change_password);
+    if (linkType || firstAccessFlow) {
       showPasswordSetup();
       return;
     }
@@ -173,7 +175,7 @@
     const container = document.getElementById('adminList');
     container.textContent = 'Carregando...';
     const { data, error } = await client.from('admin_users')
-      .select('id, email, full_name, active, access_role, allowed_pages, created_at').order('created_at');
+      .select('id, email, full_name, active, access_role, allowed_pages, must_change_password, created_at').order('created_at');
     if (error) {
       container.textContent = 'Não foi possível carregar os acessos.';
       return;
@@ -190,6 +192,12 @@
       badge.className = 'badge ' + (admin.active ? 'badge-green' : 'badge-red');
       badge.textContent = admin.active ? 'Ativo' : 'Inativo';
       header.append(name, badge);
+      if (admin.must_change_password) {
+        const pending = document.createElement('small');
+        pending.className = 'pending-password';
+        pending.textContent = 'Aguardando troca da senha inicial';
+        header.append(pending);
+      }
       const controls = document.createElement('div');
       controls.className = 'access-controls';
       const role = document.createElement('select');
@@ -226,8 +234,8 @@
     if (!data?.length) container.textContent = 'Nenhuma conta encontrada.';
   }
 
-  function updateInviteRole() {
-    document.getElementById('invitePages').hidden = document.getElementById('inviteRole').value !== 'usuario';
+  function updateCreateRole() {
+    document.getElementById('createPages').hidden = document.getElementById('createRole').value !== 'usuario';
   }
 
   async function uploadFile(file) {
@@ -316,7 +324,7 @@
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, updateInviteRole };
+  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, updateCreateRole };
 
   if (!window.supabase?.createClient || !config.url || !config.publishableKey) {
     showLogin('Não foi possível carregar a configuração de acesso.');
@@ -372,11 +380,23 @@
       return;
     }
     message('setPasswordMessage', 'Salvando...');
-    const { error } = await client.auth.updateUser({ password });
-    if (error) {
-      message('setPasswordMessage', error.message);
-      return;
+    if (firstAccessFlow) {
+      const { data, error } = await client.functions.invoke('invite-admin', {
+        body: { action: 'change-first-password', password },
+      });
+      if (error || data?.error) {
+        message('setPasswordMessage', data?.error || error?.message || 'Não foi possível alterar a senha.');
+        return;
+      }
+    } else {
+      const { error } = await client.auth.updateUser({ password });
+      if (error) {
+        message('setPasswordMessage', error.message);
+        return;
+      }
     }
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
     window.history.replaceState({}, '', window.location.pathname);
     window.location.reload();
   });
@@ -401,29 +421,41 @@
     await bootstrap();
   });
 
-  document.getElementById('inviteAdminForm').addEventListener('submit', async (event) => {
+  document.getElementById('createUserForm').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const email = document.getElementById('inviteAdminEmail').value.trim().toLowerCase();
-    const role = document.getElementById('inviteRole').value;
-    const pages = Array.from(document.querySelectorAll('#invitePages input:checked')).map(input => input.value);
+    const fullName = document.getElementById('createUserName').value.trim().replace(/\s+/g, ' ');
+    const email = document.getElementById('createUserEmail').value.trim().toLowerCase();
+    const role = document.getElementById('createRole').value;
+    const pages = Array.from(document.querySelectorAll('#createPages input:checked')).map(input => input.value);
+    const result = document.getElementById('createdUserResult');
+    result.hidden = true;
+    result.replaceChildren();
     if (role === 'usuario' && !pages.length) {
-      document.getElementById('inviteAdminMessage').textContent = 'Escolha ao menos uma tela para o usuário.';
+      document.getElementById('createUserMessage').textContent = 'Escolha ao menos uma tela para o usuário.';
       return;
     }
     const button = event.target.querySelector('button[type=submit]');
     button.disabled = true;
-    document.getElementById('inviteAdminMessage').textContent = 'Enviando...';
+    document.getElementById('createUserMessage').textContent = 'Criando conta...';
     try {
-      const { data, error } = await client.functions.invoke('invite-admin', { body: { email, role, pages } });
-      if (error || data?.error) throw new Error(data?.error || error.message);
-      document.getElementById('inviteAdminMessage').textContent = 'Convite enviado para ' + email + '.';
-      document.getElementById('inviteAdminEmail').value = '';
-      document.getElementById('inviteRole').value = 'admin';
-      document.querySelectorAll('#invitePages input').forEach(input => { input.checked = false; });
-      updateInviteRole();
+      const { data, error } = await client.functions.invoke('invite-admin', {
+        body: { action: 'create-user', fullName, email, role, pages },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || 'Erro desconhecido.');
+      document.getElementById('createUserMessage').textContent = 'Usuário criado com sucesso.';
+      const title = document.createElement('strong'); title.textContent = fullName + ' — ' + email;
+      const password = document.createElement('code'); password.textContent = data.initialPassword;
+      const note = document.createElement('p'); note.textContent = 'Senha inicial. Compartilhe apenas com esta pessoa. Ela deverá escolher outra senha no primeiro acesso.';
+      result.append(title, password, note);
+      result.hidden = false;
+      document.getElementById('createUserName').value = '';
+      document.getElementById('createUserEmail').value = '';
+      document.getElementById('createRole').value = 'admin';
+      document.querySelectorAll('#createPages input').forEach(input => { input.checked = false; });
+      updateCreateRole();
       await renderAdmins();
     } catch (error) {
-      document.getElementById('inviteAdminMessage').textContent = 'Não foi possível enviar o convite: ' + error.message;
+      document.getElementById('createUserMessage').textContent = 'Não foi possível criar o usuário: ' + error.message;
     } finally {
       button.disabled = false;
     }
