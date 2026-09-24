@@ -6,6 +6,7 @@
   const app = document.getElementById('app');
   const loginCard = document.getElementById('loginCard');
   const setPasswordCard = document.getElementById('setPasswordCard');
+  const profileCard = document.getElementById('profileCard');
   const inviteFlow = /(?:^|[&#?])type=invite(?:&|$)/.test(window.location.hash + window.location.search);
   let client;
   let version = 0;
@@ -23,6 +24,7 @@
     screen.hidden = false;
     loginCard.hidden = false;
     setPasswordCard.hidden = true;
+    profileCard.hidden = true;
     message('loginMessage', text);
   }
 
@@ -31,6 +33,17 @@
     screen.hidden = false;
     loginCard.hidden = true;
     setPasswordCard.hidden = false;
+    profileCard.hidden = true;
+  }
+
+  function showProfileSetup(fullName = '') {
+    app.classList.remove('authenticated');
+    screen.hidden = false;
+    loginCard.hidden = true;
+    setPasswordCard.hidden = true;
+    profileCard.hidden = false;
+    document.getElementById('profileFullName').value = fullName;
+    message('profileMessage', '');
   }
 
   async function loadSharedState() {
@@ -52,7 +65,7 @@
     }
 
     const { data: admin, error: adminError } = await client.from('admin_users')
-      .select('id, active').eq('id', user.id).maybeSingle();
+      .select('id, active, full_name').eq('id', user.id).maybeSingle();
     if (adminError || !admin?.active) {
       await client.auth.signOut();
       currentUser = null;
@@ -65,6 +78,10 @@
       showPasswordSetup();
       return;
     }
+    if (!admin.full_name?.trim()) {
+      showProfileSetup();
+      return;
+    }
 
     try {
       await loadSharedState();
@@ -73,10 +90,10 @@
       return;
     }
 
-    document.getElementById('currentAdminEmail').textContent = user.email || 'Administrador';
+    document.getElementById('currentAdminName').textContent = admin.full_name;
     screen.hidden = true;
     app.classList.add('authenticated');
-    showPage('dashboard');
+    showPage(document.querySelector('.page.active')?.id || 'dashboard');
   }
 
   async function persist(nextEmployees, nextTrainings) {
@@ -118,7 +135,7 @@
     const container = document.getElementById('adminList');
     container.textContent = 'Carregando...';
     const { data, error } = await client.from('admin_users')
-      .select('email, active, created_at').order('created_at');
+      .select('email, full_name, active, created_at').order('created_at');
     if (error) {
       container.textContent = 'Não foi possível carregar os administradores.';
       return;
@@ -129,7 +146,7 @@
       row.className = 'commitment-item';
       row.style.marginBottom = '8px';
       const email = document.createElement('strong');
-      email.textContent = admin.email;
+      email.textContent = admin.full_name?.trim() ? `${admin.full_name} (${admin.email})` : admin.email + ' — cadastro pendente';
       const status = document.createElement('span');
       status.className = 'badge ' + (admin.active ? 'badge-green' : 'badge-red');
       status.textContent = admin.active ? 'Ativo' : 'Inativo';
@@ -149,6 +166,22 @@
     });
     if (error) throw error;
     return { name: file.name, type: file.type || '', path };
+  }
+
+  async function deleteFile(item) {
+    if (!item?.path) return;
+    const { error } = await client.storage.from('training-files').remove([item.path]);
+    if (error) throw error;
+  }
+
+  async function editProfile() {
+    const { data, error } = await client.from('admin_users')
+      .select('full_name').eq('id', currentUser.id).single();
+    if (error) {
+      alert('Não foi possível abrir o cadastro: ' + error.message);
+      return;
+    }
+    showProfileSetup(data.full_name || '');
   }
 
   async function previewFile(item, title) {
@@ -208,7 +241,7 @@
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, previewFile, logout };
+  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout };
 
   if (!window.supabase?.createClient || !config.url || !config.publishableKey) {
     showLogin('Não foi possível carregar a configuração de acesso.');
@@ -246,6 +279,26 @@
     }
     window.history.replaceState({}, '', window.location.pathname);
     window.location.reload();
+  });
+
+  document.getElementById('profileForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const fullName = document.getElementById('profileFullName').value.trim().replace(/\s+/g, ' ');
+    if (fullName.length < 2 || fullName.length > 120) {
+      message('profileMessage', 'Informe um nome entre 2 e 120 caracteres.');
+      return;
+    }
+    const button = event.target.querySelector('button[type=submit]');
+    button.disabled = true;
+    message('profileMessage', 'Salvando...');
+    const { error } = await client.from('admin_users').update({ full_name: fullName })
+      .eq('id', currentUser.id).select('full_name').single();
+    button.disabled = false;
+    if (error) {
+      message('profileMessage', 'Não foi possível salvar o nome: ' + error.message);
+      return;
+    }
+    await bootstrap();
   });
 
   document.getElementById('inviteAdminForm').addEventListener('submit', async (event) => {

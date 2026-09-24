@@ -33,7 +33,7 @@ h1{font-size:28px;margin:0 0 6px}.muted{color:var(--gray);font-size:14px}
 .kpi{display:flex;justify-content:space-between;align-items:flex-start}.kpi .num{font-size:28px;font-weight:800}.kpi .label{color:var(--gray);font-size:13px;margin-top:3px}.icon{width:42px;height:42px;border-radius:10px;background:#fff0e9;color:var(--orange);display:grid;place-items:center;font-size:21px}
 .grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}.table-card{padding:0;overflow:hidden}.table-head{padding:18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:12px 15px;border-bottom:1px solid #eef0f2;text-align:left;font-size:13px}th{background:#fafbfc;color:#59616a;font-size:12px;text-transform:uppercase}tr:hover td{background:#fcfcfc}
-.badge{padding:5px 9px;border-radius:20px;font-size:11px;font-weight:700}.badge-green{background:#e8f7ef;color:#16724a}.badge-red{background:#fdecec;color:#a83434}.badge-orange{background:#fff0e5;color:#b84d12}.badge-blue{background:#e9f1fb;color:#2864a8}
+.badge{padding:5px 9px;border-radius:20px;font-size:11px;font-weight:700}.badge-green{background:#e8f7ef;color:#16724a}.badge-red{background:#fdecec;color:#a83434}.badge-black{background:#202326;color:#fff}.badge-orange{background:#fff0e5;color:#b84d12}.badge-blue{background:#e9f1fb;color:#2864a8}
 .page{display:none}.page.active{display:block}
 .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.filters input,.filters select,.field input,.field select,.field textarea{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:#fff}.filters input{min-width:280px}.filters select{min-width:170px}
 .form-card{max-width:1000px}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:13px;font-weight:700}.field textarea{min-height:90px;resize:vertical}
@@ -124,9 +124,9 @@ body.dark .calendar-day .day-count{color:#ff9a6b}
 .dashboard-agenda-layout{grid-template-columns:minmax(0,1.65fr) minmax(390px,.85fr);gap:24px;margin-top:24px}
 .dashboard-calendar{padding:0;border:1px solid #e8ecef;border-radius:20px;background:var(--surface);box-shadow:0 10px 32px #17212b0d;overflow:hidden}
 .dashboard-calendar .calendar-head{padding:20px 22px 18px;margin:0;border-bottom:1px solid #edf0f2;display:flex;align-items:center;justify-content:center;gap:10px}
-.dashboard-calendar .calendar-head strong{order:2;flex:1;min-width:0;font-size:21px;text-align:center;text-transform:capitalize;color:#18212b}
+.dashboard-calendar .calendar-head strong{flex:1;min-width:0;font-size:21px;text-align:center;text-transform:capitalize;color:#18212b}
 .dashboard-calendar .calendar-head .btn-secondary{min-width:44px;height:44px;border-radius:10px;background:#fff;border-color:#e1e6ea;font-size:20px;padding:8px 12px}
-.dashboard-calendar .calendar-head .btn-secondary:nth-child(1){order:1}.dashboard-calendar .calendar-head .btn-secondary:nth-child(2){order:3}.dashboard-calendar .calendar-head .btn-secondary:nth-child(4){order:4;font-size:14px;min-width:72px;color:var(--orange);border-color:#ffd2c0;background:#fff8f5}
+.dashboard-calendar .calendar-head .btn-secondary:nth-child(4){font-size:14px;min-width:72px;color:var(--orange);border-color:#ffd2c0;background:#fff8f5}
 .dashboard-calendar .calendar-grid{padding:0 18px 18px;gap:8px;background:#fff}
 .dashboard-calendar .cal-weekday{padding:16px 4px 10px;font-size:11px;color:#6c7782;letter-spacing:.02em}
 .dashboard-calendar .calendar-day{min-height:96px;border:1px solid #e8ecef;border-radius:12px;background:#fff;padding:10px 11px;box-shadow:none;transition:.16s ease}
@@ -143,7 +143,7 @@ body.dark .calendar-day .day-count{color:#ff9a6b}
 .dashboard-calendar .calendar-day .day-count{margin-top:13px;font-size:11px;color:#7a8590;font-weight:700}
 .dashboard-calendar .calendar-day.occupied .day-count{color:#c24e13}
 .calendar-legend{padding:14px 20px 18px;margin:0;display:flex;gap:18px;flex-wrap:wrap;border-top:1px solid #edf0f2;background:#fbfcfd;font-size:12px}
-.status-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:-1px}.dot-orange{background:var(--orange)}.dot-green{background:var(--green)}.dot-red{background:var(--red)}.dot-today{background:#fff;border:2px solid var(--orange)}
+.status-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:-1px}.dot-orange{background:var(--orange)}.dot-green{background:var(--green)}.dot-black{background:#202326}.dot-today{background:#fff;border:2px solid var(--orange)}
 .dashboard-commitments{border:1px solid #f0ddd4;border-radius:20px;padding:20px;background:linear-gradient(180deg,#fff8f4 0%,#fff 38%);box-shadow:0 10px 32px #17212b0d}
 .commitment-head{padding:2px 0 18px;margin-bottom:14px;border-bottom:1px solid #eee;align-items:center}.commitment-icon{width:50px;height:50px;border-radius:13px;background:var(--orange);box-shadow:0 7px 18px #f05a282b}.commitment-head h2{font-size:20px;color:#18212b}.commitment-head p{font-size:13px}
 .commitment-list{gap:12px;max-height:520px}.commitment-item{position:relative;border:1px solid #e8ecef;border-radius:14px;padding:15px 14px 15px 17px;background:#fff;grid-template-columns:1fr auto;box-shadow:0 3px 10px #17212b08}.commitment-item:before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 4px 4px 0;background:var(--orange)}.commitment-time{color:var(--orange);font-weight:800;font-size:12px}.commitment-name{font-size:15px;color:#18212b}.commitment-meta{margin-top:7px}.commitment-arrow{font-size:26px;color:#66717c}.commitment-footer .btn{border-color:#ffd1bf;color:#c44f17;background:#fff8f4}
@@ -171,6 +171,8 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 .auth-card .btn{width:100%;justify-content:center;margin-top:20px}.auth-message{min-height:22px;margin-top:14px;font-size:13px;text-align:center;color:#bf3c29}
 .auth-message.success{color:#197346}.auth-card[hidden],.auth-screen[hidden]{display:none}
 .admin-form{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.admin-form .field{flex:1;min-width:220px}.admin-form .btn{height:42px}
+.status-dot-mini.black{background:#202326;box-shadow:0 0 0 1px #aab2ba}
+.file-box .file-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -196,6 +198,15 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
     </form>
     <div class="auth-message" id="setPasswordMessage" role="status"></div>
   </div>
+  <div class="auth-card" id="profileCard" hidden>
+    <img src="spfly_logo.png" alt="SPFLY">
+    <h1>Seu cadastro</h1><p>Informe seu nome para identificarmos você no portal.</p>
+    <form id="profileForm">
+      <label for="profileFullName">Nome completo</label><input id="profileFullName" autocomplete="name" maxlength="120" required>
+      <button class="btn btn-primary" type="submit">Salvar e continuar</button>
+    </form>
+    <div class="auth-message" id="profileMessage" role="status"></div>
+  </div>
 </div>
 <div class="app" id="app">
 <aside class="sidebar">
@@ -217,7 +228,7 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 <main class="main">
 <header class="topbar">
   <input class="search" id="globalSearch" placeholder="Buscar no sistema...">
-  <div class="user"><button id="themeToggle" class="btn btn-secondary" style="padding:8px 10px" onclick="toggleDarkMode()">🌙</button><div><strong id="currentAdminEmail"></strong><br><span class="muted">Administrador</span></div><button class="btn btn-secondary" onclick="SPFLY_AUTH.logout()">Sair</button></div>
+  <div class="user"><button id="themeToggle" class="btn btn-secondary" style="padding:8px 10px" onclick="toggleDarkMode()">🌙</button><div><strong id="currentAdminName"></strong><br><span class="muted">Administrador</span></div><button class="btn btn-secondary" onclick="SPFLY_AUTH.editProfile()">Meu cadastro</button><button class="btn btn-secondary" onclick="SPFLY_AUTH.logout()">Sair</button></div>
 </header>
 
 <section class="content">
@@ -240,7 +251,7 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
     <div>
       <div class="dashboard-calendar">
         <div class="calendar-head"><button class="btn btn-secondary" onclick="changeDashboardCalendarMonth(-1)">‹</button><strong id="dashboardCalendarTitle"></strong><button class="btn btn-secondary" onclick="changeDashboardCalendarMonth(1)">›</button><button class="btn btn-secondary" onclick="goDashboardCalendarToday()">Hoje</button></div>
-        <div class="calendar-legend"><span><i class="status-dot dot-orange"></i> Cadastrado</span><span><i class="status-dot dot-green"></i> Concluído</span><span><i class="status-dot dot-red"></i> Cancelado</span><span><i class="status-dot dot-today"></i> Hoje</span></div>
+        <div class="calendar-legend"><span><i class="status-dot dot-orange"></i> Cadastrado</span><span><i class="status-dot dot-green"></i> Concluído</span><span><i class="status-dot dot-black"></i> Cancelado</span><span><i class="status-dot dot-today"></i> Hoje</span></div>
         <div class="calendar-grid" id="dashboardTrainingCalendar"></div>
       </div>
       <div class="dashboard-summary" id="dashboardSummary"></div>
@@ -280,7 +291,7 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
   <div class="training-agenda-layout">
     <div class="dashboard-calendar training-calendar-panel">
       <div class="calendar-head"><button class="btn btn-secondary" onclick="changeCalendarMonth(-1)">‹</button><strong id="calendarTitle"></strong><button class="btn btn-secondary" onclick="changeCalendarMonth(1)">›</button><button class="btn btn-secondary" onclick="goCalendarToday()">Hoje</button></div>
-      <div class="calendar-legend"><span><i class="status-dot dot-orange"></i> Cadastrado</span><span><i class="status-dot dot-green"></i> Concluído</span><span><i class="status-dot dot-red"></i> Cancelado</span><span><i class="status-dot dot-today"></i> Hoje</span></div>
+      <div class="calendar-legend"><span><i class="status-dot dot-orange"></i> Cadastrado</span><span><i class="status-dot dot-green"></i> Concluído</span><span><i class="status-dot dot-black"></i> Cancelado</span><span><i class="status-dot dot-today"></i> Hoje</span></div>
       <div class="calendar-grid" id="trainingCalendar"></div>
     </div>
     <div class="dashboard-commitments training-day-panel" id="trainingDayPanel"></div>
@@ -368,12 +379,13 @@ function parseDateBR(value){
  const p=String(value||"").split("/"); if(p.length!==3)return null; const d=new Date(Number(p[2]),Number(p[1])-1,Number(p[0])); d.setHours(0,0,0,0); return isNaN(d)?null:d;
 }
 let dashboardCalendarCursor=new Date(); dashboardCalendarCursor.setDate(1);
+let dashboardCalendarInitialized=false;
 let dashboardSelectedDate="";
 function renderDashboard(){
  const today=new Date(); today.setHours(0,0,0,0);
  // A agenda inicial usa a próxima data futura, mas o calendário e o painel do dia exibem TODOS os status.
  const base=trainings.filter(t=>{const d=parseDateBR(t.date);return d&&d>=today;}).sort((a,b)=>(parseDateBR(a.date)?.getTime()||0)-(parseDateBR(b.date)?.getTime()||0));
- if(!dashboardSelectedDate && base.length){dashboardSelectedDate=dateKeyBR(base[0].date);const d=parseDateBR(base[0].date);dashboardCalendarCursor=new Date(d.getFullYear(),d.getMonth(),1);}
+ if(!dashboardCalendarInitialized){dashboardCalendarInitialized=true;if(base.length){dashboardSelectedDate=dateKeyBR(base[0].date);const d=parseDateBR(base[0].date);dashboardCalendarCursor=new Date(d.getFullYear(),d.getMonth(),1);}}
  renderDashboardTrainingCalendar();
  renderDashboardCommitments(base);
  renderDashboardSummary();
@@ -404,7 +416,7 @@ function renderDashboardTrainingCalendar(){
  const first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),prevDays=new Date(y,m,0).getDate();
  const occupied={}; trainings.forEach(t=>{const k=dateKeyBR(t.date);if(k)(occupied[k]??=[]).push(t)});
  let html=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(x=>`<div class="cal-weekday">${x}</div>`).join("");
- for(let i=0;i<42;i++){const n=i-start+1;let day=n,yy=y,mm=m;if(n<1){day=prevDays+n;mm=m-1;if(mm<0){mm=11;yy=y-1}}else if(n>days){day=n-days;mm=m+1;if(mm>11){mm=0;yy=y+1}}const key=`${yy}-${String(mm+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`,items=occupied[key]||[],muted=mm!==m,sel=dashboardSelectedDate===key,today=dateKeyBR(new Date().toLocaleDateString("pt-BR"))===key;const statusDots=[...new Set(items.map(t=>getTrainingStatus(t)))].map(st=>st==="Ministrado"?"green":st==="Cancelado"?"red":"orange");html+=`<div class="calendar-day ${muted?"muted":""} ${items.length?"occupied":""} ${sel?"selected":""} ${today?"today":""}" ${muted?"":`onclick="selectDashboardCalendarDate('${key}')"`}><div class="day-num">${day}</div>${items.length?`<div class="day-count">${items.length} treinamento${items.length>1?"s":""}</div><div class="status-dots">${statusDots.map(c=>`<i class="status-dot-mini ${c}"></i>`).join("")}</div>`:""}</div>`}
+ for(let i=0;i<42;i++){const n=i-start+1;let day=n,yy=y,mm=m;if(n<1){day=prevDays+n;mm=m-1;if(mm<0){mm=11;yy=y-1}}else if(n>days){day=n-days;mm=m+1;if(mm>11){mm=0;yy=y+1}}const key=`${yy}-${String(mm+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`,items=occupied[key]||[],muted=mm!==m,sel=dashboardSelectedDate===key,today=dateKeyBR(new Date().toLocaleDateString("pt-BR"))===key;const statusDots=[...new Set(items.map(t=>getTrainingStatus(t)))].map(st=>st==="Ministrado"?"green":st==="Cancelado"?"black":"orange");html+=`<div class="calendar-day ${muted?"muted":""} ${items.length?"occupied":""} ${sel?"selected":""} ${today?"today":""}" ${muted?"":`onclick="selectDashboardCalendarDate('${key}')"`}><div class="day-num">${day}</div>${items.length?`<div class="day-count">${items.length} treinamento${items.length>1?"s":""}</div><div class="status-dots">${statusDots.map(c=>`<i class="status-dot-mini ${c}"></i>`).join("")}</div>`:""}</div>`}
  el.innerHTML=html;
  const list=document.getElementById("dashboardDayList"); if(!list)return;
  if(dashboardSelectedDate){const items=occupied[dashboardSelectedDate]||[];list.innerHTML=`<div class="table-head"><strong>${formatKeyDate(dashboardSelectedDate)} — ${items.length} treinamento${items.length!==1?"s":""}</strong><button class="btn btn-secondary" onclick="clearDashboardCalendarDate()">Limpar data</button></div>`;}else{list.innerHTML='<div class="muted" style="margin-top:10px">Clique em uma data ocupada para filtrar os treinamentos.</div>'}
@@ -436,7 +448,7 @@ function getTrainingStatus(t){
   return "Cadastrado";
 }
 function displayTrainingStatus(s){ return s==="Ministrado" ? "Concluído" : s; }
-function statusBadgeClass(s){ return s==="Ministrado" ? "badge-green" : s==="Cancelado" ? "badge-red" : "badge-orange"; }
+function statusBadgeClass(s){ return s==="Ministrado" ? "badge-green" : s==="Cancelado" ? "badge-black" : "badge-orange"; }
 function badgeStatus(s){
  const c=statusBadgeClass(s);
  return `<span class="badge ${c}">${displayTrainingStatus(s)}</span>`;
@@ -498,7 +510,7 @@ function renderTrainingCalendar(){
  const first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),prevDays=new Date(y,m,0).getDate();
  const occupied={}; trainings.forEach(t=>{const k=dateKeyBR(t.date);if(k)(occupied[k]??=[]).push(t)});
  let html=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(x=>`<div class="cal-weekday">${x}</div>`).join("");
- for(let i=0;i<42;i++){const n=i-start+1;let day=n,yy=y,mm=m;if(n<1){day=prevDays+n;mm=m-1;if(mm<0){mm=11;yy=y-1}}else if(n>days){day=n-days;mm=m+1;if(mm>11){mm=0;yy=y+1}}const key=`${yy}-${String(mm+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`,items=occupied[key]||[],muted=mm!==m,sel=calendarSelectedDate===key,today=dateKeyBR(new Date().toLocaleDateString("pt-BR"))===key;const statusDots=[...new Set(items.map(t=>getTrainingStatus(t)))].map(st=>st==="Ministrado"?"green":st==="Cancelado"?"red":"orange");html+=`<div class="calendar-day ${muted?"muted":""} ${items.length?"occupied":""} ${sel?"selected":""} ${today?"today":""}" ${muted?"":`onclick="selectCalendarDate('${key}')"`}><div class="day-num">${day}</div>${items.length?`<div class="status-dots">${statusDots.map(c=>`<i class="status-dot-mini ${c}"></i>`).join("")}<span class="day-count">${items.length}</span></div>`:""}</div>`}
+ for(let i=0;i<42;i++){const n=i-start+1;let day=n,yy=y,mm=m;if(n<1){day=prevDays+n;mm=m-1;if(mm<0){mm=11;yy=y-1}}else if(n>days){day=n-days;mm=m+1;if(mm>11){mm=0;yy=y+1}}const key=`${yy}-${String(mm+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`,items=occupied[key]||[],muted=mm!==m,sel=calendarSelectedDate===key,today=dateKeyBR(new Date().toLocaleDateString("pt-BR"))===key;const statusDots=[...new Set(items.map(t=>getTrainingStatus(t)))].map(st=>st==="Ministrado"?"green":st==="Cancelado"?"black":"orange");html+=`<div class="calendar-day ${muted?"muted":""} ${items.length?"occupied":""} ${sel?"selected":""} ${today?"today":""}" ${muted?"":`onclick="selectCalendarDate('${key}')"`}><div class="day-num">${day}</div>${items.length?`<div class="status-dots">${statusDots.map(c=>`<i class="status-dot-mini ${c}"></i>`).join("")}<span class="day-count">${items.length}</span></div>`:""}</div>`}
  el.innerHTML=html;
  renderTrainingDayPanel();
 }
@@ -536,16 +548,16 @@ function renderTrainingDetail(id){
  <div class="card"><h3>Documentação do treinamento</h3>
  <p class="muted">A lista de presença/fotos comprovam a realização. O material abaixo registra o conteúdo utilizado no curso.</p>
  <h4 style="margin:18px 0 8px">📋 Lista de presença / fotos</h4>
- ${(t.docs&&t.docs.length)?t.docs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📄 <strong>${esc(d)}</strong></span><button class="btn btn-secondary" onclick="previewTrainingDocument(${id},${i})">👁 Visualizar</button></div>`).join(""):(t.doc?`<div class="file-box"><span>📄 <strong>${esc(t.doc)}</strong></span><button class="btn btn-secondary" onclick="previewTrainingDocument(${id})">👁 Visualizar</button></div>`:`<div class="empty">Nenhum comprovante anexado.</div>`)}
+ ${(t.docs&&t.docs.length)?t.docs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📄 <strong>${esc(d)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingDocument(${id},${i})">👁 Visualizar</button>${!locked?`<button class="btn btn-danger" onclick="removeTrainingAttachment(${id},'doc',${i})">Remover</button>`:""}</span></div>`).join(""):(t.doc?`<div class="file-box"><span>📄 <strong>${esc(t.doc)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingDocument(${id})">👁 Visualizar</button>${!locked?`<button class="btn btn-danger" onclick="removeTrainingAttachment(${id},'doc',0)">Remover</button>`:""}</span></div>`:`<div class="empty">Nenhum comprovante anexado.</div>`)}
  ${!locked?`<div class="upload" style="margin-top:12px"><strong>📎 Anexar comprovantes</strong><span class="muted">PDF, JPG, JPEG ou PNG.</span><br><input id="detailFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style="margin-top:15px"></div>`:""}
  <h4 style="margin:22px 0 8px">📚 Material utilizado no curso</h4>
- ${(t.contentDocs&&t.contentDocs.length)?t.contentDocs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📚 <strong>${esc(d)}</strong></span><button class="btn btn-secondary" onclick="previewTrainingContent(${id},${i})">👁 Visualizar</button></div>`).join(""):`<div class="empty">Nenhum material anexado.</div>`}
+ ${(t.contentDocs&&t.contentDocs.length)?t.contentDocs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📚 <strong>${esc(d)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingContent(${id},${i})">👁 Visualizar</button>${!locked?`<button class="btn btn-danger" onclick="removeTrainingAttachment(${id},'content',${i})">Remover</button>`:""}</span></div>`).join(""):(t.contentDoc?`<div class="file-box"><span>📚 <strong>${esc(t.contentDoc)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingContent(${id},0)">👁 Visualizar</button>${!locked?`<button class="btn btn-danger" onclick="removeTrainingAttachment(${id},'content',0)">Remover</button>`:""}</span></div>`:`<div class="empty">Nenhum material anexado.</div>`)}
  ${!locked?`<div class="upload" style="margin-top:12px"><strong>📎 Anexar conteúdo do treinamento</strong><span class="muted">PDF, PowerPoint, Word, Excel, imagens ou ZIP.</span><br><input id="contentFile" type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" multiple style="margin-top:15px"></div>`:""}
  <div class="field" style="margin-top:15px"><label>Observações</label><textarea id="detailObs" ${locked?"disabled":""}>${esc(t.obs||"")}</textarea></div>${!locked?`<div class="actions"><button class="btn btn-primary" onclick="saveTrainingDocument(${id})">Salvar documentação</button></div>`:""}</div></div>
  <div class="card" style="margin-top:18px"><div class="table-head"><strong>Participantes (${t.participants?.length||0})</strong>${!locked?`<button class="btn btn-primary" onclick="openParticipantEditor(${id})">+ Informar participantes</button>`:""}</div>
  <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th><th>Cargo</th><th>Presença</th><th>Ação</th></tr></thead><tbody>${t.participants?.length?t.participants.map(pid=>{const e=employees.find(x=>x.id===pid);return e?`<tr><td>${esc(e.mat)}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge badge-green">Presente</span></td><td>${locked?"🔒":`<button class="btn btn-danger" onclick="removeParticipant(${Number(id)},${Number(e.id)})">Remover</button>`}</td></tr>`:""}).join(""):`<tr><td colspan="6" class="empty">Nenhum participante informado.</td></tr>`}</tbody></table></div>
  ${st==="Cancelado"?`<div class="cancel-box" style="margin-top:18px"><strong>✕ Motivo do cancelamento</strong><p style="margin:8px 0 0">${esc(t.cancelReason||"Não informado")}</p>${t.cancelledAt?`<div class="help" style="margin-top:6px">Cancelado em ${new Date(t.cancelledAt).toLocaleString("pt-BR")}</div>`:""}</div>`:""}
- <div class="card" style="margin-top:18px"><h3>Finalização</h3><p class="muted">Após o treinamento presencial, informe os participantes e anexe pelo menos um comprovante antes de finalizar.</p><div class="actions">${st!=="Ministrado"&&st!=="Cancelado"?`<button class="btn btn-primary" onclick="finalizeTraining(${id})">✓ Finalizar treinamento e marcar como ministrado</button><button class="btn btn-danger" onclick="cancelTraining(${id})">✕ Cancelar treinamento</button>`:`<span class="badge ${st==='Ministrado'?'badge-green':'badge-red'}" style="padding:10px 14px">${st==='Ministrado'?'Concluído e bloqueado':'Cancelado e bloqueado'}</span>`}</div></div>`;
+ <div class="card" style="margin-top:18px"><h3>Finalização</h3><p class="muted">Após o treinamento presencial, informe os participantes e anexe pelo menos um comprovante antes de finalizar.</p><div class="actions">${st!=="Ministrado"&&st!=="Cancelado"?`<button class="btn btn-primary" onclick="finalizeTraining(${id})">✓ Finalizar treinamento e marcar como ministrado</button><button class="btn btn-danger" onclick="cancelTraining(${id})">✕ Cancelar treinamento</button>`:`<span class="badge ${st==='Ministrado'?'badge-green':'badge-black'}" style="padding:10px 14px">${st==='Ministrado'?'Concluído e bloqueado':'Cancelado e bloqueado'}</span>`}</div></div>`;
  toggleEditLocationFields();
 }
 async function saveTrainingInfo(id){
@@ -569,6 +581,30 @@ async function saveTrainingDocument(id){
   if(!await persist())return;
   renderTrainingDetail(id);renderTrainings();renderDashboard();alert("Documentação salva.");
  }catch(err){alert("Não foi possível enviar os arquivos: "+err.message);}
+}
+
+async function removeTrainingAttachment(id, kind, index){
+ const t=trainings.find(x=>x.id===id);if(!t)return;
+ if((getTrainingStatus(t)==="Ministrado"||getTrainingStatus(t)==="Cancelado")&&!t.editMode){alert("Libere a edição do treinamento antes de remover anexos.");return}
+ const isDoc=kind==="doc", namesKey=isDoc?"docs":"contentDocs", filesKey=isDoc?"docFiles":"contentFiles", firstKey=isDoc?"doc":"contentDoc";
+ const names=Array.isArray(t[namesKey])&&t[namesKey].length?[...t[namesKey]]:(t[firstKey]?[t[firstKey]]:[]);
+ if(index<0||index>=names.length)return;
+ const name=names[index];
+ if(!confirm(`Remover o anexo "${name}" deste treinamento?`))return;
+ const files=Array.isArray(t[filesKey])?[...t[filesKey]]:[];
+ const file=files[index]?.name===name?files[index]:files.find(x=>x.name===name);
+ const next={...t};names.splice(index,1);
+ if(file){const fileIndex=files.indexOf(file);files.splice(fileIndex,1)}
+ next[namesKey]=names;next[filesKey]=files;next[firstKey]=names[0]||"";
+ if(index===0){if(isDoc){next.docData="";next.docType=""}else{next.contentData="";next.contentType=""}}
+ const nextTrainings=trainings.map(item=>item.id===id?next:item);
+ if(!await SPFLY_AUTH.persist(employees,nextTrainings))return;
+ trainings=nextTrainings;
+ renderTrainingDetail(id);renderTrainings();renderDashboard();
+ if(file?.path){
+  try{await SPFLY_AUTH.deleteFile(file)}catch(error){alert("O anexo saiu do treinamento, mas não foi possível apagá-lo do armazenamento: "+error.message);return}
+ }
+ alert("Anexo removido.");
 }
 
 async function previewTrainingContent(id,index=0){
