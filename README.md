@@ -2,14 +2,16 @@
 
 Esta versão mantém o GitHub Pages para a interface e usa Supabase para login, dados compartilhados e anexos privados.
 
+**Site:** https://gabproti.github.io/spfly-gestao-treinamentos/
+
 ## Instalação
 
 1. No Supabase SQL Editor, execute `supabase/schema.sql`.
 2. Em Authentication > URL Configuration, defina Site URL e Redirect URL como `https://gabproti.github.io/spfly-gestao-treinamentos/`.
-3. Em Authentication > Providers > Email, desative o cadastro público de novos usuários. O acesso aos dados também é bloqueado por RLS para qualquer conta fora de `admin_users`.
+3. Em Authentication > Sign In / Providers, desative **Allow new users to sign up**. O acesso aos dados também é bloqueado por RLS para qualquer conta fora de `admin_users`.
 4. Em Authentication > Users, envie um convite para o primeiro administrador.
 5. No SQL Editor, execute `supabase/bootstrap-admin.sql` depois de substituir `SEU_EMAIL_AQUI` pelo e-mail do convidado. Confirme que uma linha foi adicionada.
-6. Em Edge Functions, publique `supabase/functions/invite-admin/index.ts` como função `invite-admin` com verificação de JWT ativada.
+6. Em Edge Functions, publique `supabase/functions/invite-admin/index.ts` como função `invite-admin`. Deixe **Verify JWT with legacy secret** desativado: a função usa `withSupabase({ auth: 'user' })` para validar a sessão do usuário antes de aceitar pedidos.
 7. Envie `index.html`, `auth.js`, `config.js`, `spfly_logo.png` e `.nojekyll` para a raiz do repositório GitHub Pages.
 8. O primeiro administrador abre o e-mail de convite, define a senha no site e entra. Na página **Administradores**, pode convidar outros administradores.
 
