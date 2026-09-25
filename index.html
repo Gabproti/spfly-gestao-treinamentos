@@ -236,6 +236,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 @media(max-width:1050px){.dashboard-agenda-layout{grid-template-columns:1fr}.dashboard-summary{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:700px){.sidebar{position:relative;width:100%;height:auto;padding:0 12px 10px;overflow:visible}.sidebar:before,.sidebar:after,.sidebar-footer{display:none}.brand{min-height:68px;margin:0 -12px 4px;padding:9px}.brand-wordmark{font-size:31px}.brand-arrow{font-size:25px}.brand small{font-size:8px}.nav-section{display:flex;gap:4px;overflow-x:auto;padding-bottom:5px}.nav-btn{min-width:max-content;width:auto;height:43px;padding:0 10px;gap:6px;font-size:12px}.nav-icon{width:18px;height:18px;flex-basis:18px}.nav-chevron,.subnav{display:none}.main{margin-left:0;width:100%}.topbar{height:64px;padding:0 12px}.topbar-search{width:48%}.topbar-search .search{height:40px;font-size:12px}.topbar-profile .avatar{width:36px;height:36px}.topbar-profile strong{font-size:12px}.topbar-profile small{font-size:10px}.user{gap:8px}.user #themeToggle{width:37px;height:37px}.content{padding:16px 12px}.dashboard-page-head{margin:0 0 15px;gap:12px}.dashboard-page-head h1{font-size:26px}.dashboard-page-head .btn-primary{height:42px}.dashboard-summary{grid-template-columns:repeat(2,1fr)}.dashboard-calendar .calendar-day{min-height:57px;padding:5px}.dashboard-calendar .calendar-grid{padding:0 7px 10px;gap:3px}.dashboard-calendar .calendar-legend{font-size:10px;padding:6px 8px 10px}.dashboard-calendar .status-dot{width:9px;height:9px}.dashboard-calendar .status-dots{left:5px;bottom:5px;gap:3px}.dashboard-calendar .status-dot-mini{width:7px;height:7px}.dashboard-calendar .calendar-head{padding:10px 8px}.dashboard-calendar .calendar-head strong{font-size:15px}.dashboard-calendar .calendar-head .btn-secondary{width:33px;min-width:33px;height:34px;padding:0 5px}.dashboard-calendar .calendar-head .btn-secondary:nth-child(4){min-width:48px;font-size:11px}.dashboard-calendar .calendar-day.selected .day-num{font-size:16px}}
 </style>
+<link rel="stylesheet" href="capacitation.css">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -281,6 +282,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M10 2h4l.7 2.4 1.8.8 2.2-1.2 2.8 2.8-1.2 2.2.8 1.8L23 11v4l-2.4.7-.8 1.8 1.2 2.2-2.8 2.8-2.2-1.2-1.8.8L14 23h-4l-.7-2.4-1.8-.8-2.2 1.2-2.8-2.8 1.2-2.2-.8-1.8L1 15v-4l2.4-.7.8-1.8L3 6.3l2.8-2.8L8 4.7l1.8-.8z" transform="translate(0 -1) scale(.96)"/></symbol>
   <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></symbol>
   <symbol id="icon-pin" viewBox="0 0 24 24"><path d="M12 22s7-7 7-13a7 7 0 0 0-14 0c0 6 7 13 7 13z"/><circle cx="12" cy="9" r="2"/></symbol>
+  <symbol id="icon-cap" viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5L2 9zM6 11v6c3.5 3 8.5 3 12 0v-6M22 9v8"/></symbol>
 </svg>
 <aside class="sidebar">
   <div class="brand"><img class="spfly-logo" src="spfly_logo.png?v=7" alt="SPFLY Logística"><small>GESTÃO DE TREINAMENTOS</small></div>
@@ -288,6 +290,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <button class="nav-btn active" data-page="dashboard"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-home"/></svg><span class="nav-label">Início</span></button>
     <button class="nav-btn" data-page="pageEmployees"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Funcionários</span></button>
     <button class="nav-btn" data-page="pageTrainings"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg><span class="nav-label">Treinamentos</span></button>
+    <button class="nav-btn" data-page="pageCapacitation"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-cap"/></svg><span class="nav-label">Capacitação</span></button>
     <button class="nav-btn" data-menu="reports"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg><span class="nav-label">Relatórios</span><span class="nav-chevron">⌄</span></button>
     <div class="subnav" id="reports">
       <button data-page="pageReportEmployee">Por Funcionário</button><button data-page="pageReportTraining">Por Treinamento</button><button data-page="pageReportSector">Por Setor</button>
@@ -310,7 +313,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div class="header-row"><div><h1>Gestão de acessos</h1><div class="muted">Cadastre administradores, RH e usuários. Defina as telas liberadas para cada usuário.</div></div></div>
   <div class="card form-card">
     <h2>Criar usuário</h2>
-    <form id="createUserForm" class="access-form"><div class="admin-form"><div class="field"><label for="createUserName">Nome completo</label><input id="createUserName" autocomplete="name" required placeholder="Nome da pessoa"></div><div class="field"><label for="createUserEmail">E-mail</label><input id="createUserEmail" type="email" autocomplete="off" required placeholder="nome@empresa.com"></div><div class="field"><label for="createRole">Perfil</label><select id="createRole" onchange="SPFLY_AUTH.updateCreateRole()"><option value="admin">Administrador</option><option value="rh">RH</option><option value="usuario">Usuário</option></select></div><button class="btn btn-primary" type="submit">Criar usuário</button></div><div id="createPages" class="access-pages" hidden><strong>Telas permitidas para este usuário</strong><div class="access-checks"><label><input type="checkbox" value="dashboard"> Início</label><label><input type="checkbox" value="employees"> Funcionários</label><label><input type="checkbox" value="trainings"> Treinamentos</label><label><input type="checkbox" value="reports"> Relatórios</label></div><p class="help">Funcionários e Treinamentos permitem consulta e edição. Início e Relatórios são telas de consulta.</p></div></form>
+    <form id="createUserForm" class="access-form"><div class="admin-form"><div class="field"><label for="createUserName">Nome completo</label><input id="createUserName" autocomplete="name" required placeholder="Nome da pessoa"></div><div class="field"><label for="createUserEmail">E-mail</label><input id="createUserEmail" type="email" autocomplete="off" required placeholder="nome@empresa.com"></div><div class="field"><label for="createRole">Perfil</label><select id="createRole" onchange="SPFLY_AUTH.updateCreateRole()"><option value="admin">Administrador</option><option value="rh">RH</option><option value="usuario">Usuário</option><option value="funcionario">Funcionário</option></select></div><button class="btn btn-primary" type="submit">Criar usuário</button></div><div id="createEmployeeLink" class="access-pages" hidden><div class="field"><label for="createEmployeeId">Vincular ao cadastro do funcionário</label><select id="createEmployeeId" onchange="SPFLY_AUTH.updateCreateEmployeeName()"><option value="">Selecione um funcionário</option></select></div><p class="help">Este perfil verá apenas as próprias capacitações e poderá enviar os próprios certificados.</p></div><div id="createPages" class="access-pages" hidden><strong>Telas permitidas para este usuário</strong><div class="access-checks"><label><input type="checkbox" value="dashboard"> Início</label><label><input type="checkbox" value="employees"> Funcionários</label><label><input type="checkbox" value="trainings"> Treinamentos</label><label><input type="checkbox" value="reports"> Relatórios</label></div><p class="help">Funcionários e Treinamentos permitem consulta e edição. Início e Relatórios são telas de consulta.</p></div></form>
     <p class="muted">Administrador acessa tudo. RH acessa Funcionários e Treinamentos. Usuário acessa apenas as telas marcadas.</p>
     <p class="muted">A conta recebe uma senha inicial padrão. O portal exige uma nova senha antes de liberar o acesso aos dados.</p>
     <div id="createUserMessage" role="status"></div><div id="createdUserResult" class="created-user-result" hidden></div>
@@ -408,6 +411,52 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div id="detailContent"></div>
 </div>
 
+<div id="pageCapacitation" class="page cap-page">
+  <div class="header-row cap-heading"><div><h1 id="capPageTitle">Capacitação</h1><div class="muted">Trilhas e cursos para desenvolvimento dos funcionários.</div></div><button id="capNewTrackButton" class="btn btn-primary" onclick="SPFLY_CAP.newTrack()">+ Nova Trilha</button></div>
+  <div id="capMessage" class="notice" hidden role="status"></div>
+  <div id="capKpis" class="cap-kpis"></div>
+  <div class="cap-section-head"><div><h2 id="capListTitle">Trilhas de Capacitação</h2><p class="muted" id="capListHint">Acompanhe cursos, prazos e certificados em um só lugar.</p></div><button class="btn btn-secondary" onclick="SPFLY_CAP.refresh()">Atualizar</button></div>
+  <div id="capTrackGrid" class="cap-track-grid"></div>
+</div>
+
+<div id="pageCapTrackForm" class="page cap-page">
+  <div class="header-row cap-heading"><div><h1 id="capTrackFormTitle">Nova Trilha</h1><div class="muted">Defina o prazo e quem participará. Os cursos podem ser adicionados depois.</div></div></div>
+  <form id="capTrackForm" class="card form-card">
+    <div class="form-grid">
+      <div class="field full"><label for="capTrackName">Nome da trilha *</label><input id="capTrackName" maxlength="160" required></div>
+      <div class="field full"><label for="capTrackDescription">Descrição</label><textarea id="capTrackDescription" maxlength="2000"></textarea></div>
+      <div class="field"><label for="capTrackType">Tipo da trilha *</label><select id="capTrackType"><option>Obrigatória</option><option>Recomendada</option><option>Opcional</option></select></div>
+      <div class="field"><label for="capTrackDays">Prazo para conclusão, em dias *</label><input id="capTrackDays" type="number" min="1" max="3650" value="30" required></div>
+      <div class="field"><label for="capTrackStart">Data de início *</label><input id="capTrackStart" type="date" required></div>
+      <div class="field"><label for="capTrackStatus">Status *</label><select id="capTrackStatus"><option>Ativa</option><option>Concluída</option><option>Encerrada</option></select></div>
+    </div>
+    <div id="capTrackAudience" class="cap-audience"><div class="cap-section-head"><div><h3>Funcionários participantes</h3><p class="muted">Selecione os funcionários para inscrever na trilha.</p></div><input id="capEmployeeSearch" type="search" placeholder="Buscar funcionário..." oninput="SPFLY_CAP.filterEmployees()"></div><div id="capEmployeeChoices" class="cap-employee-choices"></div></div>
+    <div id="capTrackFormMessage" role="status"></div>
+    <div class="actions"><button type="button" class="btn btn-secondary" onclick="SPFLY_CAP.cancelTrackForm()">Cancelar</button><button type="submit" class="btn btn-primary">Salvar Trilha</button></div>
+  </form>
+</div>
+
+<div id="pageCapTrackDetail" class="page cap-page">
+  <div class="cap-detail-top"><button class="btn btn-secondary" onclick="showPage('pageCapacitation')">← Voltar às trilhas</button><div id="capTrackActions"></div></div>
+  <div id="capTrackHero" class="card cap-track-hero"></div>
+  <div id="capDetailTabs" class="cap-tabs"><button type="button" class="active" data-cap-tab="courses" onclick="SPFLY_CAP.selectTab('courses')">Cursos da Trilha</button><button type="button" data-cap-tab="employees" onclick="SPFLY_CAP.selectTab('employees')">Funcionários</button></div>
+  <div id="capDetailCourses"></div>
+  <div id="capDetailEmployees" hidden></div>
+  <div id="capCourseEditor" class="card cap-editor" hidden>
+    <h2 id="capCourseFormTitle">Adicionar Curso</h2>
+    <form id="capCourseForm"><div class="form-grid">
+      <div class="field full"><label for="capCourseName">Nome do curso *</label><input id="capCourseName" maxlength="160" required></div>
+      <div class="field full"><label for="capCourseDescription">Descrição</label><textarea id="capCourseDescription" maxlength="2000"></textarea></div>
+      <div class="field full"><label for="capCourseUrl">Link externo do curso *</label><input id="capCourseUrl" type="url" placeholder="https://..." maxlength="2000" required></div>
+      <div class="field"><label for="capCourseMinutes">Carga horária, em minutos *</label><input id="capCourseMinutes" type="number" min="1" max="100000" value="40" required></div>
+      <div class="field"><label for="capCourseOrder">Ordem na trilha *</label><input id="capCourseOrder" type="number" min="1" value="1" required></div>
+      <div class="field"><label for="capCourseCertificate">Certificado obrigatório</label><select id="capCourseCertificate"><option value="false">Não</option><option value="true">Sim</option></select></div>
+      <div class="field"><label for="capCourseActive">Status</label><select id="capCourseActive"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
+    </div><div id="capCourseFormMessage" role="status"></div><div class="actions"><button type="button" class="btn btn-secondary" onclick="SPFLY_CAP.closeCourseEditor()">Cancelar</button><button type="submit" class="btn btn-primary">Salvar Curso</button></div></form>
+  </div>
+  <div id="capEnrollEditor" class="card cap-editor" hidden><h2>Inscrever funcionários</h2><p class="muted">As inscrições existentes serão mantidas.</p><input id="capEnrollSearch" type="search" placeholder="Buscar funcionário..." oninput="SPFLY_CAP.filterEmployees()"><div id="capEnrollChoices" class="cap-employee-choices"></div><div class="actions"><button class="btn btn-secondary" onclick="SPFLY_CAP.closeEnrollEditor()">Cancelar</button><button class="btn btn-primary" onclick="SPFLY_CAP.saveEnrollments()">Salvar inscrições</button></div></div>
+</div>
+
 <div id="pageReportEmployee" class="page"><div class="header-row"><div><h1>Relatório por Funcionário</h1><div class="muted">Consulte o histórico de participação e seus anexos.</div></div></div><div class="card"><div class="filters"><select id="reportEmpSelect" onchange="renderEmployeeReport()"><option value="">Selecione um funcionário</option></select></div><div id="employeeReportDash"></div><div id="employeeReport"></div></div></div>
 <div id="pageReportTraining" class="page"><div class="header-row"><div><h1>Relatório por Treinamento</h1><div class="muted">Visão geral dos treinamentos, participantes e documentação.</div></div></div><div id="trainingReportDash"></div><div class="card"><div id="trainingReport"></div></div></div>
 <div id="pageReportSector" class="page"><div class="header-row"><div><h1>Relatório por Setor</h1><div class="muted">Visão consolidada de participação por setor.</div></div></div><div id="sectorReportDash"></div><div class="card"><div id="sectorReport"></div></div></div>
@@ -430,7 +479,7 @@ function showPage(id){
  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
  const page=document.getElementById(id);
  if(page) page.classList.add("active");
- const parent=id==="pageNewEmployee"?"pageEmployees":(["pageNewTraining","pageTrainingDetail"].includes(id)?"pageTrainings":id);
+ const parent=id==="pageNewEmployee"?"pageEmployees":(["pageNewTraining","pageTrainingDetail"].includes(id)?"pageTrainings":(["pageCapTrackForm","pageCapTrackDetail"].includes(id)?"pageCapacitation":id));
  document.querySelectorAll(".nav-btn").forEach(button=>button.classList.toggle("active",button.dataset.page===parent||(parent?.startsWith("pageReport")&&button.dataset.menu==="reports")));
  if(id==="pageEmployees")renderEmployees();
  if(id==="pageTrainings")renderTrainings();
@@ -438,6 +487,8 @@ function showPage(id){
  if(id==="pageReportSector")renderSectorReport();
  if(id==="pageReportTraining")renderTrainingReport();
  if(id==="pageAdmins")window.SPFLY_AUTH.renderAdmins();
+ if(id==="pageAdmins")window.SPFLY_AUTH.renderCreateEmployeeOptions();
+ if(id==="pageCapacitation"||id==="pageCapTrackDetail")window.SPFLY_CAP?.render();
  if(id==="dashboard")renderDashboard();
  applyTheme();
  return true;
@@ -834,6 +885,7 @@ applyTheme();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script src="capacitation.js"></script>
 <script src="auth.js"></script>
 </body>
 </html>
