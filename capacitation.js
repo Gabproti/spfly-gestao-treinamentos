@@ -49,16 +49,28 @@
   function courseState(enrollment, course) {
     const item = courseProgress(enrollment.id, course.id);
     if (item?.completed_at) return ['Concluído','green'];
-    if (item?.certificate_path && item.validation_status !== 'rejected') return ['Aguardando validação','orange'];
+    if (item?.certificate_path && item.validation_status !== 'rejected') return ['Certificado anexado','orange'];
     if (remaining(enrollment.due_date) < 0) return ['Em atraso','red'];
     if (item?.started_at) return ['Em andamento','orange'];
     return ['Não iniciado','gray'];
   }
   function certificateState(item) {
     if (!item?.certificate_path) return ['Pendente','gray'];
-    if (item.validation_status === 'approved') return ['Aprovado','green'];
+    if (item.validation_status === 'approved') return ['Concluído','green'];
     if (item.validation_status === 'rejected') return ['Rejeitado','red'];
-    return ['Aguardando validação','orange'];
+    return ['Certificado anexado','orange'];
+  }
+  function certificateSummary(enrollment) {
+    const required = activeCourses(enrollment.track_id).filter(course => course.certificate_required);
+    if (!required.length) return badge('Não exigido','gray');
+    const states = required.map(course => certificateState(courseProgress(enrollment.id,course.id))[0]);
+    const completed = states.filter(state => state === 'Concluído').length;
+    const attached = states.filter(state => state === 'Certificado anexado').length;
+    const rejected = states.filter(state => state === 'Rejeitado').length;
+    if (completed === required.length) return badge('Concluído','green');
+    const pending = required.length-completed-attached-rejected;
+    const labels = [completed?`${completed} concluído(s)`:null,attached?`${attached} anexado(s)`:null,pending?`${pending} pendente(s)`:null,rejected?`${rejected} rejeitado(s)`:null].filter(Boolean);
+    return badge(labels.join(' · '),rejected?'red':attached||completed?'orange':'gray');
   }
   async function load() {
     if (!client || !access) return;
@@ -252,9 +264,9 @@
   function renderEmployees(track) {
     const list = trackEnrollments(track.id).sort((a,b) => employeeName(a.employee_id).localeCompare(employeeName(b.employee_id),'pt-BR'));
     $('capDetailEmployees').innerHTML = `<div class="cap-section-head"><div><h2>Funcionários</h2><p class="muted">Progresso individual, prazos e certificados.</p></div><button type="button" class="btn btn-primary" data-cap-action="enroll">+ Inscrever funcionários</button></div>
-      ${list.length ? `<div class="cap-people-table card"><table><thead><tr><th>Funcionário</th><th>Progresso</th><th>Concluídos</th><th>Pendentes</th><th>Prazo</th><th>Status</th><th></th></tr></thead><tbody>${list.map(enrollment => {
+      ${list.length ? `<div class="cap-people-table card"><table><thead><tr><th>Funcionário</th><th>Progresso</th><th>Concluídos</th><th>Pendentes</th><th>Prazo</th><th>Status</th><th>Certificados</th><th></th></tr></thead><tbody>${list.map(enrollment => {
         const stats = enrollmentStats(enrollment);
-        return `<tr><td><strong>${safe(employeeName(enrollment.employee_id))}</strong><br><span class="muted">${safe(employeeMat(enrollment.employee_id))}</span></td><td>${bar(stats.pct)} ${stats.pct}%</td><td>${stats.done}</td><td>${stats.pending}${stats.overdue?` · <span class="cap-due-alert">${stats.overdue} atrasado(s)</span>`:''}</td><td>${fmtDate(enrollment.due_date)}</td><td>${badge(stats.status,stats.overdue?'red':stats.pct===100?'green':'orange')}</td><td><button type="button" class="btn btn-secondary" data-cap-action="employee" data-id="${safe(enrollment.id)}">Ver evolução</button></td></tr>`;
+        return `<tr><td><strong>${safe(employeeName(enrollment.employee_id))}</strong><br><span class="muted">${safe(employeeMat(enrollment.employee_id))}</span></td><td>${bar(stats.pct)} ${stats.pct}%</td><td>${stats.done}</td><td>${stats.pending}${stats.overdue?` · <span class="cap-due-alert">${stats.overdue} atrasado(s)</span>`:''}</td><td>${fmtDate(enrollment.due_date)}</td><td>${badge(stats.status,stats.overdue?'red':stats.pct===100?'green':'orange')}</td><td>${certificateSummary(enrollment)}</td><td><button type="button" class="btn btn-secondary" data-cap-action="employee" data-id="${safe(enrollment.id)}">Ver evolução</button></td></tr>`;
       }).join('')}</tbody></table></div>` : empty('Nenhum funcionário inscrito nesta trilha.')}
       <div id="capEmployeeFocus" class="cap-employee-focus"></div>`;
     if (focusedEnrollment) renderEmployeeFocus();
@@ -352,6 +364,6 @@
     const input = event.target.closest('[data-cap-upload]');
     if (input) uploadCertificate(input.dataset.capUpload,input.files?.[0]);
   });
-  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeEnrollEditor,saveEnrollments};
+  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeEnrollEditor,saveEnrollments,updateEmployees(next){employees=next||[];}};
   window.SPFLY_CAP_TEST = {addDays,remaining,percent,validUrl};
 })();
