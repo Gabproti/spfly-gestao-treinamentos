@@ -382,7 +382,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="dashboard-commitments training-day-panel" id="trainingDayPanel"></div>
   </div>
   <div class="card training-list-card"><div class="table-head"><div><strong id="trainingListTitle">Lista de treinamentos</strong><div class="muted" id="trainingListHint">Clique em Gerenciar para acessar o registro completo.</div></div><span class="table-count" id="trainingTableCount"></span></div>
-  <div class="table-scroll"><table class="training-list-table"><thead><tr><th>Data</th><th>Treinamento</th><th>Categoria</th><th>Responsável</th><th>Participantes</th><th>Status</th><th>Lista</th><th>Ações</th></tr></thead><tbody id="trainingTable"></tbody></table></div></div>
+  <div class="table-scroll"><table class="training-list-table"><thead><tr><th>Data</th><th>Treinamento</th><th>Categoria</th><th>Responsável</th><th>Participantes</th><th>Status</th><th>Eficácia</th><th>Lista</th><th>Ações</th></tr></thead><tbody id="trainingTable"></tbody></table></div></div>
 </div>
 
 <div id="pageNewTraining" class="page">
@@ -401,10 +401,13 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
       <div class="field" id="tfOnlineInfoWrap" style="display:none"><label>Informação do acesso online</label><input id="tfOnlineInfo" placeholder="Ex.: Microsoft Teams / link / plataforma"></div>
       <div class="field full"><label>Responsável / Instrutor</label><input id="tfResp"></div>
       <div class="field full"><label>Descrição / observações</label><textarea id="tfDesc" placeholder="Informações adicionais sobre o treinamento"></textarea></div>
+      <div class="field"><label for="tfReviewDays">Período para revisão (dias após o treinamento) *</label><input id="tfReviewDays" type="number" min="1" max="3650" step="1" value="30"></div>
+      <div class="field"><label for="tfReviewMethod">Método de revisão *</label><input id="tfReviewMethod" list="reviewMethods" maxlength="120" placeholder="Selecione ou descreva o método"></div>
     </div>
     <div class="actions"><button class="btn btn-secondary" onclick="showPage('pageTrainings')">Cancelar</button><button class="btn btn-primary" onclick="registerTraining()">✓ Cadastrar treinamento</button></div>
   </div>
 </div>
+<datalist id="reviewMethods"><option value="Observação prática"><option value="Prova ou questionário"><option value="Entrevista com gestor"><option value="Indicadores de desempenho"><option value="Outro"></datalist>
 
 <div id="pageTrainingDetail" class="page">
   <div class="header-row">
@@ -687,6 +690,23 @@ function toggleEditLocationFields(){const online=document.querySelector('input[n
 
 let calendarCursor=new Date(); calendarCursor.setDate(1); let calendarSelectedDate="";
 function dateKeyBR(v){const d=parseDateBR(v);return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:""}
+function reviewDueDate(training){
+ const start=parseDateBR(training.date),days=Number(training.reviewDays);
+ if(!start||!Number.isInteger(days)||days<1)return null;
+ start.setDate(start.getDate()+days);return start;
+}
+function efficacyState(training){
+ if(getTrainingStatus(training)==='Cancelado')return ['Cancelado','badge-black'];
+ const reviews=Array.isArray(training.efficacyReviews)?training.efficacyReviews:[];
+ if(reviews.length){const result=reviews[reviews.length-1].result;return result==='Eficaz'?['Eficaz','badge-green']:['Não eficaz','badge-red']}
+ if(getTrainingStatus(training)!=='Ministrado')return ['Aguardando treinamento','badge-blue'];
+ const due=reviewDueDate(training);
+ if(!due||!training.reviewMethod)return ['Definir revisão','badge-blue'];
+ const today=new Date();today.setHours(0,0,0,0);
+ return due<today?['Revisão vencida','badge-red']:['Revisão programada','badge-orange'];
+}
+function efficacyBadge(training){const [label,tone]=efficacyState(training);return `<span class="badge ${tone}">${esc(label)}</span>`}
+function formatReviewDate(value){if(!value)return '—';const [y,m,d]=String(value).slice(0,10).split('-');return y&&m&&d?`${d}/${m}/${y}`:'—'}
 function renderTrainings(){
  if(!SPFLY_AUTH.isAdmin())showDeletedTrainings=false;
  const archiveToggle=document.getElementById("deletedTrainingsToggle");
@@ -701,7 +721,7 @@ function renderTrainings(){
  const rows=trainings.filter(t=>{const s=getTrainingStatus(t), dk=dateKeyBR(t.date);return Boolean(t.deletedAt)===showDeletedTrainings&&(!q||t.name.toLowerCase().includes(q)||(t.cat||"").toLowerCase().includes(q))&&(showDeletedTrainings||!sf||s===sf)&&(!from||dk>=from)&&(!to||dk<=to)&&(showDeletedTrainings||!calendarSelectedDate||dk===calendarSelectedDate)});
  const sorted=rows.slice().sort((a,b)=>(parseDateBR(a.date)?.getTime()||0)-(parseDateBR(b.date)?.getTime()||0));
  const count=document.getElementById("trainingTableCount");if(count)count.textContent=`${sorted.length} registro${sorted.length!==1?"s":""}`;
- document.getElementById("trainingTable").innerHTML=sorted.map(t=>`<tr><td><strong>${esc(t.date||"—")}</strong><div class="row-sub">${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div></td><td><div class="row-main">${esc(t.name)}</div><div class="row-sub">${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div></td><td>${esc(t.cat||"—")}</td><td>${esc(t.resp||"—")}</td><td><span class="participant-pill">${t.participants?.length||0}</span></td><td>${showDeletedTrainings?'<span class="badge badge-black">Excluído</span>':badgeStatus(getTrainingStatus(t))}</td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary btn-sm" onclick="previewTrainingDocument(${t.id})">📎 Ver anexo</button>`:"<span class='muted'>—</span>"}</td><td>${showDeletedTrainings?`<button class="btn btn-secondary btn-sm" onclick="restoreTraining(${t.id})">Restaurar</button>`:`<button class="btn btn-secondary btn-sm manage-btn" onclick="openTrainingDetail(${t.id})">Gerenciar</button>`}</td></tr>`).join("")||`<tr><td colspan="8" class="empty">${showDeletedTrainings?"Nenhum treinamento excluído.":"Nenhum treinamento encontrado para os filtros selecionados."}</td></tr>`;
+ document.getElementById("trainingTable").innerHTML=sorted.map(t=>`<tr><td><strong>${esc(t.date||"—")}</strong><div class="row-sub">${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div></td><td><div class="row-main">${esc(t.name)}</div><div class="row-sub">${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div></td><td>${esc(t.cat||"—")}</td><td>${esc(t.resp||"—")}</td><td><span class="participant-pill">${t.participants?.length||0}</span></td><td>${showDeletedTrainings?'<span class="badge badge-black">Excluído</span>':badgeStatus(getTrainingStatus(t))}</td><td>${efficacyBadge(t)}</td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary btn-sm" onclick="previewTrainingDocument(${t.id})">📎 Ver anexo</button>`:"<span class='muted'>—</span>"}</td><td>${showDeletedTrainings?`<button class="btn btn-secondary btn-sm" onclick="restoreTraining(${t.id})">Restaurar</button>`:`<button class="btn btn-secondary btn-sm manage-btn" onclick="openTrainingDetail(${t.id})">Gerenciar</button>`}</td></tr>`).join("")||`<tr><td colspan="9" class="empty">${showDeletedTrainings?"Nenhum treinamento excluído.":"Nenhum treinamento encontrado para os filtros selecionados."}</td></tr>`;
  renderTrainingCalendar();
  renderTrainingDayPanel();
 }
@@ -731,6 +751,18 @@ function renderTrainingDayPanel(){
  panel.innerHTML=`<div class="commitment-head"><div class="commitment-icon">▣</div><div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div><div class="commitment-head-actions"><button class="btn btn-secondary" onclick="goCalendarToday()">Hoje</button></div></div><div class="commitment-list">${cards}</div>`;
 }
 function openTrainingDetail(id){if(!trainings.some(t=>t.id===id&&!t.deletedAt))return;if(showPage("pageTrainingDetail"))renderTrainingDetail(id)}
+function renderEfficacyCard(training,id,locked,editable,status){
+ const due=reviewDueDate(training),reviews=Array.isArray(training.efficacyReviews)?training.efficacyReviews:[];
+ const planned=Number.isInteger(Number(training.reviewDays))&&Number(training.reviewDays)>0&&Boolean(training.reviewMethod);
+ return `<div class="card" style="margin-top:18px"><div class="table-head"><div><h3>Avaliação de eficácia</h3><p class="muted">Defina quando e como revisar a aplicação do treinamento.</p></div>${efficacyBadge(training)}</div>
+ <div class="form-grid"><div class="field"><label for="editReviewDays">Período para revisão (dias após o treinamento)</label><input id="editReviewDays" type="number" min="1" max="3650" step="1" value="${esc(training.reviewDays||'')}" ${locked?'disabled':''}></div>
+ <div class="field"><label for="editReviewMethod">Método de revisão</label><input id="editReviewMethod" list="reviewMethods" maxlength="120" value="${esc(training.reviewMethod||'')}" placeholder="Selecione ou descreva o método" ${locked?'disabled':''}></div></div>
+ <p class="muted">Revisão prevista: <strong>${due?due.toLocaleDateString('pt-BR'):'Não definida'}</strong></p>
+ ${!locked?`<div class="actions"><button class="btn btn-secondary" onclick="saveReviewPlan(${id})">Salvar planejamento</button></div>`:''}
+ ${status==='Ministrado'&&planned?`<hr><h4>Registrar resultado da revisão</h4><p class="muted">A conclusão do treinamento continua independente desta avaliação. Cada resultado fica no histórico.</p>
+ ${editable?`<div class="form-grid"><div class="field"><label for="efficacyReviewedOn">Data da revisão *</label><input id="efficacyReviewedOn" type="date" value="${dateKeyBR(new Date().toLocaleDateString('pt-BR'))}"></div><div class="field"><label for="efficacyResult">Resultado *</label><select id="efficacyResult"><option value="">Selecione</option><option>Eficaz</option><option>Não eficaz</option></select></div><div class="field full"><label for="efficacyNotes">Evidência / justificativa *</label><textarea id="efficacyNotes" maxlength="2000" placeholder="Descreva o que foi observado na revisão"></textarea></div></div><div class="actions"><button class="btn btn-primary" onclick="saveEfficacyReview(${id})">Registrar avaliação</button></div>`:''}`:''}
+ ${reviews.length?`<h4>Histórico de avaliações</h4><div class="table-scroll"><table><thead><tr><th>Data</th><th>Resultado</th><th>Método</th><th>Evidência</th></tr></thead><tbody>${reviews.slice().reverse().map(review=>`<tr><td>${esc(formatReviewDate(review.reviewedOn))}</td><td><span class="badge ${review.result==='Eficaz'?'badge-green':'badge-red'}">${esc(review.result)}</span></td><td>${esc(review.method||'—')}</td><td>${esc(review.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`;
+}
 function renderTrainingDetail(id){
  const t=trainings.find(x=>x.id===id&&!x.deletedAt);if(!t)return;const st=getTrainingStatus(t),editable=SPFLY_AUTH.canEdit('trainings'),locked=!editable||((st==="Ministrado"||st==="Cancelado")&&!t.editMode);
  document.getElementById("detailTitle").textContent=t.name;
@@ -764,8 +796,33 @@ function renderTrainingDetail(id){
  <div class="card" style="margin-top:18px"><div class="table-head"><strong>Participantes (${t.participants?.length||0})</strong>${!locked?`<button class="btn btn-primary" onclick="openParticipantEditor(${id})">+ Informar participantes</button>`:""}</div>
  <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th><th>Cargo</th><th>Presença</th><th>Ação</th></tr></thead><tbody>${t.participants?.length?t.participants.map(pid=>{const e=employees.find(x=>x.id===pid);return e?`<tr><td>${esc(e.mat)}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge badge-green">Presente</span></td><td>${locked?"🔒":`<button class="btn btn-danger" onclick="removeParticipant(${Number(id)},${Number(e.id)})">Remover</button>`}</td></tr>`:""}).join(""):`<tr><td colspan="6" class="empty">Nenhum participante informado.</td></tr>`}</tbody></table></div>
  ${st==="Cancelado"?`<div class="cancel-box" style="margin-top:18px"><strong>✕ Motivo do cancelamento</strong><p style="margin:8px 0 0">${esc(t.cancelReason||"Não informado")}</p>${t.cancelledAt?`<div class="help" style="margin-top:6px">Cancelado em ${new Date(t.cancelledAt).toLocaleString("pt-BR")}</div>`:""}</div>`:""}
- <div class="card" style="margin-top:18px"><h3>Status e finalização</h3><p class="muted">Para marcar como concluído, informe participantes e anexe um comprovante. Alterações em registros finalizados exigem liberação da edição.</p>${locked?`<div class="actions"><span class="badge ${statusBadgeClass(st)}" style="padding:10px 14px">${displayTrainingStatus(st)}${editable?' e bloqueado':''}</span></div>`:`<div class="field"><label for="editTrainingStatus">Status do treinamento</label><select id="editTrainingStatus"><option value="Cadastrado" ${st==='Cadastrado'?'selected':''}>Cadastrado</option><option value="Ministrado" ${st==='Ministrado'?'selected':''}>Concluído</option><option value="Cancelado" ${st==='Cancelado'?'selected':''}>Cancelado</option></select></div><div class="actions"><button class="btn btn-primary" onclick="changeTrainingStatus(${id})">Salvar status</button></div>`}</div>`;
+ <div class="card" style="margin-top:18px"><h3>Status e finalização</h3><p class="muted">Para marcar como concluído, informe participantes e anexe um comprovante. Alterações em registros finalizados exigem liberação da edição.</p>${locked?`<div class="actions"><span class="badge ${statusBadgeClass(st)}" style="padding:10px 14px">${displayTrainingStatus(st)}${editable?' e bloqueado':''}</span></div>`:`<div class="field"><label for="editTrainingStatus">Status do treinamento</label><select id="editTrainingStatus"><option value="Cadastrado" ${st==='Cadastrado'?'selected':''}>Cadastrado</option><option value="Ministrado" ${st==='Ministrado'?'selected':''}>Concluído</option><option value="Cancelado" ${st==='Cancelado'?'selected':''}>Cancelado</option></select></div><div class="actions"><button class="btn btn-primary" onclick="changeTrainingStatus(${id})">Salvar status</button></div>`}</div>
+ ${renderEfficacyCard(t,id,locked,editable,st)}`;
  toggleEditLocationFields();
+}
+async function saveReviewPlan(id){
+ const training=trainings.find(item=>item.id===id&&!item.deletedAt);if(!training||!SPFLY_AUTH.canEdit('trainings'))return;
+ const status=getTrainingStatus(training);
+ if((status==='Ministrado'||status==='Cancelado')&&!training.editMode){alert('Libere a edição do registro antes de alterar o planejamento da revisão.');return}
+ const days=Number(document.getElementById('editReviewDays')?.value),method=document.getElementById('editReviewMethod')?.value.trim();
+ if(!Number.isInteger(days)||days<1||days>3650||!method||method==='Outro'){alert('Informe um período de 1 a 3650 dias e descreva o método de revisão.');return}
+ const next=trainings.map(item=>item.id===id?{...item,reviewDays:days,reviewMethod:method}:item);
+ if(!await SPFLY_AUTH.persist(employees,next))return;
+ trainings=next;renderTrainingDetail(id);renderTrainings();alert('Planejamento da revisão salvo.');
+}
+async function saveEfficacyReview(id){
+ const training=trainings.find(item=>item.id===id&&!item.deletedAt);
+ if(!training||!SPFLY_AUTH.canEdit('trainings')||getTrainingStatus(training)!=='Ministrado')return;
+ if(!reviewDueDate(training)||!training.reviewMethod){alert('Defina o período e o método de revisão antes de avaliar.');return}
+ const reviewedOn=document.getElementById('efficacyReviewedOn')?.value,result=document.getElementById('efficacyResult')?.value,notes=document.getElementById('efficacyNotes')?.value.trim();
+ const trainingDate=dateKeyBR(training.date),today=dateKeyBR(new Date().toLocaleDateString('pt-BR'));
+ if(!reviewedOn||reviewedOn<trainingDate||reviewedOn>today){alert('A data da revisão deve estar entre a data do treinamento e hoje.');return}
+ if(!['Eficaz','Não eficaz'].includes(result)||!notes||notes.length<3){alert('Selecione o resultado e descreva a evidência da avaliação.');return}
+ if(!confirm(`Registrar a avaliação como "${result}"?`))return;
+ const review={result,reviewedOn,method:training.reviewMethod,notes,recordedAt:new Date().toISOString()};
+ const next=trainings.map(item=>item.id===id?{...item,efficacyReviews:[...(Array.isArray(item.efficacyReviews)?item.efficacyReviews:[]),review]}:item);
+ if(!await SPFLY_AUTH.persist(employees,next))return;
+ trainings=next;renderTrainingDetail(id);renderTrainings();alert('Avaliação de eficácia registrada.');
 }
 async function deleteTraining(id){
  if(!SPFLY_AUTH.isAdmin())return;
@@ -929,12 +986,14 @@ function renderReview(){
 async function registerTraining(){
  const name=document.getElementById("tfName").value.trim(), d=document.getElementById("tfDate").value, modality=document.querySelector('input[name="tfModality"]:checked')?.value||"Local", start=document.getElementById("tfStartTime").value,end=document.getElementById("tfEndTime").value;
  if(!name){alert("Informe o nome do treinamento.");return} if(!d){alert("Informe a data do treinamento.");return} if(!validateTrainingTimes(start,end))return; if(!document.getElementById("tfWorkload").value){alert("Informe a carga horária do curso.");return}
+ const reviewDays=Number(document.getElementById('tfReviewDays').value),reviewMethod=document.getElementById('tfReviewMethod').value.trim();
+ if(!Number.isInteger(reviewDays)||reviewDays<1||reviewDays>3650||!reviewMethod||reviewMethod==='Outro'){alert('Defina o período em dias e descreva o método de revisão.');return}
  const parts=d.split("-").reverse().join("/"), base=modality==="Local"?document.getElementById("tfBase").value:"", onlineInfo=modality==="Online"?(document.getElementById("tfOnlineInfo").value.trim()||""):"";
  const startTime=normalizeTime(start),endTime=normalizeTime(end);
- trainings.push({id:Date.now(),date:parts,name,cat:document.getElementById("tfCat").value,resp:document.getElementById("tfResp").value,startTime,endTime,time:buildTimeRange(startTime,endTime),workload:document.getElementById("tfWorkload").value,modality,base,onlineInfo,place:modality==="Local"?base:"Online",desc:document.getElementById("tfDesc").value,participants:[],docs:[],doc:"",contentDocs:[],contentDoc:"",obs:"",status:"Cadastrado",editMode:false});
+ trainings.push({id:Date.now(),date:parts,name,cat:document.getElementById("tfCat").value,resp:document.getElementById("tfResp").value,startTime,endTime,time:buildTimeRange(startTime,endTime),workload:document.getElementById("tfWorkload").value,modality,base,onlineInfo,place:modality==="Local"?base:"Online",desc:document.getElementById("tfDesc").value,participants:[],docs:[],doc:"",contentDocs:[],contentDoc:"",obs:"",status:"Cadastrado",editMode:false,reviewDays,reviewMethod,efficacyReviews:[]});
  if(!await persist())return;clearNewTraining();showPage("pageTrainings");renderTrainings();renderDashboard();alert("Treinamento cadastrado. Após ministrá-lo, abra o registro para informar participantes e anexar a comprovação.");
 }
-function clearNewTraining(){["tfName","tfDate","tfWorkload","tfResp","tfDesc","tfOnlineInfo"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});document.getElementById("tfStartTime").value="08:00";document.getElementById("tfEndTime").value="12:00";document.getElementById("tfCat").value="Integração";document.getElementById("tfBase").value="MATRIZ";document.querySelector('input[name="tfModality"][value="Local"]').checked=true;toggleTrainingLocationFields()}
+function clearNewTraining(){["tfName","tfDate","tfWorkload","tfResp","tfDesc","tfOnlineInfo","tfReviewMethod"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});document.getElementById('tfReviewDays').value='30';document.getElementById("tfStartTime").value="08:00";document.getElementById("tfEndTime").value="12:00";document.getElementById("tfCat").value="Integração";document.getElementById("tfBase").value="MATRIZ";document.querySelector('input[name="tfModality"][value="Local"]').checked=true;toggleTrainingLocationFields()}
 function openParticipantEditor(id){
  const t=trainings.find(x=>x.id===id);if(!t)return; selectedParticipants=new Set(t.participants||[]);
  document.getElementById("modalTitle").textContent="Participantes — "+t.name;
