@@ -1,7 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server@^1'
 
 const allowedPages = new Set(['dashboard', 'employees', 'trainings', 'reports'])
-const allowedRoles = new Set(['admin', 'rh', 'usuario'])
+const allowedRoles = new Set(['admin', 'rh', 'usuario', 'funcionario'])
 
 function errorResponse(message: string, status: number) {
   return Response.json({ error: message }, { status })
@@ -44,14 +44,27 @@ export default {
     }
 
     const email = String(body.email || '').trim().toLowerCase()
-    const fullName = String(body.fullName || '').trim().replace(/\s+/g, ' ')
+    let fullName = String(body.fullName || '').trim().replace(/\s+/g, ' ')
     const role = String(body.role || '')
     const pages = Array.isArray(body.pages) ? body.pages : []
+    let employeeId: number | null = null
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return errorResponse('Informe um e-mail válido.', 400)
-    if (fullName.length < 2 || fullName.length > 120) return errorResponse('Informe um nome entre 2 e 120 caracteres.', 400)
     if (!allowedRoles.has(role) || pages.some(page => typeof page !== 'string' || !allowedPages.has(page)) || (role === 'usuario' && pages.length === 0)) {
       return errorResponse('Perfil ou telas inválidos.', 400)
     }
+    if (role === 'funcionario') {
+      employeeId = Number(body.employeeId)
+      if (!Number.isSafeInteger(employeeId) || employeeId <= 0) return errorResponse('Selecione um funcionário válido.', 400)
+      const { data: state, error: stateError } = await ctx.supabaseAdmin.from('app_state')
+        .select('employees').eq('id', 1).single()
+      if (stateError) return errorResponse('Não foi possível conferir o cadastro do funcionário.', 503)
+      const employee = (Array.isArray(state.employees) ? state.employees : [])
+        .find((item: { id?: number; name?: string; status?: string }) => Number(item.id) === employeeId)
+      if (!employee || employee.status === 'Inativo') return errorResponse('Funcionário não encontrado ou inativo.', 400)
+      fullName = String(employee.name || '').trim().replace(/\s+/g, ' ')
+      if (fullName.length < 2) return errorResponse('O cadastro do funcionário está sem nome.', 400)
+    }
+    if (fullName.length < 2 || fullName.length > 120) return errorResponse('Informe um nome entre 2 e 120 caracteres.', 400)
     const initialPassword = Deno.env.get('SPFLY_INITIAL_PASSWORD')
     if (!initialPassword || initialPassword.length < 6) return errorResponse('Senha inicial não configurada no servidor.', 503)
 
@@ -63,6 +76,7 @@ export default {
     const { error: insertError } = await ctx.supabaseAdmin.from('admin_users').insert({
       id: created.user.id, email, full_name: fullName, invited_by: callerId, active: true,
       access_role: role, allowed_pages: role === 'usuario' ? [...new Set(pages)] : [],
+      employee_id: employeeId,
       must_change_password: true,
     })
     if (insertError) {
