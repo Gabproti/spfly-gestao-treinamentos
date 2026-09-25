@@ -1,32 +1,20 @@
-# SPFLY Admin — V8
+# SPFLY Admin — V9
 
-A V8 integra o módulo **Capacitação** à plataforma existente. Trilhas, cursos, inscrições, conclusões e certificados são compartilhados pelo Supabase. O GitHub Pages continua hospedando a interface. Os cursos abrem por links externos; somente certificados são enviados ao armazenamento privado.
+A V9 mantém o módulo Capacitação e simplifica os perfis para **Administrador** e **Usuário**. O administrador escolhe, por pessoa, quais telas podem ser visualizadas e quais podem ser editadas. Início e Relatórios são apenas de consulta. Na Capacitação, a permissão de edição do usuário significa somente enviar o próprio certificado; trilhas, cursos, inscrições e conclusões ficam sob controle do administrador.
 
-## Atualizar a V7 existente
+## Atualizar a V8 existente
 
-1. No SQL Editor do projeto Supabase, execute `supabase/migration-v8-capacitacao.sql` **uma vez**. Ela cria as tabelas, políticas de acesso e o bucket privado `cap-certificates`; não apaga funcionários, treinamentos nem anexos anteriores.
-2. Atualize a Edge Function `invite-admin` com `supabase/functions/invite-admin/index.ts`. Mantenha o secret `SPFLY_INITIAL_PASSWORD` já configurado. A função permite criar conta com perfil **Funcionário**, vinculada ao cadastro da pessoa. A primeira senha segue o fluxo obrigatório de troca da V7.
-3. Envie `index.html`, `auth.js`, `capacitation.js`, `capacitation.css`, `config.js`, `spfly_logo.png` e `.nojekyll` para a raiz do repositório GitHub Pages. A URL permanece `https://gabproti.github.io/spfly-gestao-treinamentos/`.
+1. Execute `supabase/migration-v9-access-certificates.sql` **uma vez** no SQL Editor do projeto Supabase. Ela preserva funcionários, treinamentos, trilhas e anexos. Contas RH passam a Usuário com visualização e edição de Funcionários/Treinamentos; contas Funcionário passam a Usuário com visualização de Capacitação e permissão de anexo. As conclusões anteriores de cursos que exigem certificado ficam pendentes de conferência.
+2. Atualize a função `invite-admin` usando `supabase/functions/invite-admin/index.ts`. Mantenha o secret `SPFLY_INITIAL_PASSWORD` configurado.
+3. Publique `index.html`, `auth.js`, `capacitation.js` e `capacitation.css` na raiz do GitHub Pages. `config.js`, `spfly_logo.png` e `.nojekyll` continuam necessários.
 
-Para instalação nova, execute `supabase/schema.sql`, depois as migrações V6, V7 e V8 nessa ordem. A V5 é necessária apenas ao atualizar uma instalação anterior à V6. Consulte as instruções de bootstrap da V7 para criar a primeira conta administrativa.
+## Certificados
 
-## Uso
+- O usuário precisa estar vinculado a um cadastro de funcionário e ter visualização e permissão de anexo na tela Capacitação.
+- O portal aceita PDF/JPG/JPEG/PNG de até 10 MB e verifica o início do arquivo antes do envio. A conferência de conteúdo e correspondência com funcionário/curso é manual.
+- O administrador abre o arquivo e então o aprova ou rejeita com motivo. Um certificado aprovado confirma a conclusão do curso e não pode ser substituído. Se rejeitado, o usuário vê o motivo e pode enviar um novo arquivo.
+- A regra é aplicada no banco e no armazenamento privado. Ocultar botões na interface não é a única proteção.
 
-- **Administrador/RH:** criar e editar trilhas; adicionar cursos por URL; inscrever funcionários; consultar progresso individual, atrasos e certificados. Cursos e trilhas podem ser inativados ou encerrados sem excluir o histórico.
-- **Funcionário:** entra com conta própria ligada ao seu cadastro, vê apenas suas inscrições, abre links em nova aba, marca manualmente a conclusão e anexa PDF/JPG/JPEG/PNG de até 10 MB quando o certificado for obrigatório. A troca da senha inicial continua obrigatória.
-- A data limite é definida na inscrição com base na data inicial e na duração da trilha. Ao editar a duração ou data da trilha, inscrições anteriores mantêm seu prazo original para preservar o histórico. Novas inscrições usam as datas atualizadas.
-- O progresso considera cursos **ativos**; cursos concluídos e depois inativados continuam visíveis no histórico individual.
+## Instalação nova
 
-## Segurança
-
-- As tabelas têm RLS. RH e administradores consultam todas as trilhas e inscrições; funcionário consulta somente trilhas atribuídas a ele e seu próprio progresso.
-- Certificados ficam no bucket privado `cap-certificates`. A visualização usa URL assinada de curta duração; o envio exige conclusão prévia do curso e vínculo com a inscrição.
-- `config.js` contém apenas a chave pública do projeto. Nunca coloque `service_role`, secret key ou senha inicial no repositório.
-
-## Arquivos
-
-- `index.html`: interface e navegação existentes, acrescidas de Capacitação.
-- `capacitation.js` e `capacitation.css`: lógica e visual do módulo, incluindo modo escuro e layout responsivo.
-- `auth.js`: autenticação e criação de contas, com vinculação ao funcionário.
-- `supabase/migration-v8-capacitacao.sql`: estrutura e regras do banco.
-- `supabase/functions/invite-admin/index.ts`: função de criação de usuários e troca obrigatória da senha inicial.
+Execute `supabase/schema.sql`, depois as migrações V6, V7, V8 e V9, nessa ordem. Configure a autenticação e a primeira conta administrativa conforme as instruções da V7. A V5 é necessária apenas quando se atualiza uma instalação anterior à V6.
