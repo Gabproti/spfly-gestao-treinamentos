@@ -466,7 +466,9 @@
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, canEdit, updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };
+  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, canEdit,
+    isAdmin: () => currentAccess?.active && currentAccess.access_role === 'admin',
+    updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };
 
   if (!window.supabase?.createClient || !config.url || !config.publishableKey) {
     showLogin('Não foi possível carregar a configuração de acesso.');
