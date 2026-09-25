@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -174,6 +174,7 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 .admin-form{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.admin-form .field{flex:1;min-width:220px}.admin-form .btn{height:42px}
 .status-dot-mini.black{background:#202326;box-shadow:0 0 0 1px #aab2ba}
 .file-box .file-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.file-remove{width:26px;height:26px;padding:0;border:0;border-radius:6px;background:transparent;color:#c62828;font-size:18px;line-height:1;cursor:pointer}.file-remove:hover,.file-remove:focus-visible{background:#fff0f0;outline:2px solid #eab2b2;outline-offset:1px}
 .auth-screen{background:radial-gradient(circle at 15% 10%,#ffe0d1 0,transparent 30%),linear-gradient(135deg,#f6f8fb,#e8edf2);padding:24px}
 #loginCard{width:min(100%,880px);max-width:none;padding:0;display:grid;grid-template-columns:.94fr 1fr;overflow:hidden;border:1px solid #e4e9ee;box-shadow:0 24px 70px #15222d25}
 .login-brand{position:relative;min-height:485px;padding:52px 40px;background:linear-gradient(150deg,#171b1e,#252a2d);color:#fff;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
@@ -294,15 +295,13 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div class="brand"><img class="spfly-logo" src="spfly_logo.png?v=7" alt="SPFLY Logística"><small>GESTÃO DE TREINAMENTOS</small></div>
   <div class="nav-section">
     <button class="nav-btn active" data-page="dashboard"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-home"/></svg><span class="nav-label">Início</span></button>
-    <button class="nav-btn" data-page="pageEmployees"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Funcionários</span></button>
     <button class="nav-btn" data-page="pageTrainings"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg><span class="nav-label">Treinamentos</span></button>
     <button class="nav-btn" data-page="pageCapacitation"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-cap"/></svg><span class="nav-label">Capacitação</span></button>
+    <button class="nav-btn" data-page="pageEmployees"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Funcionários</span></button>
     <button class="nav-btn" data-menu="reports"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg><span class="nav-label">Relatórios</span><span class="nav-chevron">⌄</span></button>
     <div class="subnav" id="reports">
       <button data-page="pageReportEmployee">Por Funcionário</button><button data-page="pageReportTraining">Por Treinamento</button><button data-page="pageReportSector">Por Setor</button>
     </div>
-    <button class="nav-btn" data-menu="menuRegisters"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-database"/></svg><span class="nav-label">Cadastros</span><span class="nav-chevron">⌄</span></button>
-    <div class="subnav" id="menuRegisters"><button onclick="openRegisterList('Setores')">Setores</button><button onclick="openRegisterList('Cargos')">Cargos</button></div>
     <button class="nav-btn" data-page="pageAdmins"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span class="nav-label">Acessos</span></button>
   </div>
   <div class="sidebar-footer"><button class="sidebar-profile" onclick="SPFLY_AUTH.editProfile()" aria-label="Meu cadastro"><span class="avatar" id="sidebarAdminInitials">AD</span><span><strong id="sidebarAdminName">Administrador</strong><small id="sidebarAccessRole">Administrador</small></span></button><button class="sidebar-logout" onclick="SPFLY_AUTH.logout()">↪ <span>Sair</span></button></div>
@@ -345,7 +344,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 </div>
 
 <div id="pageEmployees" class="page">
-  <div class="header-row"><div><h1>Lista de Funcionários</h1><div class="muted">Gerencie os colaboradores da empresa.</div></div><button class="btn btn-primary" data-requires-edit="employees" onclick="showPage('pageNewEmployee')">+ Novo Funcionário</button></div>
+  <div class="header-row"><div><h1>Lista de Funcionários</h1><div class="muted">Gerencie os colaboradores da empresa.</div></div><div class="training-header-actions"><button class="btn btn-secondary" onclick="openRegisterList('Setores')">Gerenciar setores</button><button class="btn btn-primary" data-requires-edit="employees" onclick="newEmployee()">+ Novo Funcionário</button></div></div>
   <div class="card">
     <div class="filters"><input id="employeeSearch" placeholder="Pesquisar por nome, documento ou matrícula..." oninput="renderEmployees()"><select id="sectorFilter" onchange="renderEmployees()"><option value="">Todos os setores</option><option>Operacional</option><option>Administrativo</option><option>Logística</option><option>RH</option><option>TI</option></select><select id="statusFilter" onchange="renderEmployees()"><option value="">Todos os status</option><option>Ativo</option><option>Inativo</option></select></div>
     <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Documento</th><th>Setor</th><th>Cargo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="employeeTable"></tbody></table>
@@ -353,7 +352,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 </div>
 
 <div id="pageNewEmployee" class="page">
-  <div class="header-row"><div><h1>Novo Funcionário</h1><div class="muted">Cadastre um novo colaborador.</div></div></div>
+  <div class="header-row"><div><h1 id="employeeFormTitle">Novo Funcionário</h1><div class="muted" id="employeeFormHint">Cadastre um novo colaborador.</div></div></div>
   <div class="card form-card"><div class="form-grid">
     <div class="field full"><label>Nome completo *</label><input id="efName"></div>
     <div class="field"><label for="efDocumentType">Tipo de documento *</label><select id="efDocumentType" onchange="updateEmployeeDocumentType()"><option value="CPF">CPF</option><option value="CNPJ">CNPJ</option></select></div>
@@ -361,11 +360,12 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="field"><label>Matrícula *</label><input id="efMat"></div>
     <div class="field"><label>Data de nascimento</label><input id="efBirth" type="date"></div>
     <div class="field"><label>Data de admissão</label><input id="efHire" type="date"></div>
-    <div class="field"><label>Setor</label><select id="efSector"><option>Operacional</option><option>Administrativo</option><option>Logística</option><option>RH</option><option>TI</option><option>Comercial</option></select></div>
+    <div class="field"><label for="efSector">Setor</label><select id="efSector"></select><button type="button" class="btn btn-secondary" style="margin-top:7px" onclick="openRegisterList('Setores')">Gerenciar setores</button></div>
     <div class="field"><label>Cargo</label><input id="efRole"></div>
     <div class="field"><label>E-mail</label><input id="efEmail" type="email"></div>
     <div class="field"><label>Telefone</label><input id="efPhone"></div>
-  </div><div class="actions"><button class="btn btn-secondary" onclick="showPage('pageEmployees')">Cancelar</button><button class="btn btn-primary" onclick="saveEmployee()">Salvar Funcionário</button></div></div>
+    <div class="field"><label for="efStatus">Status</label><select id="efStatus"><option>Ativo</option><option>Inativo</option></select></div>
+  </div><div class="actions"><button class="btn btn-secondary" onclick="cancelEmployeeForm()">Cancelar</button><button id="employeeSaveButton" class="btn btn-primary" onclick="saveEmployee()">Salvar Funcionário</button></div></div>
 </div>
 
 <div id="pageTrainings" class="page">
@@ -481,6 +481,8 @@ function activeTrainings(){return trainings.filter(t=>!t.deletedAt)}
 function toggleDeletedTrainings(){showDeletedTrainings=!showDeletedTrainings;calendarSelectedDate="";renderTrainings()}
 let selectedParticipants=new Set();
 let currentStep=1;
+let editingEmployeeId=null;
+let pendingSector='';
 
 function persist(){return window.SPFLY_AUTH.persist(employees,trainings);}
 function showPage(id){
@@ -565,9 +567,43 @@ function renderDashboardTrainingCalendar(){
  if(dashboardSelectedDate){const items=occupied[dashboardSelectedDate]||[];list.innerHTML=`<div class="table-head"><strong>${formatKeyDate(dashboardSelectedDate)} — ${items.length} treinamento${items.length!==1?"s":""}</strong><button class="btn btn-secondary" onclick="clearDashboardCalendarDate()">Limpar data</button></div>`;}else{list.innerHTML='<div class="muted" style="margin-top:10px">Clique em uma data ocupada para filtrar os treinamentos.</div>'}
 }
 function renderEmployees(){
+ const sectorFilter=document.getElementById('sectorFilter'),selectedSector=sectorFilter.value;
+ sectorFilter.innerHTML='<option value="">Todos os setores</option>'+employeeSectors().map(sector=>`<option value="${esc(sector)}">${esc(sector)}</option>`).join('');
+ sectorFilter.value=selectedSector;
  const q=(document.getElementById("employeeSearch")?.value||"").toLowerCase(), s=document.getElementById("sectorFilter")?.value||"", st=document.getElementById("statusFilter")?.value||"";
- const rows=employees.filter(e=>(!q||[e.name,e.cpf,e.mat].some(x=>x.toLowerCase().includes(q)))&&(!s||e.sector===s)&&(!st||e.status===st));
- document.getElementById("employeeTable").innerHTML=rows.map(e=>`<tr><td>${esc(e.mat)}</td><td><strong>${esc(e.name)}</strong></td><td>${esc(e.cpf)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge ${e.status==="Ativo"?"badge-green":"badge-red"}">${esc(e.status)}</span></td><td><button class="btn btn-secondary" onclick="viewEmployee(${Number(e.id)})">Visualizar</button></td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhum funcionário encontrado.</td></tr>`;
+ const rows=employees.filter(e=>(!q||[e.name,e.cpf,e.mat].some(x=>String(x||'').toLowerCase().includes(q)))&&(!s||e.sector===s)&&(!st||e.status===st));
+ document.getElementById("employeeTable").innerHTML=rows.map(e=>`<tr><td>${esc(e.mat)}</td><td><strong>${esc(e.name)}</strong></td><td>${esc(e.cpf)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge ${e.status==="Ativo"?"badge-green":"badge-red"}">${esc(e.status)}</span></td><td><button class="btn btn-secondary" onclick="viewEmployee(${Number(e.id)})">Visualizar</button>${SPFLY_AUTH.canEdit('employees')?` <button class="btn btn-secondary" onclick="editEmployee(${Number(e.id)})">Editar</button>`:''}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhum funcionário encontrado.</td></tr>`;
+}
+function employeeSectors(){const assigned=employees.map(e=>e.sector).filter(Boolean);return [...new Set([...(assigned.length?[]:['Operacional','Administrativo','Logística','RH','TI','Comercial']),...assigned,pendingSector].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
+function fillEmployeeSectors(value=''){
+ const select=document.getElementById('efSector');
+ select.innerHTML=employeeSectors().map(sector=>`<option value="${esc(sector)}">${esc(sector)}</option>`).join('');
+ if(value)select.value=value;
+}
+function cancelEmployeeForm(){editingEmployeeId=null;showPage('pageEmployees')}
+function newEmployee(){
+ if(!SPFLY_AUTH.canEdit('employees'))return;
+ editingEmployeeId=null;
+ document.querySelectorAll('#pageNewEmployee input').forEach(input=>input.value='');
+ document.getElementById('efDocumentType').value='CPF';document.getElementById('efStatus').value='Ativo';
+ updateEmployeeDocumentType();fillEmployeeSectors(pendingSector);
+ document.getElementById('employeeFormTitle').textContent='Novo Funcionário';
+ document.getElementById('employeeFormHint').textContent='Cadastre um novo colaborador.';
+ document.getElementById('employeeSaveButton').textContent='Salvar Funcionário';
+ showPage('pageNewEmployee');
+}
+function editEmployee(id){
+ if(!SPFLY_AUTH.canEdit('employees'))return;
+ const employee=employees.find(item=>Number(item.id)===Number(id));if(!employee)return;
+ editingEmployeeId=employee.id;
+ for(const [field,value] of [['efName',employee.name],['efCpf',employee.cpf],['efMat',employee.mat],['efBirth',employee.birth],['efHire',employee.hire],['efRole',employee.role],['efEmail',employee.email],['efPhone',employee.phone]])document.getElementById(field).value=value||'';
+ document.getElementById('efDocumentType').value=employee.documentType||'CPF';
+ document.getElementById('efStatus').value=employee.status||'Ativo';
+ updateEmployeeDocumentType();fillEmployeeSectors(employee.sector);
+ document.getElementById('employeeFormTitle').textContent='Editar Funcionário';
+ document.getElementById('employeeFormHint').textContent='Atualize os dados deste colaborador.';
+ document.getElementById('employeeSaveButton').textContent='Salvar alterações';
+ closeModal();showPage('pageNewEmployee');
 }
 function formatBrazilianDocument(value,type){
  const digits=String(value||"").replace(/\D/g,"").slice(0,type==="CNPJ"?14:11);
@@ -585,18 +621,21 @@ function formatEmployeeDocumentInput(){
  const input=document.getElementById("efCpf");input.value=formatBrazilianDocument(input.value,document.getElementById("efDocumentType").value);
 }
 async function saveEmployee(){
+ if(!SPFLY_AUTH.canEdit('employees'))return;
  const name=document.getElementById("efName").value.trim(), type=document.getElementById("efDocumentType").value, cpf=formatBrazilianDocument(document.getElementById("efCpf").value,type), mat=document.getElementById("efMat").value.trim();
  const digits=cpf.replace(/\D/g,"");
  if(!name||!cpf||!mat){alert("Preencha Nome, documento e Matrícula.");return}
  if(digits.length!==(type==="CNPJ"?14:11)){alert("Informe um "+type+" completo.");return}
- if(employees.some(e=>String(e.cpf||"").replace(/\D/g,"")===digits||e.mat===mat)){alert("Documento ou matrícula já cadastrados.");return}
- employees.push({id:Date.now(),mat,name,cpf,documentType:type,sector:document.getElementById("efSector").value,role:document.getElementById("efRole").value||"Não informado",status:"Ativo"});
- if(!await persist())return; document.querySelectorAll("#pageNewEmployee input").forEach(i=>i.value="");document.getElementById("efDocumentType").value="CPF";updateEmployeeDocumentType();showPage("pageEmployees");
+ if(employees.some(e=>Number(e.id)!==Number(editingEmployeeId)&&(String(e.cpf||"").replace(/\D/g,"")===digits||e.mat===mat))){alert("Documento ou matrícula já cadastrados.");return}
+ const fields={mat,name,cpf,documentType:type,sector:document.getElementById('efSector').value,role:document.getElementById('efRole').value.trim()||'Não informado',status:document.getElementById('efStatus').value,birth:document.getElementById('efBirth').value,hire:document.getElementById('efHire').value,email:document.getElementById('efEmail').value.trim(),phone:document.getElementById('efPhone').value.trim()};
+ const next=editingEmployeeId===null?[...employees,{id:Date.now(),...fields}]:employees.map(e=>Number(e.id)===Number(editingEmployeeId)?{...e,...fields}:e);
+ if(!await SPFLY_AUTH.persist(next,trainings))return;
+ employees=next;window.SPFLY_CAP?.updateEmployees(employees);editingEmployeeId=null;pendingSector='';showPage('pageEmployees');
 }
 function viewEmployee(id){
  const e=employees.find(x=>x.id===id), hist=activeTrainings().filter(t=>t.participants.includes(id));
  document.getElementById("modalTitle").textContent=e.name;
- document.getElementById("modalBody").innerHTML=`<p><strong>${esc(e.documentType||"CPF")}:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p><hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
+ document.getElementById("modalBody").innerHTML=`<p><strong>${esc(e.documentType||"CPF")}:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p>${SPFLY_AUTH.canEdit('employees')?`<button class="btn btn-secondary" onclick="editEmployee(${Number(e.id)})">Editar funcionário</button>`:''}<hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
  document.getElementById("modal").classList.add("open");
 }
 function closeModal(){document.getElementById("modal").classList.remove("open")}
@@ -716,10 +755,10 @@ function renderTrainingDetail(id){
  <div class="card"><h3>Documentação do treinamento</h3>
  <p class="muted">A lista de presença/fotos comprovam a realização. O material abaixo registra o conteúdo utilizado no curso.</p>
  <h4 style="margin:18px 0 8px">📋 Lista de presença / fotos</h4>
- ${(t.docs&&t.docs.length)?t.docs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📄 <strong>${esc(d)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingDocument(${id},${i})">👁 Visualizar</button>${!locked?`<button class="btn btn-danger" onclick="removeTrainingAttachment(${id},'doc',${i})">Remover</button>`:""}</span></div>`).join(""):(t.doc?`<div class="file-box"><span>📄 <strong>${esc(t.doc)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingDocument(${id})">👁 Visualizar</button>${!locked?`<button class="btn btn-danger" onclick="removeTrainingAttachment(${id},'doc',0)">Remover</button>`:""}</span></div>`:`<div class="empty">Nenhum comprovante anexado.</div>`)}
+ ${(t.docs&&t.docs.length)?t.docs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📄 <strong>${esc(d)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingDocument(${id},${i})">👁 Visualizar</button>${!locked?`<button class="file-remove" type="button" aria-label="Remover anexo" title="Remover anexo" onclick="removeTrainingAttachment(${id},'doc',${i})">×</button>`:""}</span></div>`).join(""):(t.doc?`<div class="file-box"><span>📄 <strong>${esc(t.doc)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingDocument(${id})">👁 Visualizar</button>${!locked?`<button class="file-remove" type="button" aria-label="Remover anexo" title="Remover anexo" onclick="removeTrainingAttachment(${id},'doc',0)">×</button>`:""}</span></div>`:`<div class="empty">Nenhum comprovante anexado.</div>`)}
  ${!locked?`<div class="upload" style="margin-top:12px"><strong>📎 Anexar comprovantes</strong><span class="muted">PDF, JPG, JPEG ou PNG.</span><br><input id="detailFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style="margin-top:15px"></div>`:""}
  <h4 style="margin:22px 0 8px">📚 Material utilizado no curso</h4>
- ${(t.contentDocs&&t.contentDocs.length)?t.contentDocs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📚 <strong>${esc(d)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingContent(${id},${i})">👁 Visualizar</button>${!locked?`<button class="btn btn-danger" onclick="removeTrainingAttachment(${id},'content',${i})">Remover</button>`:""}</span></div>`).join(""):(t.contentDoc?`<div class="file-box"><span>📚 <strong>${esc(t.contentDoc)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingContent(${id},0)">👁 Visualizar</button>${!locked?`<button class="btn btn-danger" onclick="removeTrainingAttachment(${id},'content',0)">Remover</button>`:""}</span></div>`:`<div class="empty">Nenhum material anexado.</div>`)}
+ ${(t.contentDocs&&t.contentDocs.length)?t.contentDocs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📚 <strong>${esc(d)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingContent(${id},${i})">👁 Visualizar</button>${!locked?`<button class="file-remove" type="button" aria-label="Remover anexo" title="Remover anexo" onclick="removeTrainingAttachment(${id},'content',${i})">×</button>`:""}</span></div>`).join(""):(t.contentDoc?`<div class="file-box"><span>📚 <strong>${esc(t.contentDoc)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingContent(${id},0)">👁 Visualizar</button>${!locked?`<button class="file-remove" type="button" aria-label="Remover anexo" title="Remover anexo" onclick="removeTrainingAttachment(${id},'content',0)">×</button>`:""}</span></div>`:`<div class="empty">Nenhum material anexado.</div>`)}
  ${!locked?`<div class="upload" style="margin-top:12px"><strong>📎 Anexar conteúdo do treinamento</strong><span class="muted">PDF, PowerPoint, Word, Excel, imagens ou ZIP.</span><br><input id="contentFile" type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" multiple style="margin-top:15px"></div>`:""}
  <div class="field" style="margin-top:15px"><label>Observações</label><textarea id="detailObs" ${locked?"disabled":""}>${esc(t.obs||"")}</textarea></div>${!locked?`<div class="actions"><button class="btn btn-primary" onclick="saveTrainingDocument(${id})">Salvar documentação</button></div>`:""}</div></div>
  <div class="card" style="margin-top:18px"><div class="table-head"><strong>Participantes (${t.participants?.length||0})</strong>${!locked?`<button class="btn btn-primary" onclick="openParticipantEditor(${id})">+ Informar participantes</button>`:""}</div>
@@ -840,10 +879,29 @@ async function requestTrainingEdit(id){
 async function lockTraining(id){const t=trainings.find(x=>x.id===id);t.editMode=false;if(!await persist())return;renderTrainingDetail(id);alert("Treinamento bloqueado novamente.")}
 async function removeParticipant(tid,pid){const t=trainings.find(x=>x.id===tid);if(getTrainingStatus(t)==="Ministrado"&&!t.editMode){alert("Treinamento bloqueado para edição.");return}t.participants=t.participants.filter(x=>x!==pid);if(!await persist())return;renderTrainingDetail(tid);renderDashboard();}
 function openRegisterList(tipo){
- const items=tipo==="Setores"?[...new Set(employees.map(e=>e.sector).filter(Boolean))]:[...new Set(employees.map(e=>e.role).filter(Boolean))];
- document.getElementById("modalTitle").textContent=tipo;
- document.getElementById("modalBody").innerHTML=`<div class="notice">Cadastro de ${tipo.toLowerCase()} utilizado pelos registros de funcionários.</div><table><thead><tr><th>Descrição</th><th>Funcionários</th></tr></thead><tbody>${items.map(x=>{const n=tipo==="Setores"?employees.filter(e=>e.sector===x).length:employees.filter(e=>e.role===x).length;return `<tr><td>${esc(x)}</td><td>${n}</td></tr>`}).join("")||`<tr><td colspan="2" class="empty">Nenhum registro.</td></tr>`}</tbody></table>`;
+ if(tipo!=='Setores')return;
+ const items=[...new Set(employees.map(e=>e.sector).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+ document.getElementById('modalTitle').textContent='Setores';
+ document.getElementById('modalBody').innerHTML=`<p class="muted">Os setores usados pelos funcionários aparecem aqui. Para criar um novo, selecione-o no cadastro de um funcionário.</p>${SPFLY_AUTH.canEdit('employees')?'<button class="btn btn-secondary" onclick="addSector()">+ Novo setor</button>':''}<table><thead><tr><th>Setor</th><th>Funcionários</th>${SPFLY_AUTH.canEdit('employees')?'<th>Ação</th>':''}</tr></thead><tbody>${items.map((sector,index)=>`<tr><td>${esc(sector)}</td><td>${employees.filter(e=>e.sector===sector).length}</td>${SPFLY_AUTH.canEdit('employees')?`<td><button class="btn btn-secondary" onclick="renameSector(${index})">Renomear</button></td>`:''}</tr>`).join('')||'<tr><td colspan="3" class="empty">Nenhum setor utilizado.</td></tr>'}</tbody></table>`;
  document.getElementById("modal").classList.add("open");
+}
+function addSector(){
+ if(!SPFLY_AUTH.canEdit('employees'))return;
+ const name=prompt('Nome do novo setor:')?.trim();if(!name)return;
+ if(employeeSectors().some(sector=>sector.toLocaleLowerCase('pt-BR')===name.toLocaleLowerCase('pt-BR'))){alert('Este setor já existe.');return}
+ pendingSector=name;fillEmployeeSectors(name);closeModal();
+ if(!document.getElementById('pageNewEmployee').classList.contains('active'))newEmployee();
+}
+async function renameSector(index){
+ if(!SPFLY_AUTH.canEdit('employees'))return;
+ const sectors=[...new Set(employees.map(e=>e.sector).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+ const oldName=sectors[index];if(!oldName)return;
+ const newName=prompt('Novo nome para o setor:',oldName)?.trim();if(!newName||newName===oldName)return;
+ if(sectors.some(sector=>sector.toLocaleLowerCase('pt-BR')===newName.toLocaleLowerCase('pt-BR'))){alert('Este setor já existe.');return}
+ if(!confirm(`Atualizar o setor de ${employees.filter(e=>e.sector===oldName).length} funcionário(s) de "${oldName}" para "${newName}"?`))return;
+ const next=employees.map(e=>e.sector===oldName?{...e,sector:newName}:e);
+ if(!await SPFLY_AUTH.persist(next,trainings))return;
+ employees=next;window.SPFLY_CAP?.updateEmployees(employees);fillEmployeeSectors(newName);renderEmployees();openRegisterList('Setores');
 }
 function nextStep(n){
  if(n===2 && !document.getElementById("tfName").value.trim()){alert("Informe o nome do treinamento.");return}
