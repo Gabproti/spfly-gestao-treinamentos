@@ -189,6 +189,11 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 .access-form select,.access-row select{height:42px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--surface);color:inherit}.access-pages{margin-top:17px;padding:15px;border:1px solid var(--border);border-radius:10px;background:var(--light)}.access-pages[hidden]{display:none}.access-checks{display:flex;flex-wrap:wrap;gap:10px;margin-top:11px}.access-checks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:12px}.access-checks input{accent-color:var(--orange)}.access-row{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--border);border-radius:10px;margin-top:10px;background:var(--surface)}.access-row-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.access-row .access-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.access-row .access-checks{margin:0}.access-row .btn{padding:9px 12px}
 .created-user-result{margin-top:18px;padding:16px;border:1px solid #f5b89e;border-radius:10px;background:#fff5ef;color:#52240f}.created-user-result strong,.created-user-result code{display:block;margin-top:7px}.created-user-result code{font-size:19px;letter-spacing:.08em;user-select:all}.created-user-result p{margin:10px 0 0;font-size:13px}.access-row .pending-password{font-size:12px;color:#b4491c}
 .access-permissions{display:grid;gap:8px;width:100%;margin-top:10px}.permission-row{display:grid;grid-template-columns:minmax(120px,1fr) auto auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}.permission-row label{display:flex;gap:5px;align-items:center;font-size:13px}.permission-row input{accent-color:var(--orange)}.permission-row input:disabled{opacity:.4}.access-controls .access-permissions{max-width:600px}@media(max-width:700px){.permission-row{grid-template-columns:1fr 1fr}.permission-row strong{grid-column:1/-1}}
+/* Lista compacta de acessos: os detalhes de edição abrem somente quando solicitados. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.training-header-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.training-header-actions .btn-danger{border:1px solid #eab2b2}.training-header-actions .btn-danger:hover{background:#ffe1e1}.training-removed-note{padding:12px 14px;margin-bottom:14px;background:#fff8e8;border:1px solid #f1d9a0;border-radius:8px;color:#735a1e;font-size:13px}
+.access-directory{max-width:1100px;margin-top:24px}.access-directory-head{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.access-directory-head h2{margin:0 0 4px}.access-directory-tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.access-directory-tools input,.access-directory-tools select{height:42px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:inherit;padding:9px 12px}.access-directory-tools input{min-width:min(300px,75vw)}.access-directory-tools small{color:var(--muted);white-space:nowrap}.access-list-head,.access-row-head{display:grid;grid-template-columns:minmax(170px,1.25fr) minmax(105px,.65fr) minmax(220px,2fr) minmax(105px,.65fr) auto;gap:14px;align-items:center}.access-list-head{padding:9px 15px;color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.04em}.access-directory .access-row{padding:0;margin:0;border:0;border-top:1px solid var(--border);border-radius:0;background:var(--surface);gap:0}.access-directory .access-row:last-child{border-bottom:1px solid var(--border)}.access-directory .access-row-head{padding:13px 15px;min-height:72px}.access-identity{min-width:0}.access-identity strong,.access-identity small{display:block;overflow-wrap:anywhere}.access-identity strong{font-size:14px}.access-identity small{font-size:12px;color:var(--muted);margin-top:3px}.access-role-pill{display:inline-block;width:max-content;max-width:100%;padding:6px 9px;background:var(--light);border:1px solid var(--border);border-radius:99px;font-size:12px;font-weight:700}.access-screen-summary{display:flex;gap:5px;flex-wrap:wrap;color:var(--muted);font-size:12px}.access-screen-chip{display:inline-block;padding:5px 7px;border-radius:6px;background:var(--light);border:1px solid var(--border);color:var(--muted)}.access-screen-chip.can-edit{background:#fff1e9;border-color:#ffd5c0;color:#ac4517}.access-status{display:flex;flex-direction:column;gap:5px;align-items:flex-start}.access-edit-button{white-space:nowrap;padding:9px 11px!important;font-size:12px}.access-directory .access-controls{padding:16px;background:var(--light);border-top:1px solid var(--border);align-items:flex-start}.access-directory .access-controls select{min-width:180px}.access-directory .access-controls .access-permissions{max-width:100%;flex-basis:100%;order:2}.access-directory .access-controls>button{order:3}.access-empty{padding:24px;text-align:center;color:var(--muted);border:1px solid var(--border);border-radius:8px}
+@media(max-width:850px){.access-list-head{display:none}.access-row-head{grid-template-columns:minmax(170px,1fr) auto;gap:10px}.access-screen-summary{grid-column:1/-1;grid-row:2}.access-status{grid-column:2;grid-row:1}.access-role-pill{grid-column:1;grid-row:3}.access-edit-button{grid-column:2;grid-row:3}.access-directory-tools{width:100%}.access-directory-tools input{flex:1;min-width:180px}}
 #loginCard .btn-primary{height:47px;background:linear-gradient(100deg,#ff5c18,#ec4a0c);box-shadow:0 8px 22px #f4511328}#loginCard .auth-message{text-align:left}
 @media(max-width:700px){#loginCard{display:block}.login-brand{min-height:155px;padding:24px}.login-brand .brand-wordmark{font-size:38px}.login-brand h2,.login-brand p{display:none}.login-main{padding:28px 24px}.login-main h1{font-size:24px}}
 /* Identidade visual da agenda: referência fornecida pelo usuário. */
@@ -318,8 +323,8 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <p class="muted">Administrador acessa tudo. Usuário acessa apenas as telas e ações selecionadas.</p>
     <p class="muted">A conta recebe uma senha inicial padrão. O portal exige uma nova senha antes de liberar o acesso aos dados.</p>
     <div id="createUserMessage" role="status"></div><div id="createdUserResult" class="created-user-result" hidden></div>
-    <h2 style="margin-top:28px">Pessoas com acesso</h2><div id="adminList" class="muted">Carregando...</div>
   </div>
+  <div class="card access-directory"><div class="access-directory-head"><div><h2>Pessoas com acesso</h2><div class="muted">Encontre uma pessoa e abra somente o acesso que deseja alterar.</div></div><div class="access-directory-tools"><label class="sr-only" for="accessSearch">Buscar usuário</label><input id="accessSearch" type="search" placeholder="Buscar nome, e-mail ou tela..."><label class="sr-only" for="accessRoleFilter">Filtrar perfil</label><select id="accessRoleFilter"><option value="">Todos os perfis</option><option value="admin">Administradores</option><option value="usuario">Usuários</option></select><small id="accessCount"></small></div></div><div class="access-list-head"><span>Nome / e-mail</span><span>Perfil</span><span>Telas de acesso</span><span>Status</span><span>Ação</span></div><div id="adminList">Carregando...</div></div>
 </div>
 <div id="dashboard" class="page active">
   <div class="dashboard-page-head">
@@ -364,11 +369,11 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 </div>
 
 <div id="pageTrainings" class="page">
-  <div class="header-row"><div><h1>Treinamentos</h1><div class="muted">Consulte o calendário, acompanhe os treinamentos e gerencie seus registros.</div></div><button class="btn btn-primary" data-requires-edit="trainings" onclick="showPage('pageNewTraining')">+ Novo Treinamento</button></div>
+  <div class="header-row"><div><h1>Treinamentos</h1><div class="muted">Consulte o calendário, acompanhe os treinamentos e gerencie seus registros.</div></div><div class="training-header-actions"><button id="deletedTrainingsToggle" class="btn btn-secondary" hidden onclick="toggleDeletedTrainings()">Ver excluídos</button><button class="btn btn-primary" data-requires-edit="trainings" onclick="showPage('pageNewTraining')">+ Novo Treinamento</button></div></div>
   <div class="card training-filter-card"><div class="filters"><input id="trainingSearch" placeholder="Pesquisar treinamento..." oninput="renderTrainings()">
 <select id="trainingStatusFilter" onchange="renderTrainings()"><option value="">Todos os status</option><option>Cadastrado</option><option>Concluído</option><option>Cancelado</option></select>
 <label class="field-inline">De <input id="trainingDateFrom" type="date" onchange="renderTrainings()"></label><label class="field-inline">Até <input id="trainingDateTo" type="date" onchange="renderTrainings()"></label><button class="btn btn-secondary" onclick="clearTrainingDateFilter()">Limpar datas</button></div></div>
-  <div class="training-agenda-layout">
+  <div class="training-agenda-layout" id="trainingAgendaLayout">
     <div class="dashboard-calendar training-calendar-panel">
       <div class="calendar-head"><button class="btn btn-secondary" onclick="changeCalendarMonth(-1)">‹</button><strong id="calendarTitle"></strong><button class="btn btn-secondary" onclick="changeCalendarMonth(1)">›</button><button class="btn btn-secondary" onclick="goCalendarToday()">Hoje</button></div>
       <div class="calendar-legend"><span><i class="status-dot dot-orange"></i> Cadastrado</span><span><i class="status-dot dot-green"></i> Concluído</span><span><i class="status-dot dot-black"></i> Cancelado</span><span><i class="status-dot dot-today"></i> Hoje</span></div>
@@ -376,7 +381,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     </div>
     <div class="dashboard-commitments training-day-panel" id="trainingDayPanel"></div>
   </div>
-  <div class="card training-list-card"><div class="table-head"><div><strong>Lista de treinamentos</strong><div class="muted">Clique em Gerenciar para acessar o registro completo.</div></div><span class="table-count" id="trainingTableCount"></span></div>
+  <div class="card training-list-card"><div class="table-head"><div><strong id="trainingListTitle">Lista de treinamentos</strong><div class="muted" id="trainingListHint">Clique em Gerenciar para acessar o registro completo.</div></div><span class="table-count" id="trainingTableCount"></span></div>
   <div class="table-scroll"><table class="training-list-table"><thead><tr><th>Data</th><th>Treinamento</th><th>Categoria</th><th>Responsável</th><th>Participantes</th><th>Status</th><th>Lista</th><th>Ações</th></tr></thead><tbody id="trainingTable"></tbody></table></div></div>
 </div>
 
@@ -407,7 +412,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
       <h1 id="detailTitle">Gerenciar treinamento</h1>
       <div class="muted">Complete o registro após a realização do treinamento.</div>
     </div>
-    <button id="detailEditBtn" class="btn btn-secondary">🔒 Bloquear edição</button>
+    <div class="training-header-actions"><button id="detailEditBtn" class="btn btn-secondary">🔒 Bloquear edição</button><button id="detailDeleteBtn" class="btn btn-danger" hidden>Excluir treinamento</button></div>
   </div>
   <div id="detailContent"></div>
 </div>
@@ -471,6 +476,9 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 <script>
 let employees=[];
 let trainings=[];
+let showDeletedTrainings=false;
+function activeTrainings(){return trainings.filter(t=>!t.deletedAt)}
+function toggleDeletedTrainings(){showDeletedTrainings=!showDeletedTrainings;calendarSelectedDate="";renderTrainings()}
 let selectedParticipants=new Set();
 let currentStep=1;
 
@@ -522,17 +530,17 @@ function renderDashboard(){
  renderDashboardSummary();
 }
 function renderDashboardSummary(){
- const el=document.getElementById("dashboardSummary");if(!el)return;const y=dashboardCalendarCursor.getFullYear(),m=dashboardCalendarCursor.getMonth();const monthItems=trainings.filter(t=>{const d=parseDateBR(t.date);return d&&d.getFullYear()===y&&d.getMonth()===m});const days=new Set(monthItems.map(t=>dateKeyBR(t.date))).size;const workload=monthItems.reduce((sum,t)=>sum+(Number(t.workload)||0),0);const bases=new Set(monthItems.map(t=>t.modality==="Online"?"Online":(t.base||t.place||"Não informado"))).size;el.innerHTML=`<div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-calendar"/></svg></div><div><div class="summary-value">${days}</div><div class="summary-label">Dias com treinamentos</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-users"/></svg></div><div><div class="summary-value">${monthItems.length}</div><div class="summary-label">Treinamentos no mês</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-clock"/></svg></div><div><div class="summary-value">${workload%1===0?workload:workload.toFixed(1)}h</div><div class="summary-label">Carga horária total</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-pin"/></svg></div><div><div class="summary-value">${bases}</div><div class="summary-label">Bases diferentes</div></div></div>`;
+ const el=document.getElementById("dashboardSummary");if(!el)return;const y=dashboardCalendarCursor.getFullYear(),m=dashboardCalendarCursor.getMonth();const monthItems=activeTrainings().filter(t=>{const d=parseDateBR(t.date);return d&&d.getFullYear()===y&&d.getMonth()===m});const days=new Set(monthItems.map(t=>dateKeyBR(t.date))).size;const workload=monthItems.reduce((sum,t)=>sum+(Number(t.workload)||0),0);const bases=new Set(monthItems.map(t=>t.modality==="Online"?"Online":(t.base||t.place||"Não informado"))).size;el.innerHTML=`<div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-calendar"/></svg></div><div><div class="summary-value">${days}</div><div class="summary-label">Dias com treinamentos</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-users"/></svg></div><div><div class="summary-value">${monthItems.length}</div><div class="summary-label">Treinamentos no mês</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-clock"/></svg></div><div><div class="summary-value">${workload%1===0?workload:workload.toFixed(1)}h</div><div class="summary-label">Carga horária total</div></div></div><div class="summary-card"><div class="summary-icon"><svg class="ui-icon"><use href="#icon-pin"/></svg></div><div><div class="summary-value">${bases}</div><div class="summary-label">Bases diferentes</div></div></div>`;
 }
 function renderDashboardCommitments(){
  const panel=document.getElementById("dashboardCommitments"); if(!panel)return;
  const trainingAccess=!window.SPFLY_AUTH?.canPage||window.SPFLY_AUTH.canPage("pageTrainings");
  const todayKey=dateKeyBR(new Date().toLocaleDateString("pt-BR"));
  const activeKey=dashboardSelectedDate||todayKey;
- const items=trainings.filter(t=>dateKeyBR(t.date)===activeKey).sort((a,b)=>(a.startTime||"99:99").localeCompare(b.startTime||"99:99"));
+ const items=activeTrainings().filter(t=>dateKeyBR(t.date)===activeKey).sort((a,b)=>(a.startTime||"99:99").localeCompare(b.startTime||"99:99"));
  const title=formatKeyDateLong(activeKey),subtitle=`${items.length} treinamento${items.length!==1?"s":""} no dia`;
  const cards=items.length?items.map(t=>{const count=t.participantCount??t.participants?.length??0;return `<div class="commitment-item" ${trainingAccess?`onclick="openTrainingDetail(${t.id})"`:""}><div><div class="commitment-time">◷ ${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div><div class="commitment-name">${esc(t.name)}</div><div class="commitment-meta">⌂ ${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div><div class="commitment-participants">♙ ${count} participante${count!==1?"s":""}</div></div><div class="commitment-status"><span class="badge ${statusBadgeClass(getTrainingStatus(t))}">${displayTrainingStatus(getTrainingStatus(t))}</span>${trainingAccess?'<div class="commitment-arrow">›</div>':''}</div></div>`}).join(""): `<div class="commitment-empty"><div><div class="empty-icon">📅</div><strong>Nenhum treinamento nesta data</strong><div style="margin-top:6px">Clique em outra data do calendário para consultar os compromissos.</div></div></div>`;
- const nextCutoff=new Date(activeKey+"T00:00:00"); const next=trainings.filter(t=>{const d=parseDateBR(t.date);return d&&d>nextCutoff&&getTrainingStatus(t)!=="Cancelado"}).sort((a,b)=>(parseDateBR(a.date)?.getTime()||0)-(parseDateBR(b.date)?.getTime()||0)).slice(0,4);
+ const nextCutoff=new Date(activeKey+"T00:00:00"); const next=activeTrainings().filter(t=>{const d=parseDateBR(t.date);return d&&d>nextCutoff&&getTrainingStatus(t)!=="Cancelado"}).sort((a,b)=>(parseDateBR(a.date)?.getTime()||0)-(parseDateBR(b.date)?.getTime()||0)).slice(0,4);
  const action=`<button class="btn btn-secondary" onclick="goDashboardCalendarToday()">Ver dia de hoje</button>`;
  const nextHtml=`<div class="dashboard-next"><div class="dashboard-next-head"><h3>Próximos treinamentos</h3>${trainingAccess?'<button class="btn btn-secondary" onclick="showPage(\'pageTrainings\')">Ver todos</button>':''}</div>${next.length?next.map(t=>`<div class="next-item" ${trainingAccess?`onclick="openTrainingDetail(${t.id})"`:""}><div><div class="next-date">${esc(t.date)}</div><div class="next-time">${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div></div><div><div class="next-name">${esc(t.name)}</div><div class="next-place">${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div></div><div><span class="badge ${statusBadgeClass(getTrainingStatus(t))}">${displayTrainingStatus(getTrainingStatus(t))}</span>${trainingAccess?'<div class="next-arrow">›</div>':''}</div></div>`).join(""):"<div class='muted' style='padding:10px 2px'>Nenhum próximo treinamento.</div>"}</div>`;
  panel.innerHTML=`<div class="commitment-head"><div class="commitment-icon"><svg class="ui-icon"><use href="#icon-calendar"/></svg></div><div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div><div class="commitment-head-actions">${action}</div></div><div class="commitment-list">${cards}</div>${nextHtml}`;
@@ -548,7 +556,7 @@ function renderDashboardTrainingCalendar(){
  const y=dashboardCalendarCursor.getFullYear(),m=dashboardCalendarCursor.getMonth();
  title.textContent=new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric"}).format(dashboardCalendarCursor).replace(/^./,c=>c.toUpperCase());
  const first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),prevDays=new Date(y,m,0).getDate();
- const occupied={}; trainings.forEach(t=>{const k=dateKeyBR(t.date);if(k)(occupied[k]??=[]).push(t)});
+ const occupied={}; activeTrainings().forEach(t=>{const k=dateKeyBR(t.date);if(k)(occupied[k]??=[]).push(t)});
  let html=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(x=>`<div class="cal-weekday">${x}</div>`).join("");
  const visibleDays=Math.ceil((start+days)/7)*7;
  for(let i=0;i<visibleDays;i++){const n=i-start+1;let day=n,yy=y,mm=m;if(n<1){day=prevDays+n;mm=m-1;if(mm<0){mm=11;yy=y-1}}else if(n>days){day=n-days;mm=m+1;if(mm>11){mm=0;yy=y+1}}const key=`${yy}-${String(mm+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`,items=occupied[key]||[],muted=mm!==m,sel=dashboardSelectedDate===key,today=dateKeyBR(new Date().toLocaleDateString("pt-BR"))===key;const statusDots=[...new Set(items.map(t=>getTrainingStatus(t)))].map(st=>st==="Ministrado"?"green":st==="Cancelado"?"black":"orange");html+=`<div class="calendar-day ${muted?"muted":""} ${items.length?"occupied":""} ${sel?"selected":""} ${today?"today":""}" ${muted?"":`onclick="selectDashboardCalendarDate('${key}')"`}><div class="day-num">${day}</div>${items.length?`<div class="day-count">${items.length} treinamento${items.length>1?"s":""}</div><div class="status-dots">${statusDots.map(c=>`<i class="status-dot-mini ${c}"></i>`).join("")}</div>`:""}</div>`}
@@ -586,7 +594,7 @@ async function saveEmployee(){
  if(!await persist())return; document.querySelectorAll("#pageNewEmployee input").forEach(i=>i.value="");document.getElementById("efDocumentType").value="CPF";updateEmployeeDocumentType();showPage("pageEmployees");
 }
 function viewEmployee(id){
- const e=employees.find(x=>x.id===id), hist=trainings.filter(t=>t.participants.includes(id));
+ const e=employees.find(x=>x.id===id), hist=activeTrainings().filter(t=>t.participants.includes(id));
  document.getElementById("modalTitle").textContent=e.name;
  document.getElementById("modalBody").innerHTML=`<p><strong>${esc(e.documentType||"CPF")}:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p><hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
  document.getElementById("modal").classList.add("open");
@@ -641,13 +649,20 @@ function toggleEditLocationFields(){const online=document.querySelector('input[n
 let calendarCursor=new Date(); calendarCursor.setDate(1); let calendarSelectedDate="";
 function dateKeyBR(v){const d=parseDateBR(v);return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:""}
 function renderTrainings(){
+ if(!SPFLY_AUTH.isAdmin())showDeletedTrainings=false;
+ const archiveToggle=document.getElementById("deletedTrainingsToggle");
+ archiveToggle.hidden=!SPFLY_AUTH.isAdmin();
+ archiveToggle.textContent=showDeletedTrainings?"Ver treinamentos ativos":"Ver excluídos";
+ document.getElementById("trainingAgendaLayout").hidden=showDeletedTrainings;
+ document.getElementById("trainingListTitle").textContent=showDeletedTrainings?"Treinamentos excluídos":"Lista de treinamentos";
+ document.getElementById("trainingListHint").textContent=showDeletedTrainings?"Os registros e anexos permanecem guardados. Você pode restaurá-los.":"Clique em Gerenciar para acessar o registro completo.";
  const q=(document.getElementById("trainingSearch")?.value||"").toLowerCase();
  const sf=(document.getElementById("trainingStatusFilter")?.value||"");
  const from=document.getElementById("trainingDateFrom")?.value||"", to=document.getElementById("trainingDateTo")?.value||"";
- const rows=trainings.filter(t=>{const s=getTrainingStatus(t), dk=dateKeyBR(t.date);return(!q||t.name.toLowerCase().includes(q)||(t.cat||"").toLowerCase().includes(q))&&(!sf||s===sf)&&(!from||dk>=from)&&(!to||dk<=to)&&(!calendarSelectedDate||dk===calendarSelectedDate)});
+ const rows=trainings.filter(t=>{const s=getTrainingStatus(t), dk=dateKeyBR(t.date);return Boolean(t.deletedAt)===showDeletedTrainings&&(!q||t.name.toLowerCase().includes(q)||(t.cat||"").toLowerCase().includes(q))&&(showDeletedTrainings||!sf||s===sf)&&(!from||dk>=from)&&(!to||dk<=to)&&(showDeletedTrainings||!calendarSelectedDate||dk===calendarSelectedDate)});
  const sorted=rows.slice().sort((a,b)=>(parseDateBR(a.date)?.getTime()||0)-(parseDateBR(b.date)?.getTime()||0));
  const count=document.getElementById("trainingTableCount");if(count)count.textContent=`${sorted.length} registro${sorted.length!==1?"s":""}`;
- document.getElementById("trainingTable").innerHTML=sorted.map(t=>`<tr><td><strong>${esc(t.date||"—")}</strong><div class="row-sub">${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div></td><td><div class="row-main">${esc(t.name)}</div><div class="row-sub">${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div></td><td>${esc(t.cat||"—")}</td><td>${esc(t.resp||"—")}</td><td><span class="participant-pill">${t.participants?.length||0}</span></td><td>${badgeStatus(getTrainingStatus(t))}</td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary btn-sm" onclick="previewTrainingDocument(${t.id})">📎 Ver anexo</button>`:"<span class='muted'>—</span>"}</td><td><button class="btn btn-secondary btn-sm manage-btn" onclick="openTrainingDetail(${t.id})">Gerenciar</button></td></tr>`).join("")||`<tr><td colspan="8" class="empty">Nenhum treinamento encontrado para os filtros selecionados.</td></tr>`;
+ document.getElementById("trainingTable").innerHTML=sorted.map(t=>`<tr><td><strong>${esc(t.date||"—")}</strong><div class="row-sub">${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div></td><td><div class="row-main">${esc(t.name)}</div><div class="row-sub">${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div></td><td>${esc(t.cat||"—")}</td><td>${esc(t.resp||"—")}</td><td><span class="participant-pill">${t.participants?.length||0}</span></td><td>${showDeletedTrainings?'<span class="badge badge-black">Excluído</span>':badgeStatus(getTrainingStatus(t))}</td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary btn-sm" onclick="previewTrainingDocument(${t.id})">📎 Ver anexo</button>`:"<span class='muted'>—</span>"}</td><td>${showDeletedTrainings?`<button class="btn btn-secondary btn-sm" onclick="restoreTraining(${t.id})">Restaurar</button>`:`<button class="btn btn-secondary btn-sm manage-btn" onclick="openTrainingDetail(${t.id})">Gerenciar</button>`}</td></tr>`).join("")||`<tr><td colspan="8" class="empty">${showDeletedTrainings?"Nenhum treinamento excluído.":"Nenhum treinamento encontrado para os filtros selecionados."}</td></tr>`;
  renderTrainingCalendar();
  renderTrainingDayPanel();
 }
@@ -660,7 +675,7 @@ function renderTrainingCalendar(){
  const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth();
  title.textContent=new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric"}).format(calendarCursor).replace(/^./,c=>c.toUpperCase());
  const first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),prevDays=new Date(y,m,0).getDate();
- const occupied={}; trainings.forEach(t=>{const k=dateKeyBR(t.date);if(k)(occupied[k]??=[]).push(t)});
+ const occupied={}; activeTrainings().forEach(t=>{const k=dateKeyBR(t.date);if(k)(occupied[k]??=[]).push(t)});
  let html=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(x=>`<div class="cal-weekday">${x}</div>`).join("");
  for(let i=0;i<42;i++){const n=i-start+1;let day=n,yy=y,mm=m;if(n<1){day=prevDays+n;mm=m-1;if(mm<0){mm=11;yy=y-1}}else if(n>days){day=n-days;mm=m+1;if(mm>11){mm=0;yy=y+1}}const key=`${yy}-${String(mm+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`,items=occupied[key]||[],muted=mm!==m,sel=calendarSelectedDate===key,today=dateKeyBR(new Date().toLocaleDateString("pt-BR"))===key;const statusDots=[...new Set(items.map(t=>getTrainingStatus(t)))].map(st=>st==="Ministrado"?"green":st==="Cancelado"?"black":"orange");html+=`<div class="calendar-day ${muted?"muted":""} ${items.length?"occupied":""} ${sel?"selected":""} ${today?"today":""}" ${muted?"":`onclick="selectCalendarDate('${key}')"`}><div class="day-num">${day}</div>${items.length?`<div class="status-dots">${statusDots.map(c=>`<i class="status-dot-mini ${c}"></i>`).join("")}<span class="day-count">${items.length}</span></div>`:""}</div>`}
  el.innerHTML=html;
@@ -669,18 +684,19 @@ function renderTrainingCalendar(){
 function renderTrainingDayPanel(){
  const panel=document.getElementById("trainingDayPanel");if(!panel)return;
  let key=calendarSelectedDate;
- if(!key){const today=dateKeyBR(new Date().toLocaleDateString("pt-BR"));const hasToday=trainings.some(t=>dateKeyBR(t.date)===today);key=hasToday?today:"";}
- const items=key?trainings.filter(t=>dateKeyBR(t.date)===key).sort((a,b)=>(a.startTime||"99:99").localeCompare(b.startTime||"99:99")):[];
+ if(!key){const today=dateKeyBR(new Date().toLocaleDateString("pt-BR"));const hasToday=activeTrainings().some(t=>dateKeyBR(t.date)===today);key=hasToday?today:"";}
+ const items=key?activeTrainings().filter(t=>dateKeyBR(t.date)===key).sort((a,b)=>(a.startTime||"99:99").localeCompare(b.startTime||"99:99")):[];
  const title=key?formatKeyDateLong(key):"Selecione uma data";
  const subtitle=key?`${items.length} treinamento${items.length!==1?"s":""} no dia`:"Consulte os treinamentos por data";
  const cards=items.length?items.map(t=>`<div class="commitment-item" onclick="openTrainingDetail(${t.id})"><div><div class="commitment-time">◷ ${esc(t.time||buildTimeRange(t.startTime,t.endTime)||"Horário não informado")}</div><div class="commitment-name">${esc(t.name)}</div><div class="commitment-meta">⌂ ${esc(t.modality==="Online"?(t.onlineInfo||"Online"):(t.base||t.place||"Local não informado"))}</div><div class="commitment-participants">♙ ${t.participants?.length||0} participante${(t.participants?.length||0)!==1?"s":""}</div></div><div class="commitment-status"><span class="badge ${statusBadgeClass(getTrainingStatus(t))}">${displayTrainingStatus(getTrainingStatus(t))}</span><div class="commitment-arrow">›</div></div></div>`).join(""):`<div class="commitment-empty"><div><div class="empty-icon">📅</div><strong>Nenhum treinamento nesta data</strong><div style="margin-top:6px">Clique em uma data do calendário para consultar os compromissos.</div></div></div>`;
  panel.innerHTML=`<div class="commitment-head"><div class="commitment-icon">▣</div><div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div><div class="commitment-head-actions"><button class="btn btn-secondary" onclick="goCalendarToday()">Hoje</button></div></div><div class="commitment-list">${cards}</div>`;
 }
-function openTrainingDetail(id){if(showPage("pageTrainingDetail"))renderTrainingDetail(id)}
+function openTrainingDetail(id){if(!trainings.some(t=>t.id===id&&!t.deletedAt))return;if(showPage("pageTrainingDetail"))renderTrainingDetail(id)}
 function renderTrainingDetail(id){
- const t=trainings.find(x=>x.id===id);if(!t)return;const st=getTrainingStatus(t),editable=SPFLY_AUTH.canEdit('trainings'),locked=!editable||((st==="Ministrado"||st==="Cancelado")&&!t.editMode);
+ const t=trainings.find(x=>x.id===id&&!x.deletedAt);if(!t)return;const st=getTrainingStatus(t),editable=SPFLY_AUTH.canEdit('trainings'),locked=!editable||((st==="Ministrado"||st==="Cancelado")&&!t.editMode);
  document.getElementById("detailTitle").textContent=t.name;
  const b=document.getElementById("detailEditBtn");b.hidden=!editable;b.textContent=locked?"🔓 Alterar registro":"🔒 Bloquear edição";b.onclick=locked?()=>requestTrainingEdit(id):()=>lockTraining(id);
+ const deleteButton=document.getElementById("detailDeleteBtn");deleteButton.hidden=!SPFLY_AUTH.isAdmin();deleteButton.onclick=()=>deleteTraining(id);
  document.getElementById("detailContent").innerHTML=`
  <div class="notice"><strong>Status: ${st}</strong> — ${!editable?"Acesso somente para consulta.":locked?"Este treinamento está bloqueado para alterações.":"O registro está liberado para edição."}</div>
  <div class="grid2">
@@ -711,6 +727,22 @@ function renderTrainingDetail(id){
  ${st==="Cancelado"?`<div class="cancel-box" style="margin-top:18px"><strong>✕ Motivo do cancelamento</strong><p style="margin:8px 0 0">${esc(t.cancelReason||"Não informado")}</p>${t.cancelledAt?`<div class="help" style="margin-top:6px">Cancelado em ${new Date(t.cancelledAt).toLocaleString("pt-BR")}</div>`:""}</div>`:""}
  <div class="card" style="margin-top:18px"><h3>Status e finalização</h3><p class="muted">Para marcar como concluído, informe participantes e anexe um comprovante. Alterações em registros finalizados exigem liberação da edição.</p>${locked?`<div class="actions"><span class="badge ${statusBadgeClass(st)}" style="padding:10px 14px">${displayTrainingStatus(st)}${editable?' e bloqueado':''}</span></div>`:`<div class="field"><label for="editTrainingStatus">Status do treinamento</label><select id="editTrainingStatus"><option value="Cadastrado" ${st==='Cadastrado'?'selected':''}>Cadastrado</option><option value="Ministrado" ${st==='Ministrado'?'selected':''}>Concluído</option><option value="Cancelado" ${st==='Cancelado'?'selected':''}>Cancelado</option></select></div><div class="actions"><button class="btn btn-primary" onclick="changeTrainingStatus(${id})">Salvar status</button></div>`}</div>`;
  toggleEditLocationFields();
+}
+async function deleteTraining(id){
+ if(!SPFLY_AUTH.isAdmin())return;
+ const training=trainings.find(t=>t.id===id&&!t.deletedAt);if(!training)return;
+ if(!confirm(`Excluir o treinamento "${training.name}"? Ele sairá do calendário e dos relatórios, mas poderá ser restaurado em Treinamentos > Ver excluídos. Os anexos serão mantidos.`))return;
+ const next=trainings.map(t=>t.id===id?{...t,deletedAt:new Date().toISOString()}:t);
+ if(!await SPFLY_AUTH.persist(employees,next))return;
+ trainings=next;showDeletedTrainings=false;showPage('pageTrainings');renderDashboard();
+}
+async function restoreTraining(id){
+ if(!SPFLY_AUTH.isAdmin())return;
+ const training=trainings.find(t=>t.id===id&&t.deletedAt);if(!training)return;
+ if(!confirm(`Restaurar o treinamento "${training.name}" no calendário e nos relatórios?`))return;
+ const next=trainings.map(t=>{if(t.id!==id)return t;const copy={...t};delete copy.deletedAt;return copy});
+ if(!await SPFLY_AUTH.persist(employees,next))return;
+ trainings=next;renderTrainings();renderDashboard();
 }
 async function saveTrainingInfo(id){
  const t=trainings.find(x=>x.id===id);
@@ -862,21 +894,23 @@ function reportKpi(title,value,icon){return `<div class="card kpi"><div><div cla
 function renderEmployeeReport(){
  const id=Number(document.getElementById("reportEmpSelect").value), box=document.getElementById("employeeReport"), dash=document.getElementById("employeeReportDash");
  if(!id){dash.innerHTML="";box.innerHTML="";return}
- const e=employees.find(x=>x.id===id), hist=trainings.filter(t=>(t.participants||[]).includes(id));
+ const e=employees.find(x=>x.id===id), hist=activeTrainings().filter(t=>(t.participants||[]).includes(id));
  const completed=hist.filter(t=>getTrainingStatus(t)==="Ministrado").length;
  dash.innerHTML=`<div class="cards" style="margin-top:16px">${reportKpi("Treinamentos realizados",completed,"✓")}${reportKpi("Participações",hist.length,"♙")}${reportKpi("Setor",esc(e?.sector||"—"),"▣")}${reportKpi("Cargo",esc(e?.role||"—"),"◆")}</div>`;
  box.innerHTML=hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Responsável</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td>${esc(t.resp||"—")}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${t.id})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum registro.</div>`;
 }
 function renderTrainingReport(){
- const total=trainings.length, future=trainings.filter(t=>{const d=parseDateBR(t.date),now=new Date();now.setHours(0,0,0,0);return d&&d>=now&&getTrainingStatus(t)==="Cadastrado";}).length, done=trainings.filter(t=>getTrainingStatus(t)==="Ministrado").length, cancelled=trainings.filter(t=>getTrainingStatus(t)==="Cancelado").length, pres=trainings.reduce((a,t)=>a+(t.participants?.length||0),0);
- document.getElementById("trainingReportDash").innerHTML=`<div class="cards">${reportKpi("Treinamentos",total,"▣")}${reportKpi("Próximos",future,"📅")}${reportKpi("Ministrados",done,"✓")}${reportKpi("Cancelados",cancelled,"✕")}</div><div class="card" style="margin-bottom:18px"><h3>Participações por treinamento</h3><div class="chart-list">${trainings.length?trainings.slice().sort((a,b)=>(b.participants?.length||0)-(a.participants?.length||0)).slice(0,8).map(t=>{const n=t.participants?.length||0, max=Math.max(1,...trainings.map(x=>x.participants?.length||0));return `<div class="bar-row"><span>${esc(t.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/max*100)}%"></div></div><strong>${n}</strong></div>`}).join(""):`<div class="empty">Nenhum dado.</div>`}</div></div>`;
- document.getElementById("trainingReport").innerHTML=total?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Status</th><th>Participantes</th><th>Comprovante</th><th>Conteúdo</th></tr></thead><tbody>${trainings.slice().sort((a,b)=>(parseDateBR(b.date)?.getTime()||0)-(parseDateBR(a.date)?.getTime()||0)).map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td>${badgeStatus(getTrainingStatus(t))}</td><td>${t.participants?.length||0}</td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewTrainingDocument(${t.id})">📎 Ver</button>`:"—"}</td><td>${(t.contentDocs?.length||t.contentDoc)?`<button class="btn btn-secondary" onclick="previewTrainingContent(${t.id},0)">📚 Ver</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum registro.</div>`;
+ const visible=activeTrainings();
+ const total=visible.length, future=visible.filter(t=>{const d=parseDateBR(t.date),now=new Date();now.setHours(0,0,0,0);return d&&d>=now&&getTrainingStatus(t)==="Cadastrado";}).length, done=visible.filter(t=>getTrainingStatus(t)==="Ministrado").length, cancelled=visible.filter(t=>getTrainingStatus(t)==="Cancelado").length, pres=visible.reduce((a,t)=>a+(t.participants?.length||0),0);
+ document.getElementById("trainingReportDash").innerHTML=`<div class="cards">${reportKpi("Treinamentos",total,"▣")}${reportKpi("Próximos",future,"📅")}${reportKpi("Ministrados",done,"✓")}${reportKpi("Cancelados",cancelled,"✕")}</div><div class="card" style="margin-bottom:18px"><h3>Participações por treinamento</h3><div class="chart-list">${visible.length?visible.slice().sort((a,b)=>(b.participants?.length||0)-(a.participants?.length||0)).slice(0,8).map(t=>{const n=t.participants?.length||0, max=Math.max(1,...visible.map(x=>x.participants?.length||0));return `<div class="bar-row"><span>${esc(t.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/max*100)}%"></div></div><strong>${n}</strong></div>`}).join(""):`<div class="empty">Nenhum dado.</div>`}</div></div>`;
+ document.getElementById("trainingReport").innerHTML=total?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Status</th><th>Participantes</th><th>Comprovante</th><th>Conteúdo</th></tr></thead><tbody>${visible.slice().sort((a,b)=>(parseDateBR(b.date)?.getTime()||0)-(parseDateBR(a.date)?.getTime()||0)).map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td>${badgeStatus(getTrainingStatus(t))}</td><td>${t.participants?.length||0}</td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewTrainingDocument(${t.id})">📎 Ver</button>`:"—"}</td><td>${(t.contentDocs?.length||t.contentDoc)?`<button class="btn btn-secondary" onclick="previewTrainingContent(${t.id},0)">📚 Ver</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum registro.</div>`;
 }
 function renderSectorReport(){
+ const visible=activeTrainings();
  const sectors=[...new Set(employees.map(e=>e.sector).filter(Boolean))];
- const total=employees.length, active=employees.filter(e=>e.status==="Ativo").length, participation=trainings.reduce((a,t)=>a+(t.participants?.length||0),0);
+ const total=employees.length, active=employees.filter(e=>e.status==="Ativo").length, participation=visible.reduce((a,t)=>a+(t.participants?.length||0),0);
  document.getElementById("sectorReportDash").innerHTML=`<div class="cards">${reportKpi("Funcionários",total,"♙")}${reportKpi("Ativos",active,"✓")}${reportKpi("Setores",sectors.length,"▣")}${reportKpi("Participações",participation,"◆")}</div>`;
- document.getElementById("sectorReport").innerHTML=`<table><thead><tr><th>Setor</th><th>Funcionários</th><th>Participações</th><th>Cobertura</th></tr></thead><tbody>${sectors.map(s=>{const es=employees.filter(e=>e.sector===s), count=trainings.reduce((a,t)=>a+(t.participants||[]).filter(id=>es.some(e=>e.id===id)).length,0), coverage=es.length?Math.min(100,Math.round(new Set(trainings.flatMap(t=>t.participants||[]).filter(id=>es.some(e=>e.id===id))).size/es.length*100)):0;return `<tr><td><strong>${esc(s)}</strong></td><td>${es.length}</td><td>${count}</td><td><div class="bar-row"><div class="bar-track"><div class="bar-fill" style="width:${coverage}%"></div></div><strong>${coverage}%</strong></div></td></tr>`}).join("")}</tbody></table>`;
+ document.getElementById("sectorReport").innerHTML=`<table><thead><tr><th>Setor</th><th>Funcionários</th><th>Participações</th><th>Cobertura</th></tr></thead><tbody>${sectors.map(s=>{const es=employees.filter(e=>e.sector===s), count=visible.reduce((a,t)=>a+(t.participants||[]).filter(id=>es.some(e=>e.id===id)).length,0), coverage=es.length?Math.min(100,Math.round(new Set(visible.flatMap(t=>t.participants||[]).filter(id=>es.some(e=>e.id===id))).size/es.length*100)):0;return `<tr><td><strong>${esc(s)}</strong></td><td>${es.length}</td><td>${count}</td><td><div class="bar-row"><div class="bar-track"><div class="bar-fill" style="width:${coverage}%"></div></div><strong>${coverage}%</strong></div></td></tr>`}).join("")}</tbody></table>`;
 }
 function previewEmployeeAttachment(trainingId){ previewTrainingDocument(trainingId); }
 
