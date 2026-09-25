@@ -1,4 +1,4 @@
-# SPFLY Admin — V11
+# SPFLY Admin — V12
 
 A V10 organiza a tela de acessos como lista compacta. Cada linha mostra nome, e-mail, perfil, telas liberadas e status. Há busca por nome, e-mail ou tela e filtro por perfil. O administrador abre "Editar acesso" apenas para a pessoa desejada; as permissões e regras da V9 permanecem as mesmas.
 
@@ -12,9 +12,15 @@ Administradores também podem excluir um treinamento pela tela de detalhes. O re
 - A navegação principal segue Início, Treinamentos, Capacitação, Funcionários e Relatórios; Acessos continua disponível para administradores.
 - Certificados da Capacitação mostram **Pendente**, **Certificado anexado** e **Concluído** conforme o fluxo de conferência administrativa. A lista de inscritos resume esses estados por funcionário.
 
-## Atualização da V10
+## Avaliação de eficácia da V12
 
-Publique `index.html`, `capacitation.js` e este `README.md` na raiz do repositório GitHub Pages. Não há migração de banco nem alteração na Edge Function para esta versão. Mantenha os demais arquivos da V10.
+Ao cadastrar um treinamento, informe o período de revisão em dias após a data do treinamento e o método de avaliação (por exemplo, observação prática, prova, entrevista ou indicadores). A tela de detalhes calcula a data prevista. Treinamentos antigos continuam disponíveis; preencha o planejamento na tela de detalhes. Se o registro estiver concluído e bloqueado, use **Alterar registro** antes de ajustar o planejamento.
+
+Após concluir o treinamento, uma pessoa com permissão de edição em Treinamentos pode registrar o resultado **Eficaz** ou **Não eficaz**, a data e uma evidência escrita. A avaliação não altera o status de conclusão do treinamento. Cada avaliação fica no histórico, e a lista de treinamentos mostra quando a revisão está programada, vencida ou avaliada.
+
+## Atualização da V11
+
+Publique `index.html` e este `README.md` na raiz do repositório GitHub Pages. Não há migração de banco nem alteração na Edge Function para esta versão. Mantenha os demais arquivos da V11.
 
 ## Instalação nova
 
