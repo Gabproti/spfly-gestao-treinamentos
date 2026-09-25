@@ -184,33 +184,85 @@
 
   async function renderAdmins() {
     const container = document.getElementById('adminList');
+    const search = document.getElementById('accessSearch');
+    const filter = document.getElementById('accessRoleFilter');
+    const count = document.getElementById('accessCount');
+    const previousSearch = search.value;
+    const previousFilter = filter.value;
     container.textContent = 'Carregando...';
     const { data, error } = await client.from('admin_users')
       .select('id, email, full_name, active, access_role, allowed_pages, editable_pages, must_change_password, employee_id, created_at').order('created_at');
     if (error) {
       container.textContent = 'Não foi possível carregar os acessos.';
+      count.textContent = '';
       return;
     }
     container.replaceChildren();
-    for (const admin of data || []) {
+    const records = (data || []).sort((a, b) =>
+      (a.full_name?.trim() || a.email).localeCompare(b.full_name?.trim() || b.email, 'pt-BR'));
+    for (const admin of records) {
       const row = document.createElement('div');
       row.className = 'access-row';
       const header = document.createElement('div');
       header.className = 'access-row-head';
+      const identity = document.createElement('div');
+      identity.className = 'access-identity';
       const name = document.createElement('strong');
-      name.textContent = admin.full_name?.trim() ? `${admin.full_name} (${admin.email})` : admin.email + ' — cadastro pendente';
+      name.textContent = admin.full_name?.trim() || 'Cadastro pendente';
+      const email = document.createElement('small');
+      email.textContent = admin.email;
+      identity.append(name, email);
+      const roleLabel = document.createElement('span');
+      roleLabel.className = 'access-role-pill';
+      roleLabel.textContent = roleNames[admin.access_role] || 'Usuário';
+      const screenSummary = document.createElement('div');
+      screenSummary.className = 'access-screen-summary';
+      if (admin.access_role === 'admin') {
+        const all = document.createElement('span');
+        all.className = 'access-screen-chip';
+        all.textContent = 'Todas as telas';
+        screenSummary.append(all);
+      } else {
+        for (const page of admin.allowed_pages || []) {
+          const chip = document.createElement('span');
+          chip.className = 'access-screen-chip' + (admin.editable_pages?.includes(page) ? ' can-edit' : '');
+          chip.textContent = (permissionPages[page] || page) + (admin.editable_pages?.includes(page) ? (page === 'capacitation' ? ' · anexa' : ' · edita') : ' · visualiza');
+          screenSummary.append(chip);
+        }
+        if (!screenSummary.childElementCount) screenSummary.textContent = 'Nenhuma tela liberada';
+      }
+      const status = document.createElement('div');
+      status.className = 'access-status';
       const badge = document.createElement('span');
       badge.className = 'badge ' + (admin.active ? 'badge-green' : 'badge-red');
       badge.textContent = admin.active ? 'Ativo' : 'Inativo';
-      header.append(name, badge);
+      status.append(badge);
       if (admin.must_change_password) {
         const pending = document.createElement('small');
         pending.className = 'pending-password';
-        pending.textContent = 'Aguardando troca da senha inicial';
-        header.append(pending);
+        pending.textContent = 'Primeiro acesso pendente';
+        status.append(pending);
       }
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'btn btn-secondary access-edit-button';
+      toggle.textContent = 'Editar acesso';
+      toggle.setAttribute('aria-label', 'Editar acesso de ' + (admin.full_name?.trim() || admin.email));
+      toggle.setAttribute('aria-expanded', 'false');
+      header.append(identity, roleLabel, screenSummary, status, toggle);
       const controls = document.createElement('div');
       controls.className = 'access-controls';
+      controls.hidden = true;
+      toggle.addEventListener('click', () => {
+        const opening = controls.hidden;
+        container.querySelectorAll('.access-controls').forEach(item => { item.hidden = true; });
+        container.querySelectorAll('.access-edit-button').forEach(item => {
+          item.textContent = 'Editar acesso'; item.setAttribute('aria-expanded', 'false');
+        });
+        controls.hidden = !opening;
+        toggle.textContent = opening ? 'Fechar' : 'Editar acesso';
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
       const role = document.createElement('select');
       role.setAttribute('aria-label', 'Perfil de ' + admin.email);
       for (const [value, label] of Object.entries(roleNames)) {
@@ -249,8 +301,32 @@
       controls.append(role, checks, employeeLink, save);
       row.append(header, controls);
       container.append(row);
+      row.dataset.search = [admin.full_name, admin.email, roleLabel.textContent,
+        ...(admin.allowed_pages || []).map(page => permissionPages[page] || page)]
+        .join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+      row.dataset.role = admin.access_role;
     }
-    if (!data?.length) container.textContent = 'Nenhuma conta encontrada.';
+    search.value = previousSearch;
+    filter.value = previousFilter;
+    const applyFilter = () => {
+      const term = search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+      let visible = 0;
+      for (const row of container.querySelectorAll('.access-row')) {
+        row.hidden = !row.dataset.search.includes(term) || (filter.value && row.dataset.role !== filter.value);
+        if (!row.hidden) visible++;
+      }
+      count.textContent = `${visible} de ${records.length} pessoa${records.length === 1 ? '' : 's'}`;
+      container.querySelector('.access-empty')?.remove();
+      if (!visible) {
+        const empty = document.createElement('p');
+        empty.className = 'access-empty';
+        empty.textContent = records.length ? 'Nenhum usuário encontrado para esta busca.' : 'Nenhuma conta encontrada.';
+        container.append(empty);
+      }
+    };
+    search.oninput = applyFilter;
+    filter.onchange = applyFilter;
+    applyFilter();
   }
 
   function fillPermissionChecks(container, pages = [], edits = []) {
