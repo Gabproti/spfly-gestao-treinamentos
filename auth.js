@@ -20,15 +20,20 @@
     pageTrainings: 'trainings', pageNewTraining: 'trainings', pageTrainingDetail: 'trainings',
     pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports',
     pageCapacitation: 'capacitation', pageCapTrackForm: 'capacitation', pageCapTrackDetail: 'capacitation' };
-  const roleNames = { admin: 'Administrador', rh: 'RH', usuario: 'Usuário', funcionario: 'Funcionário' };
+  const roleNames = { admin: 'Administrador', usuario: 'Usuário' };
+  const permissionPages = { dashboard:'Início', employees:'Funcionários', trainings:'Treinamentos', reports:'Relatórios', capacitation:'Capacitação' };
   function canPage(pageId) {
     if (!currentAccess?.active || currentAccess.must_change_password) return false;
     if (currentAccess.access_role === 'admin') return true;
+    if (pageId === 'pageCapTrackForm') return false;
+    if (['pageNewEmployee','pageNewTraining'].includes(pageId)) return canEdit(pageNames[pageId]);
     const page = pageNames[pageId];
     if (!page) return false;
-    if (currentAccess.access_role === 'rh') return page === 'employees' || page === 'trainings' || page === 'capacitation';
-    if (currentAccess.access_role === 'funcionario') return page === 'capacitation';
     return currentAccess.access_role === 'usuario' && currentAccess.allowed_pages?.includes(page);
+  }
+  function canEdit(page) {
+    return !!currentAccess?.active && !currentAccess.must_change_password &&
+      (currentAccess.access_role === 'admin' || (currentAccess.access_role === 'usuario' && currentAccess.editable_pages?.includes(page)));
   }
   function applyAccess() {
     document.querySelectorAll('.nav-btn[data-page]').forEach(button => { button.hidden = !canPage(button.dataset.page); });
@@ -36,6 +41,9 @@
       button.hidden = button.dataset.menu === 'reports' ? !canPage('pageReportEmployee') : currentAccess.access_role !== 'admin';
     });
     document.querySelectorAll('[data-requires-page]').forEach(button => { button.hidden = !canPage(button.dataset.requiresPage); });
+    document.querySelectorAll('[data-requires-edit]').forEach(button => { button.hidden = !canEdit(button.dataset.requiresEdit); });
+    app.classList.toggle('employees-view-only', !canEdit('employees'));
+    app.classList.toggle('trainings-view-only', !canEdit('trainings'));
     document.getElementById('globalSearch').parentElement.hidden = !canPage('pageEmployees');
   }
 
@@ -93,7 +101,7 @@
     }
 
     const { data: admin, error: adminError } = await client.from('admin_users')
-      .select('id, active, full_name, access_role, allowed_pages, must_change_password, employee_id').eq('id', user.id).maybeSingle();
+      .select('id, active, full_name, access_role, allowed_pages, editable_pages, must_change_password, employee_id').eq('id', user.id).maybeSingle();
     if (adminError || !admin?.active) {
       await client.auth.signOut();
       currentUser = null;
@@ -133,9 +141,7 @@
     applyAccess();
     screen.hidden = true;
     app.classList.add('authenticated');
-    const firstPage = admin.access_role === 'rh' ? 'pageEmployees'
-      : admin.access_role === 'funcionario' ? 'pageCapacitation'
-      : admin.access_role === 'usuario' ? ['dashboard','pageEmployees','pageTrainings','pageReportEmployee'].find(canPage)
+    const firstPage = admin.access_role === 'usuario' ? ['dashboard','pageEmployees','pageTrainings','pageCapacitation','pageReportEmployee'].find(canPage)
       : 'dashboard';
     const currentPage = document.querySelector('.page.active')?.id;
     showPage(currentPage && canPage(currentPage) ? currentPage : firstPage);
@@ -180,7 +186,7 @@
     const container = document.getElementById('adminList');
     container.textContent = 'Carregando...';
     const { data, error } = await client.from('admin_users')
-      .select('id, email, full_name, active, access_role, allowed_pages, must_change_password, employee_id, created_at').order('created_at');
+      .select('id, email, full_name, active, access_role, allowed_pages, editable_pages, must_change_password, employee_id, created_at').order('created_at');
     if (error) {
       container.textContent = 'Não foi possível carregar os acessos.';
       return;
@@ -208,45 +214,78 @@
       const role = document.createElement('select');
       role.setAttribute('aria-label', 'Perfil de ' + admin.email);
       for (const [value, label] of Object.entries(roleNames)) {
-        if (value === 'funcionario' && !admin.employee_id) continue;
         const option = document.createElement('option'); option.value = value; option.textContent = label; role.append(option);
       }
       role.value = admin.access_role || 'admin';
       const checks = document.createElement('div');
-      checks.className = 'access-checks';
-      for (const [value, label] of Object.entries({ dashboard:'Início', employees:'Funcionários', trainings:'Treinamentos', reports:'Relatórios' })) {
-        const wrapper = document.createElement('label');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox'; checkbox.value = value; checkbox.checked = (admin.allowed_pages || []).includes(value);
-        wrapper.append(checkbox, ' ' + label); checks.append(wrapper);
+      checks.className = 'access-permissions';
+      fillPermissionChecks(checks, admin.allowed_pages || [], admin.editable_pages || []);
+      const employeeLink = document.createElement('select');
+      employeeLink.setAttribute('aria-label', 'Funcionário vinculado a ' + admin.email);
+      employeeLink.add(new Option('Vincule um funcionário', ''));
+      for (const employee of employees.filter(item => item.status !== 'Inativo').sort((a,b) => a.name.localeCompare(b.name,'pt-BR'))) {
+        employeeLink.add(new Option(`${employee.name} — ${employee.mat}`,String(employee.id)));
       }
-      const updateVisibility = () => { checks.hidden = role.value !== 'usuario'; };
+      employeeLink.value = admin.employee_id ? String(admin.employee_id) : '';
+      const updateVisibility = () => {
+        checks.hidden = role.value !== 'usuario';
+        employeeLink.hidden = role.value !== 'usuario' || !selectedPermissions(checks).pages.includes('capacitation');
+      };
+      checks.addEventListener('change', updateVisibility);
       role.addEventListener('change', updateVisibility); updateVisibility();
       const save = document.createElement('button');
       save.type = 'button'; save.className = 'btn btn-secondary'; save.textContent = 'Salvar acesso';
       save.disabled = admin.id === currentUser?.id || !admin.active;
       save.addEventListener('click', async () => {
-        const pages = Array.from(checks.querySelectorAll('input:checked')).map(input => input.value);
+        const { pages, edits } = selectedPermissions(checks);
         if (role.value === 'usuario' && !pages.length) { alert('Escolha ao menos uma tela.'); return; }
+        const employeeId = role.value === 'usuario' && pages.includes('capacitation') ? Number(employeeLink.value) : null;
+        if (role.value === 'usuario' && pages.includes('capacitation') && !employeeId) { alert('Vincule este usuário a um funcionário para liberar Capacitação.'); return; }
         save.disabled = true; save.textContent = 'Salvando...';
-        const { error: saveError } = await client.rpc('set_portal_access', { target_id: admin.id, next_role: role.value, next_pages: pages });
+        const { error: saveError } = await client.rpc('set_portal_access', { target_id: admin.id, next_role: role.value, next_pages: pages, next_edits: edits, next_employee_id: employeeId });
         if (saveError) { alert('Não foi possível salvar o acesso: ' + saveError.message); save.disabled = false; save.textContent = 'Salvar acesso'; return; }
         await renderAdmins();
       });
-      controls.append(role, checks, save);
+      controls.append(role, checks, employeeLink, save);
       row.append(header, controls);
       container.append(row);
     }
     if (!data?.length) container.textContent = 'Nenhuma conta encontrada.';
   }
 
+  function fillPermissionChecks(container, pages = [], edits = []) {
+    container.replaceChildren();
+    for (const [value, label] of Object.entries(permissionPages)) {
+      const row = document.createElement('div'); row.className = 'permission-row';
+      const title = document.createElement('strong'); title.textContent = label;
+      const viewLabel = document.createElement('label');
+      const view = document.createElement('input'); view.type = 'checkbox'; view.value = value; view.dataset.permission = 'view'; view.checked = pages.includes(value);
+      viewLabel.append(view, ' Visualizar');
+      const editLabel = document.createElement('label');
+      const edit = document.createElement('input'); edit.type = 'checkbox'; edit.value = value; edit.dataset.permission = 'edit'; edit.checked = edits.includes(value);
+      edit.disabled = value === 'dashboard' || value === 'reports';
+      editLabel.append(edit, value === 'capacitation' ? ' Anexar certificado' : ' Editar');
+      edit.addEventListener('change', () => { if (edit.checked) view.checked = true; if (container.id === 'createPermissionChecks') updateCreateRole(); });
+      view.addEventListener('change', () => { if (!view.checked) edit.checked = false; if (container.id === 'createPermissionChecks') updateCreateRole(); });
+      row.append(title, viewLabel, editLabel); container.append(row);
+    }
+  }
+
+  function selectedPermissions(container) {
+    return {
+      pages: [...container.querySelectorAll('input[data-permission=view]:checked')].map(input => input.value),
+      edits: [...container.querySelectorAll('input[data-permission=edit]:checked')].map(input => input.value),
+    };
+  }
+
   function updateCreateRole() {
     const role = document.getElementById('createRole').value;
     document.getElementById('createPages').hidden = role !== 'usuario';
-    document.getElementById('createEmployeeLink').hidden = role !== 'funcionario';
-    document.getElementById('createEmployeeId').required = role === 'funcionario';
-    document.getElementById('createUserName').readOnly = role === 'funcionario';
-    if (role === 'funcionario') updateCreateEmployeeName();
+    const needsEmployee = role === 'usuario' && selectedPermissions(document.getElementById('createPermissionChecks')).pages.includes('capacitation');
+    document.getElementById('createEmployeeLink').hidden = !needsEmployee;
+    document.getElementById('createEmployeeId').required = needsEmployee;
+    document.getElementById('createUserName').readOnly = needsEmployee;
+    if (needsEmployee) updateCreateEmployeeName();
   }
 
   function renderCreateEmployeeOptions() {
@@ -351,7 +390,7 @@
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };
+  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, canEdit, updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };
 
   if (!window.supabase?.createClient || !config.url || !config.publishableKey) {
     showLogin('Não foi possível carregar a configuração de acesso.');
@@ -448,13 +487,15 @@
     await bootstrap();
   });
 
+  fillPermissionChecks(document.getElementById('createPermissionChecks'));
+  updateCreateRole();
   document.getElementById('createUserForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const fullName = document.getElementById('createUserName').value.trim().replace(/\s+/g, ' ');
     const email = document.getElementById('createUserEmail').value.trim().toLowerCase();
     const role = document.getElementById('createRole').value;
-    const pages = Array.from(document.querySelectorAll('#createPages input:checked')).map(input => input.value);
-    const employeeId = role === 'funcionario' ? Number(document.getElementById('createEmployeeId').value) : null;
+    const { pages, edits } = selectedPermissions(document.getElementById('createPermissionChecks'));
+    const employeeId = role === 'usuario' && pages.includes('capacitation') ? Number(document.getElementById('createEmployeeId').value) : null;
     const result = document.getElementById('createdUserResult');
     result.hidden = true;
     result.replaceChildren();
@@ -462,7 +503,7 @@
       document.getElementById('createUserMessage').textContent = 'Escolha ao menos uma tela para o usuário.';
       return;
     }
-    if (role === 'funcionario' && !employeeId) {
+    if (role === 'usuario' && pages.includes('capacitation') && !employeeId) {
       document.getElementById('createUserMessage').textContent = 'Selecione o cadastro do funcionário.';
       return;
     }
@@ -471,7 +512,7 @@
     document.getElementById('createUserMessage').textContent = 'Criando conta...';
     try {
       const { data, error } = await client.functions.invoke('invite-admin', {
-        body: { action: 'create-user', fullName, email, role, pages, employeeId },
+        body: { action: 'create-user', fullName, email, role, pages, edits, employeeId },
       });
       if (error || data?.error) throw new Error(data?.error || error?.message || 'Erro desconhecido.');
       document.getElementById('createUserMessage').textContent = 'Usuário criado com sucesso.';
@@ -484,7 +525,7 @@
       document.getElementById('createUserEmail').value = '';
       document.getElementById('createRole').value = 'admin';
       document.getElementById('createEmployeeId').value = '';
-      document.querySelectorAll('#createPages input').forEach(input => { input.checked = false; });
+      document.querySelectorAll('#createPermissionChecks input').forEach(input => { input.checked = false; });
       updateCreateRole();
       await renderAdmins();
     } catch (error) {
