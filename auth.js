@@ -18,14 +18,16 @@
 
   const pageNames = { dashboard: 'dashboard', pageEmployees: 'employees', pageNewEmployee: 'employees',
     pageTrainings: 'trainings', pageNewTraining: 'trainings', pageTrainingDetail: 'trainings',
-    pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports' };
-  const roleNames = { admin: 'Administrador', rh: 'RH', usuario: 'Usuário' };
+    pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports',
+    pageCapacitation: 'capacitation', pageCapTrackForm: 'capacitation', pageCapTrackDetail: 'capacitation' };
+  const roleNames = { admin: 'Administrador', rh: 'RH', usuario: 'Usuário', funcionario: 'Funcionário' };
   function canPage(pageId) {
     if (!currentAccess?.active || currentAccess.must_change_password) return false;
     if (currentAccess.access_role === 'admin') return true;
     const page = pageNames[pageId];
     if (!page) return false;
-    if (currentAccess.access_role === 'rh') return page === 'employees' || page === 'trainings';
+    if (currentAccess.access_role === 'rh') return page === 'employees' || page === 'trainings' || page === 'capacitation';
+    if (currentAccess.access_role === 'funcionario') return page === 'capacitation';
     return currentAccess.access_role === 'usuario' && currentAccess.allowed_pages?.includes(page);
   }
   function applyAccess() {
@@ -91,7 +93,7 @@
     }
 
     const { data: admin, error: adminError } = await client.from('admin_users')
-      .select('id, active, full_name, access_role, allowed_pages, must_change_password').eq('id', user.id).maybeSingle();
+      .select('id, active, full_name, access_role, allowed_pages, must_change_password, employee_id').eq('id', user.id).maybeSingle();
     if (adminError || !admin?.active) {
       await client.auth.signOut();
       currentUser = null;
@@ -117,6 +119,8 @@
       showLogin('Não foi possível carregar os dados compartilhados: ' + error.message);
       return;
     }
+    window.SPFLY_CAP?.configure(client, admin, user, employees);
+    renderCreateEmployeeOptions();
 
     const displayName = admin.full_name.trim();
     const initials = displayName.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toLocaleUpperCase('pt-BR');
@@ -130,6 +134,7 @@
     screen.hidden = true;
     app.classList.add('authenticated');
     const firstPage = admin.access_role === 'rh' ? 'pageEmployees'
+      : admin.access_role === 'funcionario' ? 'pageCapacitation'
       : admin.access_role === 'usuario' ? ['dashboard','pageEmployees','pageTrainings','pageReportEmployee'].find(canPage)
       : 'dashboard';
     const currentPage = document.querySelector('.page.active')?.id;
@@ -175,7 +180,7 @@
     const container = document.getElementById('adminList');
     container.textContent = 'Carregando...';
     const { data, error } = await client.from('admin_users')
-      .select('id, email, full_name, active, access_role, allowed_pages, must_change_password, created_at').order('created_at');
+      .select('id, email, full_name, active, access_role, allowed_pages, must_change_password, employee_id, created_at').order('created_at');
     if (error) {
       container.textContent = 'Não foi possível carregar os acessos.';
       return;
@@ -203,6 +208,7 @@
       const role = document.createElement('select');
       role.setAttribute('aria-label', 'Perfil de ' + admin.email);
       for (const [value, label] of Object.entries(roleNames)) {
+        if (value === 'funcionario' && !admin.employee_id) continue;
         const option = document.createElement('option'); option.value = value; option.textContent = label; role.append(option);
       }
       role.value = admin.access_role || 'admin';
@@ -235,7 +241,28 @@
   }
 
   function updateCreateRole() {
-    document.getElementById('createPages').hidden = document.getElementById('createRole').value !== 'usuario';
+    const role = document.getElementById('createRole').value;
+    document.getElementById('createPages').hidden = role !== 'usuario';
+    document.getElementById('createEmployeeLink').hidden = role !== 'funcionario';
+    document.getElementById('createEmployeeId').required = role === 'funcionario';
+    document.getElementById('createUserName').readOnly = role === 'funcionario';
+    if (role === 'funcionario') updateCreateEmployeeName();
+  }
+
+  function renderCreateEmployeeOptions() {
+    const select = document.getElementById('createEmployeeId');
+    const previous = select.value;
+    select.replaceChildren(new Option('Selecione um funcionário', ''));
+    for (const employee of employees.filter(item => item.status !== 'Inativo').sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))) {
+      select.add(new Option(`${employee.name} — ${employee.mat}`, String(employee.id)));
+    }
+    if (Array.from(select.options).some(option => option.value === previous)) select.value = previous;
+    updateCreateEmployeeName();
+  }
+
+  function updateCreateEmployeeName() {
+    const employee = employees.find(item => String(item.id) === document.getElementById('createEmployeeId').value);
+    if (employee) document.getElementById('createUserName').value = employee.name;
   }
 
   async function uploadFile(file) {
@@ -324,7 +351,7 @@
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, updateCreateRole };
+  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };
 
   if (!window.supabase?.createClient || !config.url || !config.publishableKey) {
     showLogin('Não foi possível carregar a configuração de acesso.');
@@ -427,6 +454,7 @@
     const email = document.getElementById('createUserEmail').value.trim().toLowerCase();
     const role = document.getElementById('createRole').value;
     const pages = Array.from(document.querySelectorAll('#createPages input:checked')).map(input => input.value);
+    const employeeId = role === 'funcionario' ? Number(document.getElementById('createEmployeeId').value) : null;
     const result = document.getElementById('createdUserResult');
     result.hidden = true;
     result.replaceChildren();
@@ -434,12 +462,16 @@
       document.getElementById('createUserMessage').textContent = 'Escolha ao menos uma tela para o usuário.';
       return;
     }
+    if (role === 'funcionario' && !employeeId) {
+      document.getElementById('createUserMessage').textContent = 'Selecione o cadastro do funcionário.';
+      return;
+    }
     const button = event.target.querySelector('button[type=submit]');
     button.disabled = true;
     document.getElementById('createUserMessage').textContent = 'Criando conta...';
     try {
       const { data, error } = await client.functions.invoke('invite-admin', {
-        body: { action: 'create-user', fullName, email, role, pages },
+        body: { action: 'create-user', fullName, email, role, pages, employeeId },
       });
       if (error || data?.error) throw new Error(data?.error || error?.message || 'Erro desconhecido.');
       document.getElementById('createUserMessage').textContent = 'Usuário criado com sucesso.';
@@ -451,6 +483,7 @@
       document.getElementById('createUserName').value = '';
       document.getElementById('createUserEmail').value = '';
       document.getElementById('createRole').value = 'admin';
+      document.getElementById('createEmployeeId').value = '';
       document.querySelectorAll('#createPages input').forEach(input => { input.checked = false; });
       updateCreateRole();
       await renderAdmins();
