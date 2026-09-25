@@ -7,8 +7,9 @@
   let editingTrack = null, editingCourse = null, busy = false;
   const $ = id => document.getElementById(id);
   const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  const manager = () => ['admin', 'rh'].includes(access?.access_role);
-  const employeeRole = () => access?.access_role === 'funcionario';
+  const manager = () => access?.access_role === 'admin';
+  const employeeRole = () => access?.access_role === 'usuario' && !!access?.employee_id && access?.allowed_pages?.includes('capacitation');
+  const canUpload = () => employeeRole() && access?.editable_pages?.includes('capacitation');
   const today = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; };
   const date = key => { const [y,m,d] = String(key || '').split('-').map(Number); return new Date(y, m-1, d, 12); };
   const addDays = (key, days) => { const d = date(key); d.setDate(d.getDate() + days); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
@@ -48,13 +49,16 @@
   function courseState(enrollment, course) {
     const item = courseProgress(enrollment.id, course.id);
     if (item?.completed_at) return ['Concluído','green'];
+    if (item?.certificate_path && item.validation_status !== 'rejected') return ['Aguardando validação','orange'];
     if (remaining(enrollment.due_date) < 0) return ['Em atraso','red'];
     if (item?.started_at) return ['Em andamento','orange'];
     return ['Não iniciado','gray'];
   }
   function certificateState(item) {
     if (!item?.certificate_path) return ['Pendente','gray'];
-    return item.certificate_viewed_at ? ['Visualizado','green'] : ['Enviado','orange'];
+    if (item.validation_status === 'approved') return ['Aprovado','green'];
+    if (item.validation_status === 'rejected') return ['Rejeitado','red'];
+    return ['Aguardando validação','orange'];
   }
   async function load() {
     if (!client || !access) return;
@@ -88,7 +92,7 @@
     const mine = employeeRole();
     $('capPageTitle').textContent = mine ? 'Minhas Capacitações' : 'Capacitação';
     $('capListTitle').textContent = mine ? 'Minhas Trilhas' : 'Trilhas de Capacitação';
-    $('capListHint').textContent = mine ? 'Acompanhe seus cursos, prazos e certificados.' : 'Acompanhe cursos, prazos e certificados em um só lugar.';
+    $('capListHint').textContent = mine ? 'Consulte seus cursos e envie certificados para conferência.' : 'Acompanhe cursos, prazos e certificados em um só lugar.';
     $('capNewTrackButton').hidden = !manager();
     const visible = tracks.filter(track => !mine || trackEnrollments(track.id).length);
     const eStats = enrollments.map(enrollmentStats);
@@ -179,19 +183,17 @@
   function renderCourses(track, enrollment, reviewEnrollment = null) {
     const list = trackCourses(track.id).filter(course => manager() || course.active || courseProgress(enrollment?.id,course.id)?.completed_at);
     const viewed = reviewEnrollment || enrollment;
-    $('capDetailCourses').innerHTML = `<div class="cap-section-head"><div><h2>Cursos da Trilha</h2><p class="muted">${manager()?'Links externos, ordem, conclusão e certificados.':'Acesse o curso em nova aba e registre sua conclusão aqui.'}</p></div>${manager()?'<button type="button" class="btn btn-primary" data-cap-action="new-course">+ Adicionar Curso</button>':''}</div>
+    $('capDetailCourses').innerHTML = `<div class="cap-section-head"><div><h2>Cursos da Trilha</h2><p class="muted">${manager()?'Links externos, ordem, conclusão e certificados.':'Acesse o curso e envie o certificado para validação.'}</p></div>${manager()?'<button type="button" class="btn btn-primary" data-cap-action="new-course">+ Adicionar Curso</button>':''}</div>
       <div class="cap-course-list">${list.length ? list.map(course => {
         const item = viewed ? courseProgress(viewed.id,course.id) : null;
         const state = viewed ? courseState(viewed,course) : null;
-        const certificate = item?.completed_at && course.certificate_required ? certificateState(item) : null;
+        const certificate = course.certificate_required ? certificateState(item) : null;
         const url = validUrl(course.external_url);
-        const canWork = !!(enrollment && !reviewEnrollment && track.status==='Ativa' && course.active);
         return `<article class="cap-course"><div class="cap-course-head"><div><h3><span class="cap-course-order">${course.sort_order}.</span>${safe(course.name)}</h3><p>${safe(course.description || 'Sem descrição.')}</p></div>${state?badge(state[0],state[1]):badge(course.active?'Ativo':'Inativo',course.active?'green':'gray')}</div>
           <div class="cap-course-meta"><span>◷ ${course.duration_minutes} min</span><span>Certificado ${course.certificate_required?'obrigatório':'opcional'}</span>${!course.active?'<span>Curso inativo</span>':''}${item?.completed_at?`<span>Concluído em ${fmtTime(item.completed_at)}</span>`:''}</div>
-          ${certificate?`<div class="cap-status-line">Certificado: ${badge(certificate[0],certificate[1])}${item?.certificate_name?`<span class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</span>`:''}</div>`:''}
-          <div class="cap-course-actions">${url && !reviewEnrollment?`<a class="btn btn-secondary" href="${safe(url)}" target="_blank" rel="noopener noreferrer" ${employeeRole()?`data-cap-start="${safe(course.id)}"`:''}>${manager()?'Abrir link ↗':'Acessar curso ↗'}</a>`:''}
-            ${canWork && !item?.completed_at?`<button type="button" class="btn btn-primary" data-cap-action="complete" data-id="${safe(course.id)}">Marcar como concluído</button>`:''}
-            ${employeeRole() && enrollment && item?.completed_at && course.certificate_required && !item.certificate_path?`<label class="btn btn-secondary">Anexar certificado <input class="cap-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-cap-upload="${safe(course.id)}"></label>`:''}
+          ${certificate?`<div class="cap-status-line">Certificado: ${badge(certificate[0],certificate[1])}${item?.certificate_name?`<span class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</span>`:''}${item?.validation_status==='rejected'?`<span class="cap-due-alert">Motivo: ${safe(item.rejection_reason||'Não informado')}</span>`:''}</div>`:''}
+          <div class="cap-course-actions">${url && !reviewEnrollment?`<a class="btn btn-secondary" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${manager()?'Abrir link ↗':'Acessar curso ↗'}</a>`:''}
+            ${canUpload() && enrollment && track.status==='Ativa' && course.active && course.certificate_required && (!item?.certificate_path || item.validation_status==='rejected')?`<label class="btn btn-secondary">${item?.certificate_path?'Enviar novo certificado':'Anexar certificado'} <input class="cap-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-cap-upload="${safe(course.id)}"></label>`:''}
             ${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">Ver certificado</button>`:''}
             ${manager()?`<button type="button" class="btn btn-secondary" data-cap-action="edit-course" data-id="${safe(course.id)}">Editar Curso</button>`:''}</div></article>`;
       }).join('') : empty('Esta trilha ainda não tem cursos.')} </div>`;
@@ -263,12 +265,12 @@
     const stats = enrollmentStats(enrollment);
     node.innerHTML = `<div class="card"><h3>${safe(employeeName(enrollment.employee_id))}</h3><p class="muted">Início: ${fmtDate(enrollment.start_date)} · Prazo: ${fmtDate(enrollment.due_date)} · ${deadline(enrollment)} · Prazo utilizado: ${timeUsed(enrollment)}%</p><p>Concluídos ${stats.done} de ${stats.total} · Pendentes ${stats.pending} · Certificados enviados ${activeCourses(selectedTrack).filter(course=>courseProgress(enrollment.id,course.id)?.certificate_path).length}</p>${bar(stats.pct)}<div class="cap-course-list">${trackCourses(selectedTrack).map(course => {
       const item = courseProgress(enrollment.id,course.id), state = courseState(enrollment,course);
-      const cert = course.certificate_required && item?.completed_at ? certificateState(item) : null;
-      return `<div class="cap-course"><div class="cap-course-head"><strong>${safe(course.name)}</strong>${badge(state[0],state[1])}</div><div class="cap-status-line">${course.active?'Ativo':'Inativo'} · ${item?.completed_at?'Concluído em '+fmtTime(item.completed_at):'Pendente'}${cert?` · Certificado ${badge(cert[0],cert[1])}`:''}</div>${item?.certificate_name?`<div class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</div>`:''}${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">Ver certificado</button>`:''}</div>`;
+      const cert = course.certificate_required ? certificateState(item) : null;
+      return `<div class="cap-course"><div class="cap-course-head"><strong>${safe(course.name)}</strong>${badge(state[0],state[1])}</div><div class="cap-status-line">${course.active?'Ativo':'Inativo'} · ${item?.completed_at?'Concluído em '+fmtTime(item.completed_at):'Pendente'}${cert?` · Certificado ${badge(cert[0],cert[1])}`:''}</div>${item?.certificate_name?`<div class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</div>`:''}${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">Ver certificado</button>`:''}${item?.certificate_path && item.validation_status==='pending'?`<button type="button" class="btn btn-primary" data-cap-action="approve" data-id="${safe(item.id)}" ${item.certificate_viewed_at?'':'disabled title="Abra o certificado antes de aprovar"'}>Aprovar certificado</button><button type="button" class="btn btn-danger" data-cap-action="reject" data-id="${safe(item.id)}">Rejeitar</button>`:''}${!course.certificate_required && !item?.completed_at?`<button type="button" class="btn btn-primary" data-cap-action="complete" data-id="${safe(course.id)}">Confirmar conclusão</button>`:''}</div>`;
     }).join('')}</div></div>`;
   }
   async function setState(courseId, nextState) {
-    const enrollment = trackEnrollments(selectedTrack)[0]; if (!employeeRole() || !enrollment || busy) return;
+    const enrollment = enrollments.find(item => item.id === focusedEnrollment); if (!manager() || !enrollment || busy) return;
     busy = true;
     try { const { error } = await client.rpc('cap_set_course_state',{target_enrollment:enrollment.id,target_course:courseId,next_state:nextState});
       if (error) throw error; await load(); renderDetail(); renderList(); }
@@ -276,13 +278,19 @@
     finally { busy = false; }
   }
   async function uploadCertificate(courseId, file) {
-    if (!employeeRole() || !file || busy) return;
+    if (!canUpload() || !file || busy) return;
     const enrollment = trackEnrollments(selectedTrack)[0]; if (!enrollment) return;
     const ext = (file.name.split('.').pop() || '').toLowerCase();
     const types = {pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png'};
     if (!types[ext] || file.type && file.type !== types[ext] || file.size > 10*1024*1024 || file.size === 0) {
       alert('Envie PDF, JPG, JPEG ou PNG de até 10 MB.'); return;
     }
+    const signature = new Uint8Array(await file.slice(0,8).arrayBuffer());
+    const validSignature = ext === 'pdf' ? String.fromCharCode(...signature.slice(0,5)) === '%PDF-'
+      : ext === 'png' ? [137,80,78,71,13,10,26,10].every((byte,i) => signature[i] === byte)
+      : signature[0] === 255 && signature[1] === 216 && signature[2] === 255;
+    if (!validSignature) { alert('O conteúdo do arquivo não corresponde ao formato informado.'); return; }
+    if (!confirm('Confirma o envio deste certificado para conferência do administrador? Enquanto estiver pendente ou após aprovação, você não poderá substituí-lo.')) return;
     busy = true;
     try {
       const path = `${enrollment.id}/${courseId}/${crypto.randomUUID()}.${ext}`;
@@ -292,6 +300,21 @@
       if (attached.error) throw attached.error;
       await load(); renderDetail();
     } catch (error) { alert('Não foi possível anexar o certificado: '+error.message); }
+    finally { busy = false; }
+  }
+  async function reviewCertificate(progressId, decision) {
+    if (!manager() || busy) return;
+    const item = progress.find(row => row.id === progressId);
+    if (!item?.certificate_path || item.validation_status !== 'pending') return;
+    const reason = decision === 'rejected' ? prompt('Explique o que precisa ser corrigido no certificado:') : null;
+    if (decision === 'rejected' && (reason === null || reason.trim().length < 3)) return;
+    if (decision === 'approved' && !confirm('Você conferiu o documento e confirma que ele pertence ao funcionário e ao curso? Após aprovar, ele ficará bloqueado para alterações.')) return;
+    busy = true;
+    try {
+      const {error} = await client.rpc('cap_review_certificate',{target_progress:progressId,decision,reason});
+      if (error) throw error;
+      await load(); renderDetail();
+    } catch (error) { alert('Não foi possível validar o certificado: '+error.message); }
     finally { busy = false; }
   }
   async function viewCertificate(progressId) {
@@ -317,16 +340,14 @@
     if (action==='enroll') showEnrollEditor();
     if (action==='employee') { focusedEnrollment=id; renderEmployeeFocus(); $('capEmployeeFocus').scrollIntoView({behavior:'smooth'}); }
     if (action==='complete') setState(id,'completed');
+    if (action==='approve') reviewCertificate(id,'approved');
+    if (action==='reject') reviewCertificate(id,'rejected');
     if (action==='certificate') viewCertificate(id);
   }
   $('capTrackForm').addEventListener('submit',saveTrack);
   $('capCourseForm').addEventListener('submit',saveCourse);
   $('pageCapacitation').addEventListener('click',delegate);
-  $('pageCapTrackDetail').addEventListener('click',event => {
-    const link = event.target.closest('[data-cap-start]');
-    if (link && employeeRole()) setState(link.dataset.capStart,'started');
-    delegate(event);
-  });
+  $('pageCapTrackDetail').addEventListener('click',delegate);
   $('pageCapTrackDetail').addEventListener('change',event => {
     const input = event.target.closest('[data-cap-upload]');
     if (input) uploadCertificate(input.dataset.capUpload,input.files?.[0]);
