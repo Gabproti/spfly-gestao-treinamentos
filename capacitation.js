@@ -400,6 +400,52 @@
       await load(); if (document.querySelector('.page.active')?.id === 'pageCapTrackDetail') renderDetail();
     } catch (error) { if (tab) tab.close(); alert('Não foi possível abrir o certificado: '+error.message); }
   }
+  function canViewEmployeeHistory(employeeId) {
+    return manager() || (employeeRole() && String(access.employee_id) === String(employeeId));
+  }
+  async function renderEmployeeHistory(employeeId) {
+    const node = $('employeeCapHistory');
+    if (!node || node.dataset.employeeId !== String(employeeId) || !canViewEmployeeHistory(employeeId)) return;
+    try {
+      const rows = [];
+      for (let offset = 0; ; offset += 1000) {
+        const {data,error} = await client.rpc('cap_employee_history',{target_employee_id:Number(employeeId)}).range(offset,offset+999);
+        if (error) throw error;
+        rows.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      if ($('employeeCapHistory') !== node || node.dataset.employeeId !== String(employeeId)) return;
+      if (!rows.length) { node.innerHTML = empty('Nenhuma capacitação registrada para este funcionário.'); return; }
+      const groups = new Map();
+      for (const row of rows) {
+        if (!groups.has(row.enrollment_id)) groups.set(row.enrollment_id,{head:row,courses:[]});
+        if (row.course_id) groups.get(row.enrollment_id).courses.push(row);
+      }
+      node.innerHTML = `<div class="employee-cap-history">${[...groups.values()].map(({head,courses:list}) => {
+        const active = list.filter(item => item.course_active);
+        const completed = active.filter(item => item.completed_at).length;
+        const progressValue = percent(completed,active.length);
+        const trackStatus = head.track_deleted_at ? badge('Trilha excluída','gray') : head.removed_at ? badge('Inscrição removida','gray') : badge(head.track_status,head.track_status==='Concluída'?'green':'orange');
+        return `<article class="employee-cap-track"><div class="employee-cap-head"><div><strong>${safe(head.track_name)}</strong><div class="muted">${safe(head.track_type)} · Início ${fmtDate(head.enrollment_start)} · Prazo ${fmtDate(head.enrollment_due)}</div></div>${trackStatus}</div><div class="employee-cap-summary"><span>${completed} de ${active.length} curso(s) ativo(s) concluído(s)</span><strong>${progressValue}%</strong></div>${bar(progressValue)}<div class="employee-cap-courses">${list.length ? list.map(item => {
+          const state = item.completed_at ? badge('Concluído','green') : item.validation_status==='rejected' ? badge('Certificado rejeitado','red') : item.certificate_path ? badge('Certificado anexado','orange') : item.course_finished_at && item.certificate_required ? badge('Aguardando certificado','orange') : item.started_at ? badge('Em andamento','orange') : badge('Não iniciado','gray');
+          const certificate = item.certificate_required ? certificateState(item) : null;
+          return `<div class="employee-cap-course"><div><strong>${safe(item.course_name)}</strong>${!item.course_active?' <span class="muted">(inativo)</span>':''}<div class="muted">${item.completed_at?'Concluído em '+fmtTime(item.completed_at):item.course_finished_at?'Finalizado em '+fmtTime(item.course_finished_at):'Sem conclusão registrada'}</div>${item.validation_status==='rejected'?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(item.rejection_reason||'Não informado')}</div>`:''}</div><div class="employee-cap-course-state">${state}${certificate?`<span>Certificado: ${badge(certificate[0],certificate[1])}</span>`:''}${item.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-history-cert="${safe(item.certificate_path)}">Ver certificado</button>`:''}</div></div>`;
+        }).join('') : empty('Nenhum curso registrado nesta trilha.')}</div></article>`;
+      }).join('')}</div>`;
+    } catch (error) {
+      if ($('employeeCapHistory') === node) node.textContent = 'Não foi possível carregar o histórico: ' + error.message;
+    }
+  }
+  async function viewHistoryCertificate(path) {
+    if (!client || !path || !access) return;
+    const tab = window.open('about:blank','_blank');
+    try {
+      const {data,error} = await client.storage.from('cap-certificates').createSignedUrl(path,60);
+      if (error) throw error;
+      if (tab) tab.location.href = data.signedUrl;
+      else window.location.href = data.signedUrl;
+    } catch (error) { if (tab) tab.close(); alert('Não foi possível abrir o certificado: '+error.message); }
+  }
   function delegate(event) {
     const button = event.target.closest('[data-cap-action]'); if (!button) return;
     const {capAction:action,id} = button.dataset;
@@ -427,6 +473,10 @@
     const input = event.target.closest('[data-cap-upload]');
     if (input) uploadCertificate(input.dataset.capUpload,input.files?.[0]);
   });
-  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeEnrollEditor,saveEnrollments,updateEmployees(next){employees=next||[];}};
+  $('modalBody').addEventListener('click',event => {
+    const button = event.target.closest('[data-cap-history-cert]');
+    if (button) viewHistoryCertificate(button.dataset.capHistoryCert);
+  });
+  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];}};
   window.SPFLY_CAP_TEST = {addDays,remaining,percent,validUrl};
 })();

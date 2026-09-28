@@ -1,4 +1,8 @@
-# SPFLY Admin — V17
+# SPFLY Admin — V18
+
+## Ajuste da V18
+
+Em **Funcionários > Visualizar**, a ficha mostra o histórico de capacitações: trilhas, cursos, progresso, situação e certificados. O administrador também consulta trilhas e inscrições removidas, preservadas como histórico. Usuários com acesso a Funcionários e Capacitação visualizam apenas o próprio histórico. Execute `supabase/migration-v18-employee-cap-history.sql` antes de publicar `index.html`, `capacitation.js` e `capacitation.css`.
 
 ## Ajuste da V17
 
