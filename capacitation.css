@@ -57,6 +57,7 @@
 .cap-status-line{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:10px 0;font-size:12px;color:var(--muted)}
 .cap-due-alert{color:#b23030;font-weight:700}
 .cap-certificate-name{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.cap-rejection-reason{margin:10px 0;padding:10px 12px;border:1px solid #efb5b5;border-radius:8px;background:#fff5f5;color:#9a3030;font-size:13px;overflow-wrap:anywhere}
 .cap-file-input{max-width:220px;font-size:12px}
 .cap-toast{margin:12px 0;padding:11px 13px;border-radius:8px;background:#fff5ee;border:1px solid #ffc8aa;color:#8d3c1c;font-size:13px}
 .cap-toast.error{background:#fff0f0;border-color:#efb5b5;color:#a83434}
@@ -71,6 +72,7 @@ body.dark .cap-audience{border-color:#343b42}
 body.dark .cap-section-head input,body.dark #capEnrollSearch,body.dark .cap-file-input{background:#12161a;color:#e8edf2;border-color:#394149}
 body.dark .cap-toast{background:#33241e;color:#ffc29f;border-color:#6c3b26}
 body.dark .cap-toast.error{background:#341d1f;color:#ffc4c4;border-color:#713437}
+body.dark .cap-rejection-reason{background:#341d1f;color:#ffc4c4;border-color:#713437}
 @media(max-width:1200px){.cap-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:800px){.cap-track-grid,.cap-employee-choices{grid-template-columns:1fr}.cap-hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.cap-heading,.cap-section-head{align-items:stretch;flex-direction:column}.cap-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.cap-detail-top{align-items:flex-start;flex-direction:column}.cap-section-head input{max-width:none}.cap-card-head{align-items:flex-start;flex-direction:column}}
