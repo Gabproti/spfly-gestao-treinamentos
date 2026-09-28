@@ -1,4 +1,8 @@
-# SPFLY Admin — V18
+# SPFLY Admin — V19
+
+## Ajuste da V19
+
+Em **Funcionários > Visualizar > Histórico de capacitações**, cada trilha aparece recolhida, mostrando apenas o nome. Clique no nome para expandir e ver o progresso, os cursos e os certificados. Não há alteração no banco de dados nesta versão.
 
 ## Ajuste da V18
 
