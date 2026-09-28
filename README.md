@@ -1,4 +1,4 @@
-# SPFLY Admin — V12
+# SPFLY Admin — V13
 
 A V10 organiza a tela de acessos como lista compacta. Cada linha mostra nome, e-mail, perfil, telas liberadas e status. Há busca por nome, e-mail ou tela e filtro por perfil. O administrador abre "Editar acesso" apenas para a pessoa desejada; as permissões e regras da V9 permanecem as mesmas.
 
@@ -18,9 +18,13 @@ Ao cadastrar um treinamento, informe o período de revisão em dias após a data
 
 Após concluir o treinamento, uma pessoa com permissão de edição em Treinamentos pode registrar o resultado **Eficaz** ou **Não eficaz**, a data e uma evidência escrita. A avaliação não altera o status de conclusão do treinamento. Cada avaliação fica no histórico, e a lista de treinamentos mostra quando a revisão está programada, vencida ou avaliada.
 
-## Atualização da V11
+## Ajuste da V13
 
-Publique `index.html` e este `README.md` na raiz do repositório GitHub Pages. Não há migração de banco nem alteração na Edge Function para esta versão. Mantenha os demais arquivos da V11.
+O nome e o perfil exibidos no topo e na barra lateral são somente informativos. Clicar neles não abre mais a tela de alteração do nome. O nome definido no cadastro do acesso continua aparecendo após o login. A etapa de nome permanece apenas como proteção para contas antigas que não tenham nome cadastrado.
+
+## Atualização da V12
+
+Publique `index.html`, `auth.js` e este `README.md` na raiz do repositório GitHub Pages. Não há migração de banco nem alteração na Edge Function para esta versão. Mantenha os demais arquivos da V12.
 
 ## Instalação nova
 
