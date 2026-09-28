@@ -398,16 +398,6 @@
     if (error) throw error;
   }
 
-  async function editProfile() {
-    const { data, error } = await client.from('admin_users')
-      .select('full_name').eq('id', currentUser.id).single();
-    if (error) {
-      alert('Não foi possível abrir o cadastro: ' + error.message);
-      return;
-    }
-    showProfileSetup(data.full_name || '');
-  }
-
   async function previewFile(item, title) {
     if (!item?.name) {
       alert('Arquivo não encontrado.');
@@ -466,7 +456,7 @@
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, editProfile, logout, canPage, canEdit,
+  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, logout, canPage, canEdit,
     isAdmin: () => currentAccess?.active && currentAccess.access_role === 'admin',
     updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };
 
