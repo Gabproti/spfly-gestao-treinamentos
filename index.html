@@ -215,12 +215,12 @@ body{background:#f7f9fc;color:#172233}
 .subnav{padding-left:45px}.subnav button{font-size:13px}
 .sidebar-footer{position:absolute;z-index:2;left:0;right:0;bottom:0;padding:14px 19px 18px;background:#1a1f21e8;border-top:1px solid #ffffff22}
 .sidebar-profile,.sidebar-logout{border:0;background:none;color:#fff;display:flex;align-items:center;text-align:left;cursor:pointer}
-.sidebar-profile{width:100%;gap:12px;padding:0 0 10px}.sidebar-profile .avatar{background:#424a50;width:44px;height:44px;flex:0 0 44px}.sidebar-profile strong{display:block;font-size:13px;font-weight:700}.sidebar-profile small{display:block;color:#aeb7be;font-size:12px;margin-top:4px}
+.sidebar-profile{width:100%;gap:12px;padding:0 0 10px;cursor:default}.sidebar-profile .avatar{background:#424a50;width:44px;height:44px;flex:0 0 44px}.sidebar-profile strong{display:block;font-size:13px;font-weight:700}.sidebar-profile small{display:block;color:#aeb7be;font-size:12px;margin-top:4px}
 .sidebar-logout{gap:13px;padding:7px 13px;color:#e1e5e8;font-size:14px}.sidebar-logout:hover,.sidebar-profile:hover{color:#fff}
 .main{margin-left:272px;width:calc(100% - 272px);min-width:0}.topbar{height:76px;padding:0 28px;background:#fff;box-shadow:0 1px 0 #e4e9ee}
 .topbar-search{width:min(420px,45%);position:relative}.topbar-search>span{position:absolute;left:15px;top:50%;transform:translateY(-53%);font-size:29px;color:#596878;pointer-events:none}.topbar-search .search{width:100%;height:46px;padding:10px 14px 10px 47px;background:#fff;border-color:#dce4ec;font-size:14px}
 .user{gap:18px}.user #themeToggle{width:44px;height:44px;padding:0;border:1px solid #dce4ec;background:#fff;color:#526173;font-size:24px;line-height:1}
-.topbar-profile{display:flex;align-items:center;gap:12px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;padding:0}.topbar-profile .avatar{width:44px;height:44px;background:#35424c;font-size:13px}.topbar-profile strong{display:block;font-size:14px;color:#172233}.topbar-profile small{display:block;font-size:12px;color:#687789;margin-top:3px}
+.topbar-profile{display:flex;align-items:center;gap:12px;border:0;background:none;color:inherit;text-align:left;cursor:default;padding:0}.topbar-profile .avatar{width:44px;height:44px;background:#35424c;font-size:13px}.topbar-profile strong{display:block;font-size:14px;color:#172233}.topbar-profile small{display:block;font-size:12px;color:#687789;margin-top:3px}
 .content{max-width:none;margin:0;padding:16px 20px 32px}.dashboard-page-head{align-items:center;margin:0 8px 18px}.dashboard-page-head h1{font-size:34px;line-height:1.15;letter-spacing:-.035em}.dashboard-page-head .muted{font-size:14px;line-height:1.45}.dashboard-page-head .btn-primary{height:49px;padding:0 20px;background:#fa500f;border-radius:9px;font-size:14px}
 .dashboard-agenda-layout{grid-template-columns:minmax(0,1.17fr) minmax(430px,1fr);gap:16px;align-items:stretch}
 .dashboard-calendar,.dashboard-commitments{border-radius:14px;box-shadow:0 5px 20px #16233008}
@@ -304,13 +304,13 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     </div>
     <button class="nav-btn" data-page="pageAdmins"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-settings"/></svg><span class="nav-label">Acessos</span></button>
   </div>
-  <div class="sidebar-footer"><button class="sidebar-profile" onclick="SPFLY_AUTH.editProfile()" aria-label="Meu cadastro"><span class="avatar" id="sidebarAdminInitials">AD</span><span><strong id="sidebarAdminName">Administrador</strong><small id="sidebarAccessRole">Administrador</small></span></button><button class="sidebar-logout" onclick="SPFLY_AUTH.logout()">↪ <span>Sair</span></button></div>
+  <div class="sidebar-footer"><div class="sidebar-profile"><span class="avatar" id="sidebarAdminInitials">AD</span><span><strong id="sidebarAdminName">Administrador</strong><small id="sidebarAccessRole">Administrador</small></span></div><button class="sidebar-logout" onclick="SPFLY_AUTH.logout()">↪ <span>Sair</span></button></div>
 </aside>
 
 <main class="main">
 <header class="topbar">
   <div class="topbar-search"><span aria-hidden="true">⌕</span><input class="search" id="globalSearch" placeholder="Buscar no sistema..."></div>
-  <div class="user"><button id="themeToggle" class="btn btn-secondary" onclick="toggleDarkMode()" aria-label="Alternar tema">☾</button><button class="topbar-profile" onclick="SPFLY_AUTH.editProfile()" aria-label="Meu cadastro"><span class="avatar" id="topbarAdminInitials">AD</span><span><strong id="currentAdminName"></strong><small id="topbarAccessRole">Administrador</small></span></button></div>
+  <div class="user"><button id="themeToggle" class="btn btn-secondary" onclick="toggleDarkMode()" aria-label="Alternar tema">☾</button><div class="topbar-profile"><span class="avatar" id="topbarAdminInitials">AD</span><span><strong id="currentAdminName"></strong><small id="topbarAccessRole">Administrador</small></span></div></div>
 </header>
 
 <section class="content">
