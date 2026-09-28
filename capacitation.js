@@ -20,7 +20,7 @@
   const employeeMat = id => employees.find(person => String(person.id) === String(id))?.mat || '';
   const trackCourses = id => courses.filter(course => course.track_id === id).sort((a,b) => a.sort_order-b.sort_order || a.name.localeCompare(b.name,'pt-BR'));
   const activeCourses = id => trackCourses(id).filter(course => course.active);
-  const trackEnrollments = id => enrollments.filter(enrollment => enrollment.track_id === id);
+  const trackEnrollments = id => enrollments.filter(enrollment => enrollment.track_id === id && !enrollment.removed_at);
   const courseProgress = (enrollmentId, courseId) => progress.find(item => item.enrollment_id === enrollmentId && item.course_id === courseId);
   const remaining = due => Math.round((date(due) - date(today())) / 86400000);
   const timeUsed = enrollment => {
@@ -182,7 +182,7 @@
     const mine = employeeRole(), enrollment = mine ? participants[0] : null;
     const stats = enrollment ? enrollmentStats(enrollment) : null;
     const mean = participants.length ? Math.round(participants.reduce((sum,item) => sum+enrollmentStats(item).pct,0)/participants.length) : 0;
-    $('capTrackActions').innerHTML = manager() ? `<button type="button" class="btn btn-secondary" data-cap-action="edit-track" data-id="${safe(track.id)}">Editar Trilha</button>` : '';
+    $('capTrackActions').innerHTML = manager() ? `<button type="button" class="btn btn-secondary" data-cap-action="edit-track" data-id="${safe(track.id)}">Editar Trilha</button><button type="button" class="btn btn-danger" data-cap-action="delete-track" data-id="${safe(track.id)}">Excluir Trilha</button>` : '';
     $('capDetailTabs').hidden = !manager();
     $('capDetailTabs').querySelectorAll('button').forEach(button => button.classList.toggle('active',button.dataset.capTab === selectedTab));
     $('capDetailCourses').hidden = selectedTab !== 'courses'; $('capDetailEmployees').hidden = selectedTab !== 'employees';
@@ -254,9 +254,7 @@
     const track = tracks.find(item => item.id === selectedTrack); if (!track) return;
     busy = true;
     try {
-      const rows = ids.map(employee_id => ({track_id:track.id,employee_id,start_date:track.start_date,
-        due_date:addDays(track.start_date,track.duration_days),enrolled_by:currentUser.id}));
-      const { error } = await client.from('cap_enrollments').insert(rows); if (error) throw error;
+      const { error } = await client.rpc('cap_enroll_employees',{target_track:track.id,target_employee_ids:ids}); if (error) throw error;
       closeEnrollEditor(); await load(); renderDetail();
     } catch (error) { alert('Não foi possível inscrever: '+error.message); }
     finally { busy = false; }
@@ -266,7 +264,7 @@
     $('capDetailEmployees').innerHTML = `<div class="cap-section-head"><div><h2>Funcionários</h2><p class="muted">Progresso individual, prazos e certificados.</p></div><button type="button" class="btn btn-primary" data-cap-action="enroll">+ Inscrever funcionários</button></div>
       ${list.length ? `<div class="cap-people-table card"><table><thead><tr><th>Funcionário</th><th>Progresso</th><th>Concluídos</th><th>Pendentes</th><th>Prazo</th><th>Status</th><th>Certificados</th><th></th></tr></thead><tbody>${list.map(enrollment => {
         const stats = enrollmentStats(enrollment);
-        return `<tr><td><strong>${safe(employeeName(enrollment.employee_id))}</strong><br><span class="muted">${safe(employeeMat(enrollment.employee_id))}</span></td><td>${bar(stats.pct)} ${stats.pct}%</td><td>${stats.done}</td><td>${stats.pending}${stats.overdue?` · <span class="cap-due-alert">${stats.overdue} atrasado(s)</span>`:''}</td><td>${fmtDate(enrollment.due_date)}</td><td>${badge(stats.status,stats.overdue?'red':stats.pct===100?'green':'orange')}</td><td>${certificateSummary(enrollment)}</td><td><button type="button" class="btn btn-secondary" data-cap-action="employee" data-id="${safe(enrollment.id)}">Ver evolução</button></td></tr>`;
+        return `<tr><td><strong>${safe(employeeName(enrollment.employee_id))}</strong><br><span class="muted">${safe(employeeMat(enrollment.employee_id))}</span></td><td>${bar(stats.pct)} ${stats.pct}%</td><td>${stats.done}</td><td>${stats.pending}${stats.overdue?` · <span class="cap-due-alert">${stats.overdue} atrasado(s)</span>`:''}</td><td>${fmtDate(enrollment.due_date)}</td><td>${badge(stats.status,stats.overdue?'red':stats.pct===100?'green':'orange')}</td><td>${certificateSummary(enrollment)}</td><td><button type="button" class="btn btn-secondary" data-cap-action="employee" data-id="${safe(enrollment.id)}">Ver evolução</button> <button type="button" class="btn btn-secondary" data-cap-action="remove-enrollment" data-id="${safe(enrollment.id)}">Remover da trilha</button></td></tr>`;
       }).join('')}</tbody></table></div>` : empty('Nenhum funcionário inscrito nesta trilha.')}
       <div id="capEmployeeFocus" class="cap-employee-focus"></div>`;
     if (focusedEnrollment) renderEmployeeFocus();
@@ -347,6 +345,31 @@
     } catch (error) { alert('Não foi possível alterar o motivo: '+error.message); }
     finally { busy = false; }
   }
+  async function deleteTrack(id) {
+    if (!manager() || busy) return;
+    const track = tracks.find(item => item.id === id);
+    if (!track || !confirm(`Excluir a trilha "${track.name}"? Ela deixará de aparecer para todos os usuários. O histórico e os certificados serão preservados.`)) return;
+    busy = true;
+    try {
+      const {error} = await client.rpc('cap_archive_track',{target_track:id});
+      if (error) throw error;
+      selectedTrack = null; focusedEnrollment = null; await load(); showPage('pageCapacitation');
+    } catch (error) { alert('Não foi possível excluir a trilha: '+error.message); }
+    finally { busy = false; }
+  }
+  async function removeEnrollment(id) {
+    if (!manager() || busy) return;
+    const enrollment = enrollments.find(item => item.id === id && item.track_id === selectedTrack);
+    if (!enrollment || !confirm(`Remover ${employeeName(enrollment.employee_id)} desta trilha e de todos os cursos dela? O histórico e os certificados serão preservados.`)) return;
+    busy = true;
+    try {
+      const {error} = await client.rpc('cap_remove_enrollment',{target_enrollment:id});
+      if (error) throw error;
+      if (focusedEnrollment === id) focusedEnrollment = null;
+      await load(); renderDetail();
+    } catch (error) { alert('Não foi possível remover o funcionário: '+error.message); }
+    finally { busy = false; }
+  }
   async function viewCertificate(progressId) {
     const item = progress.find(row => row.id === progressId);
     if (!item?.certificate_path) return;
@@ -365,10 +388,12 @@
     const {capAction:action,id} = button.dataset;
     if (action==='track') openTrack(id);
     if (action==='edit-track') editTrack(id);
+    if (action==='delete-track') deleteTrack(id);
     if (action==='new-course') showCourseEditor();
     if (action==='edit-course') showCourseEditor(id);
     if (action==='enroll') showEnrollEditor();
     if (action==='employee') { focusedEnrollment=id; renderEmployeeFocus(); $('capEmployeeFocus').scrollIntoView({behavior:'smooth'}); }
+    if (action==='remove-enrollment') removeEnrollment(id);
     if (action==='complete') setState(id,'completed');
     if (action==='approve') reviewCertificate(id,'approved');
     if (action==='reject') reviewCertificate(id,'rejected');

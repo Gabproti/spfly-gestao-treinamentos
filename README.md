@@ -1,4 +1,8 @@
-# SPFLY Admin — V15
+# SPFLY Admin — V16
+
+## Ajuste da V16
+
+Administradores podem usar **Excluir Trilha** na tela da trilha ou **Remover da trilha** na lista de funcionários inscritos. A remoção de um funcionário o retira de todos os cursos da trilha. Trilhas e inscrições removidas deixam de aparecer no portal; o histórico de progresso e os certificados continuam guardados. Se o funcionário for inscrito novamente, o histórico anterior reaparece. Execute `supabase/migration-v16-track-removal.sql` no SQL Editor do Supabase antes de publicar `index.html` e `capacitation.js` desta versão.
 
 ## Ajuste da V15
 
