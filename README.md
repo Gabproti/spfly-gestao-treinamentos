@@ -1,4 +1,12 @@
-# SPFLY Admin — V13
+# SPFLY Admin — V15
+
+## Ajuste da V15
+
+Na aba **Capacitação > Funcionários > Ver evolução**, o administrador vê o motivo de cada certificado recusado e pode usar **Editar motivo** para corrigi-lo. A mudança aparece para o funcionário após a atualização da tela. Execute `supabase/migration-v15-rejection-reason.sql` no SQL Editor do Supabase antes de publicar `index.html`, `capacitation.js` e `capacitation.css` desta versão.
+
+## Ajuste da V14
+
+O ícone da SPFLY enviado para esta versão aparece na aba do navegador por meio de `favicon.png`. Publique `index.html` e `favicon.png` juntos na raiz do repositório GitHub Pages. Não há alteração no banco de dados.
 
 A V10 organiza a tela de acessos como lista compacta. Cada linha mostra nome, e-mail, perfil, telas liberadas e status. Há busca por nome, e-mail ou tela e filtro por perfil. O administrador abre "Editar acesso" apenas para a pessoa desejada; as permissões e regras da V9 permanecem as mesmas.
 
