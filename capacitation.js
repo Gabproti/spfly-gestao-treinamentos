@@ -50,6 +50,7 @@
     const item = courseProgress(enrollment.id, course.id);
     if (item?.completed_at) return ['Concluído','green'];
     if (item?.certificate_path && item.validation_status !== 'rejected') return ['Certificado anexado','orange'];
+    if (item?.course_finished_at && course.certificate_required) return ['Aguardando certificado','orange'];
     if (remaining(enrollment.due_date) < 0) return ['Em atraso','red'];
     if (item?.started_at) return ['Em andamento','orange'];
     return ['Não iniciado','gray'];
@@ -204,8 +205,10 @@
         return `<article class="cap-course"><div class="cap-course-head"><div><h3><span class="cap-course-order">${course.sort_order}.</span>${safe(course.name)}</h3><p>${safe(course.description || 'Sem descrição.')}</p></div>${state?badge(state[0],state[1]):badge(course.active?'Ativo':'Inativo',course.active?'green':'gray')}</div>
           <div class="cap-course-meta"><span>◷ ${course.duration_minutes} min</span><span>Certificado ${course.certificate_required?'obrigatório':'opcional'}</span>${!course.active?'<span>Curso inativo</span>':''}${item?.completed_at?`<span>Concluído em ${fmtTime(item.completed_at)}</span>`:''}</div>
           ${certificate?`<div class="cap-status-line">Certificado: ${badge(certificate[0],certificate[1])}${item?.certificate_name?`<span class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</span>`:''}${item?.validation_status==='rejected'?`<span class="cap-due-alert">Motivo: ${safe(item.rejection_reason||'Não informado')}</span>`:''}</div>`:''}
-          <div class="cap-course-actions">${url && !reviewEnrollment?`<a class="btn btn-secondary" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${manager()?'Abrir link ↗':'Acessar curso ↗'}</a>`:''}
-            ${canUpload() && enrollment && track.status==='Ativa' && course.active && course.certificate_required && (!item?.certificate_path || item.validation_status==='rejected')?`<label class="btn btn-secondary">${item?.certificate_path?'Enviar novo certificado':'Anexar certificado'} <input class="cap-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-cap-upload="${safe(course.id)}"></label>`:''}
+          <div class="cap-course-actions">${canUpload() && enrollment && track.status==='Ativa' && course.active && !item?.started_at?`<button type="button" class="btn btn-primary" data-cap-action="start-course" data-id="${safe(course.id)}">Iniciar</button>`:''}
+            ${url && !reviewEnrollment && (manager() || item?.started_at)?`<a class="btn btn-secondary" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${manager()?'Abrir link ↗':'Acessar curso ↗'}</a>`:''}
+            ${canUpload() && enrollment && track.status==='Ativa' && course.active && item?.started_at && !item?.course_finished_at && !item?.completed_at?`<button type="button" class="btn btn-primary" data-cap-action="finish-course" data-id="${safe(course.id)}">Concluir</button>`:''}
+            ${canUpload() && enrollment && track.status==='Ativa' && course.active && course.certificate_required && item?.course_finished_at && (!item?.certificate_path || item.validation_status==='rejected')?`<label class="btn btn-secondary">${item?.certificate_path?'Enviar novo certificado':'Anexar certificado'} <input class="cap-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-cap-upload="${safe(course.id)}"></label>`:''}
             ${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">Ver certificado</button>`:''}
             ${manager()?`<button type="button" class="btn btn-secondary" data-cap-action="edit-course" data-id="${safe(course.id)}">Editar Curso</button>`:''}</div></article>`;
       }).join('') : empty('Esta trilha ainda não tem cursos.')} </div>`;
@@ -277,7 +280,7 @@
       const item = courseProgress(enrollment.id,course.id), state = courseState(enrollment,course);
       const cert = course.certificate_required ? certificateState(item) : null;
       const rejected = item?.validation_status === 'rejected';
-      return `<div class="cap-course"><div class="cap-course-head"><strong>${safe(course.name)}</strong>${badge(state[0],state[1])}</div><div class="cap-status-line">${course.active?'Ativo':'Inativo'} · ${item?.completed_at?'Concluído em '+fmtTime(item.completed_at):'Pendente'}${cert?` · Certificado ${badge(cert[0],cert[1])}`:''}</div>${item?.certificate_name?`<div class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</div>`:''}${rejected?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(item.rejection_reason||'Não informado')}</div>`:''}${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">Ver certificado</button>`:''}${rejected?`<button type="button" class="btn btn-secondary" data-cap-action="edit-rejection" data-id="${safe(item.id)}">Editar motivo</button>`:''}${item?.certificate_path && item.validation_status==='pending'?`<button type="button" class="btn btn-primary" data-cap-action="approve" data-id="${safe(item.id)}" ${item.certificate_viewed_at?'':'disabled title="Abra o certificado antes de aprovar"'}>Aprovar certificado</button><button type="button" class="btn btn-danger" data-cap-action="reject" data-id="${safe(item.id)}">Rejeitar</button>`:''}${!course.certificate_required && !item?.completed_at?`<button type="button" class="btn btn-primary" data-cap-action="complete" data-id="${safe(course.id)}">Confirmar conclusão</button>`:''}</div>`;
+      return `<div class="cap-course"><div class="cap-course-head"><strong>${safe(course.name)}</strong>${badge(state[0],state[1])}</div><div class="cap-status-line">${course.active?'Ativo':'Inativo'} · ${item?.completed_at?'Concluído em '+fmtTime(item.completed_at):item?.course_finished_at?'Finalizado pelo usuário':'Pendente'}${cert?` · Certificado ${badge(cert[0],cert[1])}`:''}</div>${item?.certificate_name?`<div class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</div>`:''}${rejected?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(item.rejection_reason||'Não informado')}</div>`:''}${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">Ver certificado</button>`:''}${rejected?`<button type="button" class="btn btn-secondary" data-cap-action="edit-rejection" data-id="${safe(item.id)}">Editar motivo</button>`:''}${item?.certificate_path && item.validation_status==='pending'?`<button type="button" class="btn btn-primary" data-cap-action="approve" data-id="${safe(item.id)}" ${item.certificate_viewed_at?'':'disabled title="Abra o certificado antes de aprovar"'}>Aprovar certificado</button><button type="button" class="btn btn-danger" data-cap-action="reject" data-id="${safe(item.id)}">Rejeitar</button>`:''}${!course.certificate_required && !item?.completed_at?`<button type="button" class="btn btn-primary" data-cap-action="complete" data-id="${safe(course.id)}">Confirmar conclusão</button>`:''}</div>`;
     }).join('')}</div></div>`;
   }
   async function setState(courseId, nextState) {
@@ -286,6 +289,20 @@
     try { const { error } = await client.rpc('cap_set_course_state',{target_enrollment:enrollment.id,target_course:courseId,next_state:nextState});
       if (error) throw error; await load(); renderDetail(); renderList(); }
     catch (error) { alert('Não foi possível atualizar o curso: '+error.message); }
+    finally { busy = false; }
+  }
+  async function advanceCourse(courseId, nextState) {
+    if (!canUpload() || busy) return;
+    const enrollment = trackEnrollments(selectedTrack)[0];
+    const course = courses.find(item => item.id === courseId && item.track_id === selectedTrack);
+    if (!enrollment || !course || !course.active) return;
+    if (nextState === 'finished' && !confirm(`Concluir o curso "${course.name}"?${course.certificate_required?' Em seguida, anexe o certificado para validação.':''}`)) return;
+    busy = true;
+    try {
+      const {error} = await client.rpc('cap_set_course_state',{target_enrollment:enrollment.id,target_course:courseId,next_state:nextState});
+      if (error) throw error;
+      await load(); renderDetail();
+    } catch (error) { alert('Não foi possível atualizar o curso: '+error.message); }
     finally { busy = false; }
   }
   async function uploadCertificate(courseId, file) {
@@ -395,6 +412,8 @@
     if (action==='employee') { focusedEnrollment=id; renderEmployeeFocus(); $('capEmployeeFocus').scrollIntoView({behavior:'smooth'}); }
     if (action==='remove-enrollment') removeEnrollment(id);
     if (action==='complete') setState(id,'completed');
+    if (action==='start-course') advanceCourse(id,'started');
+    if (action==='finish-course') advanceCourse(id,'finished');
     if (action==='approve') reviewCertificate(id,'approved');
     if (action==='reject') reviewCertificate(id,'rejected');
     if (action==='edit-rejection') editRejectionReason(id);

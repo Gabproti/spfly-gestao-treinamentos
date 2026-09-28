@@ -1,4 +1,8 @@
-# SPFLY Admin — V16
+# SPFLY Admin — V17
+
+## Ajuste da V17
+
+Na tela do funcionário, **Iniciar** libera o link do curso. Após fazer o curso, **Concluir** registra o término. Cursos sem certificado obrigatório são concluídos nesse momento. Nos cursos com certificado obrigatório, **Concluir** libera **Anexar certificado**; o progresso só conta como concluído depois da aprovação administrativa do documento. Execute `supabase/migration-v17-course-flow.sql` depois da migração V16 e antes de publicar `index.html` e `capacitation.js`.
 
 ## Ajuste da V16
 
