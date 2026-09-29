@@ -415,9 +415,10 @@
         if (!data || data.length < 1000) break;
       }
       if ($('employeeCapHistory') !== node || node.dataset.employeeId !== String(employeeId)) return;
-      if (!rows.length) { node.innerHTML = empty('Nenhuma capacitação registrada para este funcionário.'); return; }
+      const visibleRows = rows.filter(row => !row.track_deleted_at && !row.removed_at);
+      if (!visibleRows.length) { node.innerHTML = empty('Nenhuma capacitação registrada para este funcionário.'); return; }
       const groups = new Map();
-      for (const row of rows) {
+      for (const row of visibleRows) {
         if (!groups.has(row.enrollment_id)) groups.set(row.enrollment_id,{head:row,courses:[]});
         if (row.course_id) groups.get(row.enrollment_id).courses.push(row);
       }
@@ -425,7 +426,7 @@
         const active = list.filter(item => item.course_active);
         const completed = active.filter(item => item.completed_at).length;
         const progressValue = percent(completed,active.length);
-        const trackStatus = head.track_deleted_at ? badge('Trilha excluída','gray') : head.removed_at ? badge('Inscrição removida','gray') : badge(head.track_status,head.track_status==='Concluída'?'green':'orange');
+        const trackStatus = badge(head.track_status,head.track_status==='Concluída'?'green':'orange');
         return `<details class="employee-cap-track"><summary class="employee-cap-trigger"><strong>${safe(head.track_name)}</strong><span class="employee-cap-chevron" aria-hidden="true">⌄</span></summary><div class="employee-cap-expanded"><div class="employee-cap-head"><div class="muted">${safe(head.track_type)} · Início ${fmtDate(head.enrollment_start)} · Prazo ${fmtDate(head.enrollment_due)}</div>${trackStatus}</div><div class="employee-cap-summary"><span>${completed} de ${active.length} curso(s) ativo(s) concluído(s)</span><strong>${progressValue}%</strong></div>${bar(progressValue)}<div class="employee-cap-courses">${list.length ? list.map(item => {
           const state = item.completed_at ? badge('Concluído','green') : item.validation_status==='rejected' ? badge('Certificado rejeitado','red') : item.certificate_path ? badge('Certificado anexado','orange') : item.course_finished_at && item.certificate_required ? badge('Aguardando certificado','orange') : item.started_at ? badge('Em andamento','orange') : badge('Não iniciado','gray');
           const certificate = item.certificate_required ? certificateState(item) : null;

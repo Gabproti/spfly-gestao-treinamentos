@@ -1,4 +1,8 @@
-# SPFLY Admin — V19
+# SPFLY Admin — V20
+
+## Ajuste da V20
+
+O histórico de capacitações na ficha do funcionário mostra apenas trilhas e inscrições ainda ativas; registros excluídos ou removidos deixam de aparecer. No modo escuro, o destaque das linhas das tabelas mantém fundo e texto com contraste adequado. Não há migração de banco de dados nesta versão.
 
 ## Ajuste da V19
 
