@@ -18,6 +18,15 @@
   const percent = (done, total) => total ? Math.round(done / total * 100) : 0;
   const employeeName = id => employees.find(person => String(person.id) === String(id))?.name || `Funcionário #${id}`;
   const employeeMat = id => employees.find(person => String(person.id) === String(id))?.mat || '';
+  const trackSector = track => String(track?.sector || '').trim();
+  const sectorNames = () => [...new Set([...employees.map(person => person.sector),...tracks.map(trackSector)].map(value => String(value || '').trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b,'pt-BR'));
+  function fillSectorSelect(id, selected = '') {
+    const names = sectorNames();
+    if (selected && !names.includes(selected)) names.push(selected);
+    const select = $(id);
+    select.innerHTML = `<option value="">Todos os setores</option>${names.sort((a,b) => a.localeCompare(b,'pt-BR')).map(sector => `<option value="${safe(sector)}">${safe(sector)}</option>`).join('')}`;
+    select.value = selected;
+  }
   const trackCourses = id => courses.filter(course => course.track_id === id).sort((a,b) => a.sort_order-b.sort_order || a.name.localeCompare(b.name,'pt-BR'));
   const activeCourses = id => trackCourses(id).filter(course => course.active);
   const trackEnrollments = id => enrollments.filter(enrollment => enrollment.track_id === id && !enrollment.removed_at);
@@ -107,9 +116,15 @@
     $('capListTitle').textContent = mine ? 'Minhas Trilhas' : 'Trilhas de Capacitação';
     $('capListHint').textContent = mine ? 'Consulte seus cursos e envie certificados para conferência.' : 'Acompanhe cursos, prazos e certificados em um só lugar.';
     $('capNewTrackButton').hidden = !manager();
-    const visible = tracks.filter(track => !mine || trackEnrollments(track.id).length);
-    const eStats = enrollments.map(enrollmentStats);
-    const uniquePeople = new Set(enrollments.map(item => item.employee_id));
+    const sectorFilter = $('capSectorFilter');
+    fillSectorSelect('capSectorFilter',sectorFilter.value);
+    sectorFilter.hidden = mine;
+    const selectedSector = mine ? '' : sectorFilter.value;
+    const visible = tracks.filter(track => (!mine || trackEnrollments(track.id).length) && (!selectedSector || trackSector(track) === selectedSector));
+    const visibleIds = new Set(visible.map(track => track.id));
+    const filteredEnrollments = enrollments.filter(item => visibleIds.has(item.track_id));
+    const eStats = filteredEnrollments.map(enrollmentStats);
+    const uniquePeople = new Set(filteredEnrollments.map(item => item.employee_id));
     const values = [visible.length, uniquePeople.size, eStats.reduce((sum,s) => sum+s.done,0), eStats.reduce((sum,s) => sum+s.started,0), eStats.reduce((sum,s) => sum+s.overdue,0)];
     const labels = [mine?'Minhas trilhas':'Trilhas cadastradas',mine?'Inscrições':'Funcionários inscritos','Cursos concluídos','Em andamento','Em atraso'];
     const icons = ['🎓','♙','✓','◷','!'];
@@ -121,14 +136,17 @@
       const shownPct = mineEnrollment ? enrollmentStats(mineEnrollment).pct : completion;
       const days = mineEnrollment ? `<span>Prazo: ${fmtDate(mineEnrollment.due_date)}</span><span>${deadline(mineEnrollment)}</span>` : `<span>Prazo: ${track.duration_days} dias</span><span>${participants.length} funcionário(s)</span>`;
       const status = mineEnrollment && enrollmentStats(mineEnrollment).overdue ? badge('Em atraso','red') : badge(track.status,track.status==='Ativa'?'green':'gray');
-      return `<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}"><div class="cap-card-head"><h3>${safe(track.name)}</h3>${status}</div><p>${safe(track.description || 'Sem descrição.')}</p><div class="cap-meta"><span>${safe(track.track_type)}</span><span>${trackCourses(track.id).filter(c=>c.active).length} curso(s)</span>${days}</div>${bar(shownPct)}<div class="cap-card-foot"><span>Progresso ${mine?'individual':'médio'}</span><strong>${shownPct}%</strong></div></button>`;
-    }).join('') : empty(mine ? 'Você ainda não foi inscrito em uma trilha.' : 'Nenhuma trilha cadastrada. Crie a primeira trilha para começar.');
+      return `<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}"><div class="cap-card-head"><h3>${safe(track.name)}</h3>${status}</div><p>${safe(track.description || 'Sem descrição.')}</p><div class="cap-meta"><span>${safe(track.track_type)}</span><span>Setor: ${safe(trackSector(track) || 'Todos os setores')}</span><span>${trackCourses(track.id).filter(c=>c.active).length} curso(s)</span>${days}</div>${bar(shownPct)}<div class="cap-card-foot"><span>Progresso ${mine?'individual':'médio'}</span><strong>${shownPct}%</strong></div></button>`;
+    }).join('') : empty(mine ? 'Você ainda não foi inscrito em uma trilha.' : selectedSector ? 'Nenhuma trilha destinada a este setor.' : 'Nenhuma trilha cadastrada. Crie a primeira trilha para começar.');
   }
+  function filterTracks() { renderList(); }
   function choices(target, excludeEnrolled = false) {
     const enrolled = new Set(excludeEnrolled ? trackEnrollments(selectedTrack).map(item => String(item.employee_id)) : []);
-    const list = employees.filter(person => person.status !== 'Inativo' && !enrolled.has(String(person.id))).sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
-    $(target).innerHTML = list.length ? list.map(person => `<label data-search="${safe((person.name+' '+(person.mat||'')).toLocaleLowerCase('pt-BR'))}"><input type="checkbox" value="${safe(person.id)}"><span>${safe(person.name)}</span><small>${safe(person.mat||'')}</small></label>`).join('') : empty('Nenhum funcionário disponível. Cadastre um funcionário primeiro.');
+    const sector = target === 'capEmployeeChoices' ? $('capTrackSector').value : trackSector(tracks.find(track => track.id === selectedTrack));
+    const list = employees.filter(person => person.status !== 'Inativo' && !enrolled.has(String(person.id)) && (!sector || person.sector === sector)).sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
+    $(target).innerHTML = list.length ? list.map(person => `<label data-search="${safe((person.name+' '+(person.mat||'')).toLocaleLowerCase('pt-BR'))}"><input type="checkbox" value="${safe(person.id)}"><span>${safe(person.name)}</span><small>${safe(person.mat||'')} · ${safe(person.sector || 'Sem setor')}</small></label>`).join('') : empty(sector ? 'Nenhum funcionário ativo disponível neste setor.' : 'Nenhum funcionário disponível. Cadastre um funcionário primeiro.');
   }
+  function changeTrackSector() { if (!$('capTrackAudience').hidden) { choices('capEmployeeChoices'); filterEmployees(); } }
   function filterEmployees() {
     for (const [list,search] of [['capEmployeeChoices','capEmployeeSearch'],['capEnrollChoices','capEnrollSearch']]) {
       const value = $(search)?.value.trim().toLocaleLowerCase('pt-BR') || '';
@@ -139,6 +157,7 @@
     if (!manager()) return;
     editingTrack = null; $('capTrackForm').reset(); $('capTrackFormTitle').textContent = 'Nova Trilha';
     $('capTrackStart').value = today(); $('capTrackDays').value = 30; $('capTrackAudience').hidden = false;
+    fillSectorSelect('capTrackSector');
     $('capEmployeeSearch').value = ''; choices('capEmployeeChoices'); notice('capTrackFormMessage',''); showPage('pageCapTrackForm');
   }
   function editTrack(id) {
@@ -147,6 +166,7 @@
     editingTrack = id; $('capTrackFormTitle').textContent = 'Editar Trilha';
     $('capTrackName').value = item.name; $('capTrackDescription').value = item.description;
     $('capTrackType').value = item.track_type; $('capTrackDays').value = item.duration_days;
+    fillSectorSelect('capTrackSector',trackSector(item));
     $('capTrackStart').value = item.start_date; $('capTrackStatus').value = item.status;
     $('capTrackAudience').hidden = true; notice('capTrackFormMessage',''); showPage('pageCapTrackForm');
   }
@@ -156,8 +176,11 @@
     const days = Number($('capTrackDays').value);
     if (!Number.isInteger(days) || days < 1 || days > 3650) { notice('capTrackFormMessage','Informe um prazo entre 1 e 3650 dias.',true); return; }
     const fields = { name:$('capTrackName').value.trim(), description:$('capTrackDescription').value.trim(),
-      track_type:$('capTrackType').value, duration_days:days, start_date:$('capTrackStart').value,
+      track_type:$('capTrackType').value, sector:$('capTrackSector').value, duration_days:days, start_date:$('capTrackStart').value,
       status:$('capTrackStatus').value, updated_at:new Date().toISOString() };
+    if (editingTrack && fields.sector && trackEnrollments(editingTrack).some(item => employees.find(person => String(person.id) === String(item.employee_id))?.sector !== fields.sector)) {
+      notice('capTrackFormMessage','Remova da trilha os funcionários de outros setores antes de alterar o setor destinatário.',true); return;
+    }
     const selected = [...$('capEmployeeChoices').querySelectorAll('input:checked')].map(input => Number(input.value));
     busy = true; notice('capTrackFormMessage','Salvando trilha...');
     try {
@@ -187,7 +210,7 @@
     $('capDetailTabs').hidden = !manager();
     $('capDetailTabs').querySelectorAll('button').forEach(button => button.classList.toggle('active',button.dataset.capTab === selectedTab));
     $('capDetailCourses').hidden = selectedTab !== 'courses'; $('capDetailEmployees').hidden = selectedTab !== 'employees';
-    $('capTrackHero').innerHTML = `${badge(track.status,track.status==='Ativa'?'green':'gray')} <span class="muted">${safe(track.track_type)}</span><h1>${safe(track.name)}</h1><p>${safe(track.description || 'Sem descrição.')}</p>
+    $('capTrackHero').innerHTML = `${badge(track.status,track.status==='Ativa'?'green':'gray')} <span class="muted">${safe(track.track_type)} · Setor: ${safe(trackSector(track) || 'Todos os setores')}</span><h1>${safe(track.name)}</h1><p>${safe(track.description || 'Sem descrição.')}</p>
       ${enrollment ? `<div class="cap-status-line"><strong>Seu prazo: ${fmtDate(enrollment.due_date)}</strong>${deadline(enrollment)}${badge(stats.status,stats.overdue?'red':stats.pct===100?'green':'orange')}</div>${bar(stats.pct)}<div class="cap-card-foot">Prazo utilizado <strong>${timeUsed(enrollment)}%</strong></div>` : ''}
       <div class="cap-hero-stats"><div><strong>${activeCourses(track.id).length}</strong><span>Cursos ativos</span></div><div><strong>${track.duration_days} dias</strong><span>Prazo da trilha</span></div><div><strong>${enrollment?stats.done:participants.length}</strong><span>${enrollment?'Cursos concluídos':'Funcionários inscritos'}</span></div><div><strong>${enrollment?stats.pct:mean}%</strong><span>${enrollment?'Seu progresso':'Progresso médio'}</span></div></div>`;
     if (selectedTab === 'courses') renderCourses(track,enrollment);
@@ -247,6 +270,8 @@
   }
   function showEnrollEditor() {
     if (!manager()) return; $('capEnrollSearch').value = ''; choices('capEnrollChoices',true);
+    const sector = trackSector(tracks.find(track => track.id === selectedTrack));
+    $('capEnrollHint').textContent = sector ? `Mostrando funcionários do setor ${sector}. As inscrições existentes serão mantidas.` : 'Mostrando funcionários de todos os setores. As inscrições existentes serão mantidas.';
     $('capEnrollEditor').hidden = false; $('capEnrollEditor').scrollIntoView({behavior:'smooth',block:'start'});
   }
   function closeEnrollEditor() { $('capEnrollEditor').hidden = true; }
@@ -479,6 +504,6 @@
     const button = event.target.closest('[data-cap-history-cert]');
     if (button) viewHistoryCertificate(button.dataset.capHistoryCert);
   });
-  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];}};
+  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];}};
   window.SPFLY_CAP_TEST = {addDays,remaining,percent,validUrl};
 })();

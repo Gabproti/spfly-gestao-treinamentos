@@ -1,4 +1,8 @@
-# SPFLY Admin — V21
+# SPFLY Admin — V22
+
+## Ajuste da V22
+
+Cada trilha pode ser destinada a um setor ou a **Todos os setores**. A lista de trilhas ganhou filtro por setor; o setor aparece nos cartões e nos detalhes. Ao criar uma trilha ou inscrever funcionários, a lista mostra apenas pessoas do setor escolhido. A migração `supabase/migration-v22-track-sector.sql` cria o campo e aplica a mesma regra no banco. Execute a migração antes de publicar os arquivos da V22. Trilhas existentes continuam destinadas a todos os setores.
 
 ## Ajuste da V21
 

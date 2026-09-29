@@ -13,6 +13,9 @@
 .cap-section-head h3{font-size:17px}
 .cap-section-head p{margin:0}
 .cap-section-head input{max-width:275px;width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.cap-list-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.cap-list-actions select{min-height:42px;min-width:180px;max-width:260px;border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:var(--surface);color:inherit}
+.cap-list-actions select[hidden]{display:none}
 .cap-track-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .cap-track-card{display:block;text-align:left;width:100%;padding:21px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 18px #1425350a;color:inherit;transition:transform .15s,border-color .15s,box-shadow .15s}
 .cap-track-card:hover{transform:translateY(-2px);border-color:#ff9d70;box-shadow:0 10px 22px #f05a2817}
@@ -89,7 +92,7 @@ body.dark .cap-progress-line{background:#343b42}
 body.dark .cap-hero-stats>div{background:#20252a;border-color:#343b42}
 body.dark .cap-tabs{border-color:#343b42}
 body.dark .cap-audience{border-color:#343b42}
-body.dark .cap-section-head input,body.dark #capEnrollSearch,body.dark .cap-file-input{background:#12161a;color:#e8edf2;border-color:#394149}
+body.dark .cap-section-head input,body.dark .cap-list-actions select,body.dark #capEnrollSearch,body.dark .cap-file-input{background:#12161a;color:#e8edf2;border-color:#394149}
 body.dark .cap-toast{background:#33241e;color:#ffc29f;border-color:#6c3b26}
 body.dark .cap-toast.error{background:#341d1f;color:#ffc4c4;border-color:#713437}
 body.dark .cap-rejection-reason{background:#341d1f;color:#ffc4c4;border-color:#713437}
@@ -102,3 +105,4 @@ body.dark .employee-cap-track{background:#181c20;border-color:#343b42}body.dark 
 @media(max-width:700px){.app.authenticated{display:block}.cap-page{min-width:0}.cap-kpi{padding:12px}.cap-kpi-icon{width:32px;height:32px;flex-basis:32px}.cap-kpi-value{font-size:21px}}
 @media(max-width:600px){.employee-cap-head,.employee-cap-course{flex-direction:column}.employee-cap-course-state{justify-content:flex-start;text-align:left}}
 @media(max-width:600px){.cap-course-dialog{padding:18px}.cap-course-dialog .actions{flex-wrap:wrap}.cap-course-dialog .actions .btn{flex:1}}
+@media(max-width:600px){.cap-list-actions{width:100%}.cap-list-actions select{flex:1;max-width:none;min-width:0}}

@@ -245,7 +245,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 @media(max-width:1050px){.dashboard-agenda-layout{grid-template-columns:1fr}.dashboard-summary{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:700px){.sidebar{position:relative;width:100%;height:auto;padding:0 12px 10px;overflow:visible}.sidebar:before,.sidebar:after,.sidebar-footer{display:none}.brand{min-height:68px;margin:0 -12px 4px;padding:9px}.brand-wordmark{font-size:31px}.brand-arrow{font-size:25px}.brand small{font-size:8px}.nav-section{display:flex;gap:4px;overflow-x:auto;padding-bottom:5px}.nav-btn{min-width:max-content;width:auto;height:43px;padding:0 10px;gap:6px;font-size:12px}.nav-icon{width:18px;height:18px;flex-basis:18px}.nav-chevron,.subnav{display:none}.main{margin-left:0;width:100%}.topbar{height:64px;padding:0 12px}.topbar-search{width:48%}.topbar-search .search{height:40px;font-size:12px}.topbar-profile .avatar{width:36px;height:36px}.topbar-profile strong{font-size:12px}.topbar-profile small{font-size:10px}.user{gap:8px}.user #themeToggle{width:37px;height:37px}.content{padding:16px 12px}.dashboard-page-head{margin:0 0 15px;gap:12px}.dashboard-page-head h1{font-size:26px}.dashboard-page-head .btn-primary{height:42px}.dashboard-summary{grid-template-columns:repeat(2,1fr)}.dashboard-calendar .calendar-day{min-height:57px;padding:5px}.dashboard-calendar .calendar-grid{padding:0 7px 10px;gap:3px}.dashboard-calendar .calendar-legend{font-size:10px;padding:6px 8px 10px}.dashboard-calendar .status-dot{width:9px;height:9px}.dashboard-calendar .status-dots{left:5px;bottom:5px;gap:3px}.dashboard-calendar .status-dot-mini{width:7px;height:7px}.dashboard-calendar .calendar-head{padding:10px 8px}.dashboard-calendar .calendar-head strong{font-size:15px}.dashboard-calendar .calendar-head .btn-secondary{width:33px;min-width:33px;height:34px;padding:0 5px}.dashboard-calendar .calendar-head .btn-secondary:nth-child(4){min-width:48px;font-size:11px}.dashboard-calendar .calendar-day.selected .day-num{font-size:16px}}
 </style>
-<link rel="stylesheet" href="capacitation.css?v=21">
+<link rel="stylesheet" href="capacitation.css?v=22">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -426,7 +426,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div class="header-row cap-heading"><div><h1 id="capPageTitle">Capacitação</h1><div class="muted">Trilhas e cursos para desenvolvimento dos funcionários.</div></div><button id="capNewTrackButton" class="btn btn-primary" onclick="SPFLY_CAP.newTrack()">+ Nova Trilha</button></div>
   <div id="capMessage" class="notice" hidden role="status"></div>
   <div id="capKpis" class="cap-kpis"></div>
-  <div class="cap-section-head"><div><h2 id="capListTitle">Trilhas de Capacitação</h2><p class="muted" id="capListHint">Acompanhe cursos, prazos e certificados em um só lugar.</p></div><button class="btn btn-secondary" onclick="SPFLY_CAP.refresh()">Atualizar</button></div>
+  <div class="cap-section-head"><div><h2 id="capListTitle">Trilhas de Capacitação</h2><p class="muted" id="capListHint">Acompanhe cursos, prazos e certificados em um só lugar.</p></div><div class="cap-list-actions"><select id="capSectorFilter" aria-label="Filtrar trilhas por setor" onchange="SPFLY_CAP.filterTracks()"><option value="">Todos os setores</option></select><button class="btn btn-secondary" onclick="SPFLY_CAP.refresh()">Atualizar</button></div></div>
   <div id="capTrackGrid" class="cap-track-grid"></div>
 </div>
 
@@ -437,6 +437,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
       <div class="field full"><label for="capTrackName">Nome da trilha *</label><input id="capTrackName" maxlength="160" required></div>
       <div class="field full"><label for="capTrackDescription">Descrição</label><textarea id="capTrackDescription" maxlength="2000"></textarea></div>
       <div class="field"><label for="capTrackType">Tipo da trilha *</label><select id="capTrackType"><option>Obrigatória</option><option>Recomendada</option><option>Opcional</option></select></div>
+      <div class="field"><label for="capTrackSector">Setor destinatário</label><select id="capTrackSector" onchange="SPFLY_CAP.changeTrackSector()"><option value="">Todos os setores</option></select><small class="help">A inscrição fica limitada aos funcionários deste setor.</small></div>
       <div class="field"><label for="capTrackDays">Prazo para conclusão, em dias *</label><input id="capTrackDays" type="number" min="1" max="3650" value="30" required></div>
       <div class="field"><label for="capTrackStart">Data de início *</label><input id="capTrackStart" type="date" required></div>
       <div class="field"><label for="capTrackStatus">Status *</label><select id="capTrackStatus"><option>Ativa</option><option>Concluída</option><option>Encerrada</option></select></div>
@@ -453,7 +454,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div id="capDetailTabs" class="cap-tabs"><button type="button" class="active" data-cap-tab="courses" onclick="SPFLY_CAP.selectTab('courses')">Cursos da Trilha</button><button type="button" data-cap-tab="employees" onclick="SPFLY_CAP.selectTab('employees')">Funcionários</button></div>
   <div id="capDetailCourses"></div>
   <div id="capDetailEmployees" hidden></div>
-  <div id="capEnrollEditor" class="card cap-editor" hidden><h2>Inscrever funcionários</h2><p class="muted">As inscrições existentes serão mantidas.</p><input id="capEnrollSearch" type="search" placeholder="Buscar funcionário..." oninput="SPFLY_CAP.filterEmployees()"><div id="capEnrollChoices" class="cap-employee-choices"></div><div class="actions"><button class="btn btn-secondary" onclick="SPFLY_CAP.closeEnrollEditor()">Cancelar</button><button class="btn btn-primary" onclick="SPFLY_CAP.saveEnrollments()">Salvar inscrições</button></div></div>
+  <div id="capEnrollEditor" class="card cap-editor" hidden><h2>Inscrever funcionários</h2><p id="capEnrollHint" class="muted">As inscrições existentes serão mantidas.</p><input id="capEnrollSearch" type="search" placeholder="Buscar funcionário..." oninput="SPFLY_CAP.filterEmployees()"><div id="capEnrollChoices" class="cap-employee-choices"></div><div class="actions"><button class="btn btn-secondary" onclick="SPFLY_CAP.closeEnrollEditor()">Cancelar</button><button class="btn btn-primary" onclick="SPFLY_CAP.saveEnrollments()">Salvar inscrições</button></div></div>
 </div>
 
 <dialog id="capCourseEditor" class="cap-course-dialog" aria-labelledby="capCourseFormTitle">
@@ -1047,7 +1048,7 @@ applyTheme();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="capacitation.js?v=21"></script>
+<script src="capacitation.js?v=22"></script>
 <script src="auth.js"></script>
 </body>
 </html>
