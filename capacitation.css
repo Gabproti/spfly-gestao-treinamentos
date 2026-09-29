@@ -45,6 +45,12 @@
 .cap-course-actions .btn{font-size:12px;padding:8px 12px}
 .cap-editor{margin:17px 0 22px;max-width:950px}
 .cap-editor h2{margin:0 0 18px}
+.cap-course-dialog{width:min(720px,calc(100vw - 32px));max-width:none;max-height:90vh;max-height:90dvh;margin:auto;padding:26px;border:1px solid var(--border);border-radius:16px;background:var(--surface);color:inherit;box-shadow:0 25px 80px #0005;overflow:auto;font:inherit}
+.cap-course-dialog::backdrop{background:#101820b8;backdrop-filter:blur(3px)}
+.cap-course-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}
+.cap-course-dialog-head h2{margin:0 0 5px}.cap-course-dialog-head p{margin:0}
+.cap-course-dialog-close{width:34px;height:34px;flex:0 0 34px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:inherit;font-size:17px;cursor:pointer}
+.cap-course-dialog-close:hover,.cap-course-dialog-close:focus-visible{border-color:var(--orange);color:var(--orange)}
 .cap-audience{border-top:1px solid var(--border);margin-top:22px;padding-top:4px}
 .cap-employee-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:300px;overflow:auto}
 .cap-employee-choices label{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px}
@@ -87,9 +93,12 @@ body.dark .cap-section-head input,body.dark #capEnrollSearch,body.dark .cap-file
 body.dark .cap-toast{background:#33241e;color:#ffc29f;border-color:#6c3b26}
 body.dark .cap-toast.error{background:#341d1f;color:#ffc4c4;border-color:#713437}
 body.dark .cap-rejection-reason{background:#341d1f;color:#ffc4c4;border-color:#713437}
+body.dark .cap-course-dialog{background:#181c20;color:#e8edf2;border-color:#3a424a}
+body.dark .cap-course-dialog-close{background:#20252a;border-color:#3a424a}
 body.dark .employee-cap-track{background:#181c20;border-color:#343b42}body.dark .employee-cap-trigger,body.dark .employee-cap-summary strong{color:#f3f5f7}body.dark .employee-cap-trigger:hover{background:#242a2f}body.dark .employee-cap-course{border-color:#343b42}
 @media(max-width:1200px){.cap-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:800px){.cap-track-grid,.cap-employee-choices{grid-template-columns:1fr}.cap-hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.cap-heading,.cap-section-head{align-items:stretch;flex-direction:column}.cap-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.cap-detail-top{align-items:flex-start;flex-direction:column}.cap-section-head input{max-width:none}.cap-card-head{align-items:flex-start;flex-direction:column}}
 @media(max-width:700px){.app.authenticated{display:block}.cap-page{min-width:0}.cap-kpi{padding:12px}.cap-kpi-icon{width:32px;height:32px;flex-basis:32px}.cap-kpi-value{font-size:21px}}
 @media(max-width:600px){.employee-cap-head,.employee-cap-course{flex-direction:column}.employee-cap-course-state{justify-content:flex-start;text-align:left}}
+@media(max-width:600px){.cap-course-dialog{padding:18px}.cap-course-dialog .actions{flex-wrap:wrap}.cap-course-dialog .actions .btn{flex:1}}

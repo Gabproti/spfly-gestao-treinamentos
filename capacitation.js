@@ -224,9 +224,9 @@
     $('capCourseOrder').value = item?.sort_order || trackCourses(selectedTrack).length+1;
     $('capCourseCertificate').value = String(item?.certificate_required || false);
     $('capCourseActive').value = String(item?.active ?? true);
-    notice('capCourseFormMessage',''); $('capCourseEditor').hidden = false; $('capCourseEditor').scrollIntoView({behavior:'smooth',block:'start'});
+    notice('capCourseFormMessage',''); $('capCourseEditor').showModal(); $('capCourseName').focus();
   }
-  function closeCourseEditor() { $('capCourseEditor').hidden = true; editingCourse = null; }
+  function closeCourseEditor() { if ($('capCourseEditor').open) $('capCourseEditor').close(); editingCourse = null; }
   async function saveCourse(event) {
     event.preventDefault(); if (!manager() || busy || !selectedTrack) return;
     const url = validUrl($('capCourseUrl').value.trim());
@@ -468,6 +468,7 @@
   }
   $('capTrackForm').addEventListener('submit',saveTrack);
   $('capCourseForm').addEventListener('submit',saveCourse);
+  $('capCourseEditor').addEventListener('close',() => { editingCourse = null; });
   $('pageCapacitation').addEventListener('click',delegate);
   $('pageCapTrackDetail').addEventListener('click',delegate);
   $('pageCapTrackDetail').addEventListener('change',event => {

@@ -1,4 +1,8 @@
-# SPFLY Admin — V20
+# SPFLY Admin — V21
+
+## Ajuste da V21
+
+Em **Capacitação > trilha > Cursos da Trilha**, **Adicionar Curso** e **Editar Curso** abrem um formulário em janela sobreposta. Os campos e o salvamento permanecem os mesmos. A janela pode ser fechada por **Cancelar**, pelo X ou pela tecla Esc. Não há alteração no banco de dados nesta versão.
 
 ## Ajuste da V20
 
