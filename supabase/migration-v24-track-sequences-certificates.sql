@@ -7,6 +7,7 @@ alter table public.cap_tracks add column if not exists certificate_mode text not
 alter table public.cap_tracks add constraint cap_tracks_sequence_order_v24_check check (sequence_order between 1 and 999);
 alter table public.cap_tracks add constraint cap_tracks_certificate_mode_v24_check check (certificate_mode in ('per_course','after_all'));
 alter table public.cap_tracks add constraint cap_tracks_sequence_name_v24_check check (char_length(sequence_name) <= 120 and sequence_name=btrim(sequence_name));
+grant update(sequence_name,sequence_order,certificate_mode) on public.cap_tracks to authenticated;
 
 create or replace function public.cap_check_certificate_mode_change()
 returns trigger language plpgsql security definer set search_path = '' as $$
