@@ -1,4 +1,8 @@
-# SPFLY Admin — V23
+# SPFLY Admin — V24
+
+## Ajuste da V24
+
+A lista de capacitações permite buscar pelo nome, descrição ou sequência da trilha. Na criação ou edição, o administrador pode informar uma sequência e posição para relacionar trilhas sem bloquear o acesso a nenhuma delas. Também pode escolher certificado por curso ou um certificado único após todos os cursos ativos. O certificado final é anexado pelo funcionário, conferido pelo administrador e pode ser reenviado após recusa. Trilhas existentes continuam com certificado por curso. Execute `supabase/migration-v24-track-sequences-certificates.sql` antes de publicar os arquivos desta versão.
 
 ## Ajuste da V23
 
