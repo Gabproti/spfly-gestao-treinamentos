@@ -4,6 +4,8 @@
 
 A lista de capacitações permite buscar pelo nome, descrição ou sequência da trilha. Na criação ou edição, o administrador pode informar uma sequência e posição para relacionar trilhas sem bloquear o acesso a nenhuma delas. Também pode escolher certificado por curso ou um certificado único após todos os cursos ativos. O certificado final é anexado pelo funcionário, conferido pelo administrador e pode ser reenviado após recusa. Trilhas existentes continuam com certificado por curso. Execute `supabase/migration-v24-track-sequences-certificates.sql` antes de publicar os arquivos desta versão.
 
+Em projetos que receberam a primeira edição da V24, execute também `supabase/hotfix-v24-track-edit-grant.sql` para permitir que administradores editem os novos campos ao salvar trilhas. A política `cap_tracks_update` continua exigindo o perfil de administrador.
+
 ## Ajuste da V23
 
 Em **Funcionários > Gerenciar setores**, um setor pode ser cadastrado sem funcionário vinculado e fica disponível para vinculação posterior. Renomear um setor atualiza também funcionários e trilhas vinculados. Ao criar ou editar uma trilha, marque um ou mais setores destinatários; sem seleção específica, ela serve a todos. O filtro de trilhas por setor inclui as trilhas gerais. A lista de inscrição permite funcionários de qualquer setor marcado.
