@@ -1,0 +1,215 @@
+-- V23: catálogo independente de setores e múltiplos setores por trilha.
+-- Execute depois da V22. Trilhas existentes preservam seu setor atual.
+begin;
+create table if not exists public.portal_sectors (
+  name text primary key check (name = btrim(name) and char_length(name) between 1 and 120),
+  created_at timestamptz not null default now()
+);
+alter table public.portal_sectors enable row level security;
+revoke all on public.portal_sectors from anon, authenticated;
+grant select, insert on public.portal_sectors to authenticated;
+drop policy if exists portal_sectors_read on public.portal_sectors;
+create policy portal_sectors_read on public.portal_sectors for select to authenticated
+  using (public.can_view_portal_page('employees') or public.cap_is_manager());
+drop policy if exists portal_sectors_insert on public.portal_sectors;
+create policy portal_sectors_insert on public.portal_sectors for insert to authenticated
+  with check (public.can_edit_portal_data('employees'));
+
+insert into public.portal_sectors(name)
+select distinct sector from (
+  select jsonb_array_elements(s.employees)->>'sector' as sector from public.app_state s where s.id=1
+  union all select t.sector from public.cap_tracks t
+  union all select unnest(array['Operacional','Administrativo','Logística','RH','TI','Comercial'])
+) names where sector is not null and sector=btrim(sector) and char_length(sector) between 1 and 120
+on conflict do nothing;
+
+alter table public.cap_tracks add column if not exists sectors text[] not null default '{}';
+update public.cap_tracks set sectors=array[sector] where sector<>'' and cardinality(sectors)=0;
+alter table public.cap_tracks drop constraint if exists cap_tracks_sectors_check;
+alter table public.cap_tracks add constraint cap_tracks_sectors_check
+  check (cardinality(sectors) <= 30 and array_position(sectors,null) is null);
+grant update(sectors) on public.cap_tracks to authenticated;
+
+create or replace function public.cap_employee_matches_sectors(target_employee_id bigint,target_sectors text[])
+returns boolean language sql stable security definer set search_path = '' as $$
+  select cardinality(target_sectors) = 0 or exists (
+    select 1 from public.app_state s,
+      jsonb_array_elements(s.employees) as employee(item)
+    where s.id = 1 and employee.item->>'id' = target_employee_id::text
+      and employee.item->>'sector' = any(target_sectors));
+$$;
+
+create or replace function public.cap_member_enrolled(target_track uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.cap_enrollments e
+    join public.cap_tracks t on t.id=e.track_id
+    where e.track_id=target_track and e.employee_id=public.cap_employee_id()
+      and e.removed_at is null and t.deleted_at is null
+      and public.cap_employee_matches_sectors(e.employee_id,t.sectors));
+$$;
+
+create or replace function public.cap_owns_enrollment(target_enrollment uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.cap_enrollments e
+    join public.cap_tracks t on t.id=e.track_id
+    where e.id=target_enrollment and e.employee_id=public.cap_employee_id()
+      and e.removed_at is null and t.deleted_at is null
+      and public.cap_employee_matches_sectors(e.employee_id,t.sectors));
+$$;
+
+drop policy if exists cap_enrollments_read on public.cap_enrollments;
+create policy cap_enrollments_read on public.cap_enrollments for select to authenticated
+  using (removed_at is null and exists (select 1 from public.cap_tracks t
+    where t.id=track_id and t.deleted_at is null
+      and (public.cap_is_manager() or
+        (employee_id=public.cap_employee_id() and
+         public.cap_employee_matches_sectors(employee_id,t.sectors)))));
+
+drop policy if exists cap_enrollments_insert on public.cap_enrollments;
+create policy cap_enrollments_insert on public.cap_enrollments for insert to authenticated
+  with check (public.cap_is_manager() and removed_at is null
+    and public.cap_employee_exists(employee_id) and enrolled_by=(select auth.uid())
+    and exists (select 1 from public.cap_tracks t
+      where t.id=track_id and t.deleted_at is null
+        and public.cap_employee_matches_sectors(employee_id,t.sectors)));
+
+create or replace function public.cap_check_track_sector_change()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if exists (select 1 from unnest(new.sectors) as names(name)
+    where name<>btrim(name) or char_length(name) not between 1 and 120
+      or not exists(select 1 from public.portal_sectors s where s.name=names.name))
+     or (select count(*) from unnest(new.sectors))<>(select count(distinct name) from unnest(new.sectors) as names(name)) then
+    raise exception 'Selecione setores cadastrados, sem repetições' using errcode='22023';
+  end if;
+  if cardinality(new.sectors) > 0
+     and exists (select 1 from public.cap_enrollments e
+       where e.track_id=new.id and e.removed_at is null
+         and not public.cap_employee_matches_sectors(e.employee_id,new.sectors)) then
+    raise exception 'Remova os funcionários de outros setores antes de alterar o setor da trilha'
+      using errcode='22023';
+  end if;
+  new.sector := case when cardinality(new.sectors)=1 then new.sectors[1] else '' end;
+  return new;
+end;
+$$;
+drop trigger if exists cap_track_sector_change on public.cap_tracks;
+create trigger cap_track_sector_change before insert or update of sectors on public.cap_tracks
+  for each row execute function public.cap_check_track_sector_change();
+
+create or replace function public.cap_enroll_employees(target_track uuid,target_employee_ids bigint[])
+returns void language plpgsql security definer set search_path = '' as $$
+declare target_start date; target_days integer; target_sectors text[];
+begin
+  if not public.cap_is_manager() then raise exception 'Acesso negado' using errcode='42501'; end if;
+  if coalesce(array_length(target_employee_ids,1),0) not between 1 and 500
+     or exists (select 1 from unnest(target_employee_ids) as ids(employee_id)
+       where employee_id is null or not public.cap_employee_exists(employee_id)) then
+    raise exception 'Selecione funcionários válidos' using errcode='22023';
+  end if;
+  select start_date,duration_days,sectors into target_start,target_days,target_sectors
+    from public.cap_tracks where id=target_track and deleted_at is null;
+  if not found then raise exception 'Trilha não encontrada' using errcode='P0002'; end if;
+  if exists (select 1 from unnest(target_employee_ids) as ids(employee_id)
+    where not public.cap_employee_matches_sectors(employee_id,target_sectors)) then
+    raise exception 'Selecione apenas funcionários do setor destinatário' using errcode='22023';
+  end if;
+  insert into public.cap_enrollments(track_id,employee_id,start_date,due_date,enrolled_by,removed_at)
+    select target_track,id,target_start,target_start+target_days,(select auth.uid()),null
+    from (select distinct unnest(target_employee_ids) as id) people
+    on conflict(track_id,employee_id) do update set
+      removed_at=null,start_date=excluded.start_date,due_date=excluded.due_date,
+      enrolled_at=now(),enrolled_by=excluded.enrolled_by;
+end;
+$$;
+
+create or replace function public.cap_can_upload_certificate(object_path text)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select object_path ~* '^[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9-]{36}\.(pdf|jpe?g|png)$'
+    and exists(select 1 from public.cap_enrollments e
+      join public.cap_tracks t on t.id=e.track_id and t.status='Ativa' and t.deleted_at is null
+      join public.cap_courses c on c.track_id=e.track_id
+      join public.cap_progress p on p.enrollment_id=e.id and p.course_id=c.id
+      where e.id::text=split_part(object_path,'/',1)
+        and c.id::text=split_part(object_path,'/',2)
+        and e.employee_id=public.cap_employee_id() and e.removed_at is null
+        and public.cap_employee_matches_sectors(e.employee_id,t.sectors)
+        and public.can_view_portal_page('capacitation')
+        and exists(select 1 from public.admin_users a where a.id=(select auth.uid())
+          and 'capacitation'=any(a.editable_pages))
+        and c.active and c.certificate_required and p.course_finished_at is not null
+        and (p.certificate_path is null or p.validation_status='rejected'));
+$$;
+
+create or replace function public.cap_can_read_certificate(object_path text)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select public.cap_is_manager() or exists(select 1 from public.cap_enrollments e
+    join public.cap_tracks t on t.id=e.track_id
+    where e.id::text=split_part(object_path,'/',1)
+      and e.employee_id=public.cap_employee_id()
+      and e.removed_at is null and t.deleted_at is null
+      and public.cap_employee_matches_sectors(e.employee_id,t.sectors));
+$$;
+
+create or replace function public.cap_employee_history(target_employee_id bigint)
+returns table (
+  enrollment_id uuid, enrollment_start date, enrollment_due date,
+  enrolled_at timestamptz, removed_at timestamptz,
+  track_id uuid, track_name text, track_type text, track_status text,
+  track_deleted_at timestamptz, course_id uuid, course_name text,
+  course_active boolean, course_order integer, certificate_required boolean,
+  started_at timestamptz, course_finished_at timestamptz, completed_at timestamptz,
+  certificate_path text, certificate_name text, certificate_uploaded_at timestamptz,
+  validation_status text, rejection_reason text
+)
+language sql stable security definer set search_path = '' as $$
+  select e.id,e.start_date,e.due_date,e.enrolled_at,e.removed_at,
+    t.id,t.name,t.track_type,t.status,t.deleted_at,
+    c.id,c.name,c.active,c.sort_order,c.certificate_required,
+    p.started_at,p.course_finished_at,p.completed_at,p.certificate_path,
+    p.certificate_name,p.certificate_uploaded_at,p.validation_status,p.rejection_reason
+  from public.cap_enrollments e
+  join public.cap_tracks t on t.id=e.track_id
+  left join public.cap_courses c on c.track_id=t.id
+  left join public.cap_progress p on p.enrollment_id=e.id and p.course_id=c.id
+  where e.employee_id=target_employee_id
+    and (public.cap_is_manager()
+      or (public.cap_employee_id()=target_employee_id
+        and e.removed_at is null and t.deleted_at is null
+        and public.cap_employee_matches_sectors(e.employee_id,t.sectors)))
+  order by e.enrolled_at desc,c.sort_order,c.name;
+$$;
+
+
+create or replace function public.rename_portal_sector(old_name text,new_name text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare normalized text := btrim(new_name);
+begin
+  if not public.can_edit_portal_data('employees') then
+    raise exception 'Acesso negado' using errcode='42501';
+  end if;
+  if normalized is null or char_length(normalized) not between 1 and 120 then
+    raise exception 'Nome de setor inválido' using errcode='22023';
+  end if;
+  perform 1 from public.app_state where id=1 for update;
+  if not exists(select 1 from public.portal_sectors where name=old_name) then
+    raise exception 'Setor não encontrado' using errcode='P0002';
+  end if;
+  if exists(select 1 from public.portal_sectors where lower(name)=lower(normalized) and name<>old_name) then
+    raise exception 'Este setor já existe' using errcode='23505';
+  end if;
+  update public.portal_sectors set name=normalized where name=old_name;
+  update public.app_state s set employees=(
+    select coalesce(jsonb_agg(case when item->>'sector'=old_name
+      then jsonb_set(item,'{sector}',to_jsonb(normalized)) else item end order by ordinal),'[]'::jsonb)
+    from jsonb_array_elements(s.employees) with ordinality as employees(item,ordinal)
+  ),version=version+1,updated_at=now(),updated_by=(select auth.uid()) where s.id=1;
+  update public.cap_tracks t set sectors=array_replace(t.sectors,old_name,normalized)
+    where old_name=any(t.sectors);
+end;
+$$;
+revoke all on function public.rename_portal_sector(text,text) from public,anon;
+grant execute on function public.rename_portal_sector(text,text) to authenticated;
+
+commit;
+
