@@ -55,6 +55,9 @@
 .cap-course-dialog-close{width:34px;height:34px;flex:0 0 34px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:inherit;font-size:17px;cursor:pointer}
 .cap-course-dialog-close:hover,.cap-course-dialog-close:focus-visible{border-color:var(--orange);color:var(--orange)}
 .cap-audience{border-top:1px solid var(--border);margin-top:22px;padding-top:4px}
+.cap-sector-options{display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--surface)}
+.cap-sector-options label{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px}
+.cap-sector-options input{accent-color:var(--orange)}
 .cap-employee-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:300px;overflow:auto}
 .cap-employee-choices label{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px}
 .cap-employee-choices input{accent-color:var(--orange)}
@@ -85,6 +88,7 @@
 .cap-toast{margin:12px 0;padding:11px 13px;border-radius:8px;background:#fff5ee;border:1px solid #ffc8aa;color:#8d3c1c;font-size:13px}
 .cap-toast.error{background:#fff0f0;border-color:#efb5b5;color:#a83434}
 body.dark .cap-kpi,body.dark .cap-track-card,body.dark .cap-course,body.dark .cap-empty,body.dark .cap-employee-choices label{background:#181c20;border-color:#343b42;color:#e8edf2}
+body.dark .cap-sector-options,body.dark .cap-sector-options label{background:#181c20;border-color:#343b42;color:#e8edf2}
 body.dark .cap-kpi-value,body.dark .cap-card-head h3,body.dark .cap-card-foot strong,body.dark .cap-section-head h2,body.dark .cap-section-head h3,body.dark .cap-track-hero h1,body.dark .cap-hero-stats strong,body.dark .cap-course-head h3{color:#f3f5f7}
 body.dark .cap-kpi-icon{background:#3a241b;color:#ff8e5c}
 body.dark .cap-badge{background:#353b42;color:#cbd2d8}body.dark .cap-badge-green{background:#143b2b;color:#80ddae}body.dark .cap-badge-orange{background:#493021;color:#ffb383}body.dark .cap-badge-red{background:#462628;color:#ffa5a9}

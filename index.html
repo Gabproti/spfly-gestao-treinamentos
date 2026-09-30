@@ -245,7 +245,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 @media(max-width:1050px){.dashboard-agenda-layout{grid-template-columns:1fr}.dashboard-summary{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:700px){.sidebar{position:relative;width:100%;height:auto;padding:0 12px 10px;overflow:visible}.sidebar:before,.sidebar:after,.sidebar-footer{display:none}.brand{min-height:68px;margin:0 -12px 4px;padding:9px}.brand-wordmark{font-size:31px}.brand-arrow{font-size:25px}.brand small{font-size:8px}.nav-section{display:flex;gap:4px;overflow-x:auto;padding-bottom:5px}.nav-btn{min-width:max-content;width:auto;height:43px;padding:0 10px;gap:6px;font-size:12px}.nav-icon{width:18px;height:18px;flex-basis:18px}.nav-chevron,.subnav{display:none}.main{margin-left:0;width:100%}.topbar{height:64px;padding:0 12px}.topbar-search{width:48%}.topbar-search .search{height:40px;font-size:12px}.topbar-profile .avatar{width:36px;height:36px}.topbar-profile strong{font-size:12px}.topbar-profile small{font-size:10px}.user{gap:8px}.user #themeToggle{width:37px;height:37px}.content{padding:16px 12px}.dashboard-page-head{margin:0 0 15px;gap:12px}.dashboard-page-head h1{font-size:26px}.dashboard-page-head .btn-primary{height:42px}.dashboard-summary{grid-template-columns:repeat(2,1fr)}.dashboard-calendar .calendar-day{min-height:57px;padding:5px}.dashboard-calendar .calendar-grid{padding:0 7px 10px;gap:3px}.dashboard-calendar .calendar-legend{font-size:10px;padding:6px 8px 10px}.dashboard-calendar .status-dot{width:9px;height:9px}.dashboard-calendar .status-dots{left:5px;bottom:5px;gap:3px}.dashboard-calendar .status-dot-mini{width:7px;height:7px}.dashboard-calendar .calendar-head{padding:10px 8px}.dashboard-calendar .calendar-head strong{font-size:15px}.dashboard-calendar .calendar-head .btn-secondary{width:33px;min-width:33px;height:34px;padding:0 5px}.dashboard-calendar .calendar-head .btn-secondary:nth-child(4){min-width:48px;font-size:11px}.dashboard-calendar .calendar-day.selected .day-num{font-size:16px}}
 </style>
-<link rel="stylesheet" href="capacitation.css?v=22">
+<link rel="stylesheet" href="capacitation.css?v=23">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -437,7 +437,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
       <div class="field full"><label for="capTrackName">Nome da trilha *</label><input id="capTrackName" maxlength="160" required></div>
       <div class="field full"><label for="capTrackDescription">Descrição</label><textarea id="capTrackDescription" maxlength="2000"></textarea></div>
       <div class="field"><label for="capTrackType">Tipo da trilha *</label><select id="capTrackType"><option>Obrigatória</option><option>Recomendada</option><option>Opcional</option></select></div>
-      <div class="field"><label for="capTrackSector">Setor destinatário</label><select id="capTrackSector" onchange="SPFLY_CAP.changeTrackSector()"><option value="">Todos os setores</option></select><small class="help">A inscrição fica limitada aos funcionários deste setor.</small></div>
+      <div class="field"><label>Setores destinatários</label><div id="capTrackSectors" class="cap-sector-options" onchange="SPFLY_CAP.changeTrackSector(event)"></div><small class="help">Selecione um ou mais setores. Sem setor específico, a trilha fica disponível para todos.</small></div>
       <div class="field"><label for="capTrackDays">Prazo para conclusão, em dias *</label><input id="capTrackDays" type="number" min="1" max="3650" value="30" required></div>
       <div class="field"><label for="capTrackStart">Data de início *</label><input id="capTrackStart" type="date" required></div>
       <div class="field"><label for="capTrackStatus">Status *</label><select id="capTrackStatus"><option>Ativa</option><option>Concluída</option><option>Encerrada</option></select></div>
@@ -489,7 +489,7 @@ function toggleDeletedTrainings(){showDeletedTrainings=!showDeletedTrainings;cal
 let selectedParticipants=new Set();
 let currentStep=1;
 let editingEmployeeId=null;
-let pendingSector='';
+let sectors=[];
 
 function persist(){return window.SPFLY_AUTH.persist(employees,trainings);}
 function showPage(id){
@@ -581,7 +581,7 @@ function renderEmployees(){
  const rows=employees.filter(e=>(!q||[e.name,e.cpf,e.mat].some(x=>String(x||'').toLowerCase().includes(q)))&&(!s||e.sector===s)&&(!st||e.status===st));
  document.getElementById("employeeTable").innerHTML=rows.map(e=>`<tr><td>${esc(e.mat)}</td><td><strong>${esc(e.name)}</strong></td><td>${esc(e.cpf)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge ${e.status==="Ativo"?"badge-green":"badge-red"}">${esc(e.status)}</span></td><td><button class="btn btn-secondary" onclick="viewEmployee(${Number(e.id)})">Visualizar</button>${SPFLY_AUTH.canEdit('employees')?` <button class="btn btn-secondary" onclick="editEmployee(${Number(e.id)})">Editar</button>`:''}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">Nenhum funcionário encontrado.</td></tr>`;
 }
-function employeeSectors(){const assigned=employees.map(e=>e.sector).filter(Boolean);return [...new Set([...(assigned.length?[]:['Operacional','Administrativo','Logística','RH','TI','Comercial']),...assigned,pendingSector].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
+function employeeSectors(){return [...new Set([...sectors,...employees.map(e=>e.sector)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
 function fillEmployeeSectors(value=''){
  const select=document.getElementById('efSector');
  select.innerHTML=employeeSectors().map(sector=>`<option value="${esc(sector)}">${esc(sector)}</option>`).join('');
@@ -593,7 +593,7 @@ function newEmployee(){
  editingEmployeeId=null;
  document.querySelectorAll('#pageNewEmployee input').forEach(input=>input.value='');
  document.getElementById('efDocumentType').value='CPF';document.getElementById('efStatus').value='Ativo';
- updateEmployeeDocumentType();fillEmployeeSectors(pendingSector);
+ updateEmployeeDocumentType();fillEmployeeSectors();
  document.getElementById('employeeFormTitle').textContent='Novo Funcionário';
  document.getElementById('employeeFormHint').textContent='Cadastre um novo colaborador.';
  document.getElementById('employeeSaveButton').textContent='Salvar Funcionário';
@@ -637,7 +637,7 @@ async function saveEmployee(){
  const fields={mat,name,cpf,documentType:type,sector:document.getElementById('efSector').value,role:document.getElementById('efRole').value.trim()||'Não informado',status:document.getElementById('efStatus').value,birth:document.getElementById('efBirth').value,hire:document.getElementById('efHire').value,email:document.getElementById('efEmail').value.trim(),phone:document.getElementById('efPhone').value.trim()};
  const next=editingEmployeeId===null?[...employees,{id:Date.now(),...fields}]:employees.map(e=>Number(e.id)===Number(editingEmployeeId)?{...e,...fields}:e);
  if(!await SPFLY_AUTH.persist(next,trainings))return;
- employees=next;window.SPFLY_CAP?.updateEmployees(employees);editingEmployeeId=null;pendingSector='';showPage('pageEmployees');
+ employees=next;window.SPFLY_CAP?.updateEmployees(employees);editingEmployeeId=null;showPage('pageEmployees');
 }
 function viewEmployee(id){
  const e=employees.find(x=>x.id===id), hist=activeTrainings().filter(t=>t.participants.includes(id));
@@ -948,28 +948,26 @@ async function lockTraining(id){const t=trainings.find(x=>x.id===id);t.editMode=
 async function removeParticipant(tid,pid){const t=trainings.find(x=>x.id===tid);if(getTrainingStatus(t)==="Ministrado"&&!t.editMode){alert("Treinamento bloqueado para edição.");return}t.participants=t.participants.filter(x=>x!==pid);if(!await persist())return;renderTrainingDetail(tid);renderDashboard();}
 function openRegisterList(tipo){
  if(tipo!=='Setores')return;
- const items=[...new Set(employees.map(e=>e.sector).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+ const items=employeeSectors();
  document.getElementById('modalTitle').textContent='Setores';
- document.getElementById('modalBody').innerHTML=`<p class="muted">Os setores usados pelos funcionários aparecem aqui. Para criar um novo, selecione-o no cadastro de um funcionário.</p>${SPFLY_AUTH.canEdit('employees')?'<button class="btn btn-secondary" onclick="addSector()">+ Novo setor</button>':''}<table><thead><tr><th>Setor</th><th>Funcionários</th>${SPFLY_AUTH.canEdit('employees')?'<th>Ação</th>':''}</tr></thead><tbody>${items.map((sector,index)=>`<tr><td>${esc(sector)}</td><td>${employees.filter(e=>e.sector===sector).length}</td>${SPFLY_AUTH.canEdit('employees')?`<td><button class="btn btn-secondary" onclick="renameSector(${index})">Renomear</button></td>`:''}</tr>`).join('')||'<tr><td colspan="3" class="empty">Nenhum setor utilizado.</td></tr>'}</tbody></table>`;
+ document.getElementById('modalBody').innerHTML=`<p class="muted">Cadastre setores mesmo antes de vincular funcionários. Eles aparecerão no cadastro de funcionários e nas trilhas.</p>${SPFLY_AUTH.canEdit('employees')?'<button class="btn btn-secondary" onclick="addSector()">+ Novo setor</button>':''}<table><thead><tr><th>Setor</th><th>Funcionários</th>${SPFLY_AUTH.canEdit('employees')?'<th>Ação</th>':''}</tr></thead><tbody>${items.map((sector,index)=>`<tr><td>${esc(sector)}</td><td>${employees.filter(e=>e.sector===sector).length}</td>${SPFLY_AUTH.canEdit('employees')?`<td><button class="btn btn-secondary" onclick="renameSector(${index})">Renomear</button></td>`:''}</tr>`).join('')||'<tr><td colspan="3" class="empty">Nenhum setor cadastrado.</td></tr>'}</tbody></table>`;
  document.getElementById("modal").classList.add("open");
 }
-function addSector(){
+async function addSector(){
  if(!SPFLY_AUTH.canEdit('employees'))return;
  const name=prompt('Nome do novo setor:')?.trim();if(!name)return;
  if(employeeSectors().some(sector=>sector.toLocaleLowerCase('pt-BR')===name.toLocaleLowerCase('pt-BR'))){alert('Este setor já existe.');return}
- pendingSector=name;fillEmployeeSectors(name);closeModal();
- if(!document.getElementById('pageNewEmployee').classList.contains('active'))newEmployee();
+ if(!await SPFLY_AUTH.createSector(name))return;
+ fillEmployeeSectors(document.getElementById('pageNewEmployee').classList.contains('active')?name:undefined);renderEmployees();openRegisterList('Setores');
 }
 async function renameSector(index){
  if(!SPFLY_AUTH.canEdit('employees'))return;
- const sectors=[...new Set(employees.map(e=>e.sector).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
- const oldName=sectors[index];if(!oldName)return;
+ const oldName=employeeSectors()[index];if(!oldName)return;
  const newName=prompt('Novo nome para o setor:',oldName)?.trim();if(!newName||newName===oldName)return;
- if(sectors.some(sector=>sector.toLocaleLowerCase('pt-BR')===newName.toLocaleLowerCase('pt-BR'))){alert('Este setor já existe.');return}
- if(!confirm(`Atualizar o setor de ${employees.filter(e=>e.sector===oldName).length} funcionário(s) de "${oldName}" para "${newName}"?`))return;
- const next=employees.map(e=>e.sector===oldName?{...e,sector:newName}:e);
- if(!await SPFLY_AUTH.persist(next,trainings))return;
- employees=next;window.SPFLY_CAP?.updateEmployees(employees);fillEmployeeSectors(newName);renderEmployees();openRegisterList('Setores');
+ if(employeeSectors().some(sector=>sector.toLocaleLowerCase('pt-BR')===newName.toLocaleLowerCase('pt-BR'))){alert('Este setor já existe.');return}
+ if(!confirm(`Renomear "${oldName}" para "${newName}" nos funcionários e trilhas vinculados?`))return;
+ if(!await SPFLY_AUTH.renameSector(oldName,newName))return;
+ fillEmployeeSectors();renderEmployees();openRegisterList('Setores');
 }
 function nextStep(n){
  if(n===2 && !document.getElementById("tfName").value.trim()){alert("Informe o nome do treinamento.");return}
@@ -1035,7 +1033,7 @@ function renderTrainingReport(){
 }
 function renderSectorReport(){
  const visible=activeTrainings();
- const sectors=[...new Set(employees.map(e=>e.sector).filter(Boolean))];
+ const sectors=employeeSectors();
  const total=employees.length, active=employees.filter(e=>e.status==="Ativo").length, participation=visible.reduce((a,t)=>a+(t.participants?.length||0),0);
  document.getElementById("sectorReportDash").innerHTML=`<div class="cards">${reportKpi("Funcionários",total,"♙")}${reportKpi("Ativos",active,"✓")}${reportKpi("Setores",sectors.length,"▣")}${reportKpi("Participações",participation,"◆")}</div>`;
  document.getElementById("sectorReport").innerHTML=`<table><thead><tr><th>Setor</th><th>Funcionários</th><th>Participações</th><th>Cobertura</th></tr></thead><tbody>${sectors.map(s=>{const es=employees.filter(e=>e.sector===s), count=visible.reduce((a,t)=>a+(t.participants||[]).filter(id=>es.some(e=>e.id===id)).length,0), coverage=es.length?Math.min(100,Math.round(new Set(visible.flatMap(t=>t.participants||[]).filter(id=>es.some(e=>e.id===id))).size/es.length*100)):0;return `<tr><td><strong>${esc(s)}</strong></td><td>${es.length}</td><td>${count}</td><td><div class="bar-row"><div class="bar-track"><div class="bar-fill" style="width:${coverage}%"></div></div><strong>${coverage}%</strong></div></td></tr>`}).join("")}</tbody></table>`;
@@ -1048,7 +1046,7 @@ applyTheme();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="capacitation.js?v=22"></script>
-<script src="auth.js"></script>
+<script src="capacitation.js?v=23"></script>
+<script src="auth.js?v=23"></script>
 </body>
 </html>

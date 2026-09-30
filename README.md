@@ -1,4 +1,10 @@
-# SPFLY Admin — V22
+# SPFLY Admin — V23
+
+## Ajuste da V23
+
+Em **Funcionários > Gerenciar setores**, um setor pode ser cadastrado sem funcionário vinculado e fica disponível para vinculação posterior. Renomear um setor atualiza também funcionários e trilhas vinculados. Ao criar ou editar uma trilha, marque um ou mais setores destinatários; sem seleção específica, ela serve a todos. O filtro de trilhas por setor inclui as trilhas gerais. A lista de inscrição permite funcionários de qualquer setor marcado.
+
+Execute `supabase/migration-v23-sectors.sql` após a V22 e antes de publicar os arquivos da V23. A migração preserva o setor das trilhas atuais, registra os setores já usados no catálogo e mantém as trilhas gerais disponíveis a todos.
 
 ## Ajuste da V22
 

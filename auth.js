@@ -89,6 +89,33 @@
     version = Number(state.version);
     employees = Array.isArray(state.employees) ? state.employees : [];
     trainings = Array.isArray(state.trainings) ? state.trainings : [];
+    await loadSectors();
+  }
+
+  async function loadSectors() {
+    const { data, error } = await client.from('portal_sectors').select('name').order('name');
+    if (error) throw error;
+    sectors = (data || []).map(item => item.name);
+    window.SPFLY_CAP?.updateSectors(sectors);
+  }
+
+  async function createSector(name) {
+    try {
+      const { error } = await client.from('portal_sectors').insert({name});
+      if (error) throw error;
+      await loadSectors();
+      return true;
+    } catch (error) { alert('Não foi possível cadastrar o setor: ' + error.message); return false; }
+  }
+
+  async function renameSector(oldName, newName) {
+    try {
+      const { error } = await client.rpc('rename_portal_sector',{old_name:oldName,new_name:newName});
+      if (error) throw error;
+      await loadSharedState();
+      window.SPFLY_CAP?.updateEmployees(employees);
+      return true;
+    } catch (error) { alert('Não foi possível renomear o setor: ' + error.message); return false; }
   }
 
   async function bootstrap() {
@@ -456,7 +483,7 @@
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, renderAdmins, uploadFile, deleteFile, previewFile, logout, canPage, canEdit,
+  window.SPFLY_AUTH = { persist, createSector, renameSector, renderAdmins, uploadFile, deleteFile, previewFile, logout, canPage, canEdit,
     isAdmin: () => currentAccess?.active && currentAccess.access_role === 'admin',
     updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };
 
