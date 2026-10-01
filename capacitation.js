@@ -4,7 +4,7 @@
   let client, access, currentUser, employees = [], sectors = [];
   let tracks = [], courses = [], enrollments = [], progress = [];
   let selectedTrack = null, selectedTab = 'courses', focusedEnrollment = null;
-  let editingTrack = null, editingCourse = null, busy = false;
+  let editingTrack = null, editingCourse = null, busy = false, loadRevision = 0, previewRevision = 0, previewPath = null, previewName = '';
   const $ = id => document.getElementById(id);
   const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const fold = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
@@ -105,6 +105,7 @@
   }
   async function load() {
     if (!client || !access) return;
+    const revision = ++loadRevision;
     async function allRows(table) {
       const rows = [];
       for (let offset = 0; ; offset += 1000) {
@@ -114,10 +115,13 @@
         if (!data || data.length < 1000) return rows;
       }
     }
-    [tracks,courses,enrollments,progress] = await Promise.all(
-      ['cap_tracks','cap_courses','cap_enrollments','cap_progress'].map(allRows));
+    const rows = await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress'].map(allRows));
+    if (revision !== loadRevision) return false;
+    [tracks,courses,enrollments,progress] = rows;
+    return true;
   }
   function configure(nextClient, nextAccess, nextUser, nextEmployees) {
+    loadRevision++;
     client = nextClient; access = nextAccess; currentUser = nextUser; employees = nextEmployees || [];
     if (employeeRole()) { employees = []; selectedTrack = null; focusedEnrollment = null; }
   }
@@ -127,7 +131,7 @@
     if (!['pageCapacitation','pageCapTrackDetail'].includes(page)) return;
     const target = page === 'pageCapacitation' ? $('capTrackGrid') : $('capTrackHero');
     target.innerHTML = empty('Carregando capacitações...');
-    try { await load(); if (page === 'pageCapacitation') renderList(); else renderDetail(); }
+    try { if (!await load()) return; if (page === 'pageCapacitation') renderList(); else renderDetail(); }
     catch (error) { target.innerHTML = empty('Não foi possível carregar as capacitações. ' + error.message); }
   }
   function refresh() { render(); }
@@ -363,20 +367,44 @@
     catch (error) { alert('Não foi possível atualizar o curso: '+error.message); }
     finally { busy = false; }
   }
-  async function advanceCourse(courseId, nextState) {
-    if (!canUpload() || busy) return;
+  async function refreshCourseProgress(enrollmentId, courseId) {
+    loadRevision++;
+    const {data,error} = await client.from('cap_progress').select('*')
+      .eq('enrollment_id',enrollmentId).eq('course_id',courseId).single();
+    if (error) throw error;
+    const index = progress.findIndex(item => item.id === data.id);
+    if (index >= 0) progress[index] = data;
+    else progress.push(data);
+  }
+  async function advanceCourse(courseId, nextState, button) {
+    if (!canUpload()) return;
+    if (busy) { alert('Aguarde a atualização do curso em andamento.'); return; }
     const enrollment = trackEnrollments(selectedTrack)[0];
     const course = courses.find(item => item.id === courseId && item.track_id === selectedTrack);
     if (!enrollment || !course || !course.active) return;
     const track = tracks.find(item => item.id === selectedTrack);
     if (nextState === 'finished' && !confirm(`Concluir o curso "${course.name}"?${certificateMode(track)==='per_course' && course.certificate_required?' Em seguida, anexe o certificado para validação.':''}`)) return;
     busy = true;
+    const previousLabel = button?.textContent;
+    if (button) { button.disabled = true; button.textContent = 'Salvando...'; }
+    let saved = false;
     try {
       const {error} = await client.rpc('cap_set_course_state',{target_enrollment:enrollment.id,target_course:courseId,next_state:nextState});
       if (error) throw error;
-      await load(); renderDetail();
-    } catch (error) { alert('Não foi possível atualizar o curso: '+error.message); }
-    finally { busy = false; }
+      saved = true;
+      try { await refreshCourseProgress(enrollment.id,courseId); }
+      catch (syncError) {
+        // A operação já foi gravada. Mostre o novo estado mesmo se a leitura falhar.
+        loadRevision++;
+        let item = courseProgress(enrollment.id,courseId);
+        if (!item) { item = {id:`local-${enrollment.id}-${courseId}`,enrollment_id:enrollment.id,course_id:courseId}; progress.push(item); }
+        const now = new Date().toISOString();
+        if (nextState === 'started') item.started_at ||= now;
+        else { item.course_finished_at ||= now; if (certificateMode(track)==='after_all' || !course.certificate_required) item.completed_at ||= now; }
+      }
+      renderDetail();
+    } catch (error) { alert(saved ? 'O curso foi atualizado, mas a tela não sincronizou. '+error.message : 'Não foi possível atualizar o curso: '+error.message); }
+    finally { busy = false; if (button?.isConnected) { button.disabled = false; button.textContent = previousLabel; } }
   }
   async function uploadCertificate(courseId, file, trackLevel = false) {
     if (!canUpload() || !file || busy) return;
@@ -460,33 +488,73 @@
     } catch (error) { alert('Não foi possível remover o funcionário: '+error.message); }
     finally { busy = false; }
   }
+  async function openCertificatePreview(path, name = 'Certificado') {
+    if (!path || !client) return false;
+    const revision = ++previewRevision;
+    const dialog = $('capCertificatePreview');
+    $('capCertificatePreviewTitle').textContent = 'Certificado';
+    $('capCertificatePreviewName').textContent = name;
+    $('capCertificateViewer').textContent = 'Carregando arquivo...';
+    previewPath = null; previewName = '';
+    $('capCertificateOpenTab').hidden = true;
+    $('capCertificateOpenTab').removeAttribute('href');
+    if (!dialog.open) dialog.showModal();
+    try {
+      const {data,error} = await client.storage.from('cap-certificates').createSignedUrl(path,300);
+      if (error) throw error;
+      if (revision !== previewRevision || !dialog.open) return false;
+      previewPath = path; previewName = name;
+      $('capCertificateOpenTab').href = data.signedUrl;
+      $('capCertificateOpenTab').hidden = false;
+      const viewer = $('capCertificateViewer'); viewer.replaceChildren();
+      const visual = /\.pdf$/i.test(path) ? document.createElement('iframe') : document.createElement('img');
+      visual.src = data.signedUrl;
+      if (visual.tagName === 'IFRAME') visual.title = name;
+      else visual.alt = name;
+      viewer.append(visual);
+      return true;
+    } catch (error) {
+      if (revision === previewRevision && dialog.open) $('capCertificateViewer').textContent = 'Não foi possível abrir o arquivo: ' + error.message;
+      return false;
+    }
+  }
+  function closeCertificatePreview() {
+    previewRevision++;
+    previewPath = null; previewName = '';
+    $('capCertificateOpenTab').hidden = true;
+    $('capCertificateOpenTab').removeAttribute('href');
+    $('capCertificateViewer').replaceChildren();
+    if ($('capCertificatePreview').open) $('capCertificatePreview').close();
+  }
+  async function downloadCertificatePreview() {
+    if (!previewPath) return;
+    const {data,error} = await client.storage.from('cap-certificates').createSignedUrl(previewPath,60,{download:previewName});
+    if (error) { alert('Não foi possível baixar o certificado: '+error.message); return; }
+    const link=document.createElement('a');link.href=data.signedUrl;link.download=previewName;document.body.append(link);link.click();link.remove();
+  }
   async function viewCertificate(progressId) {
     const item = progress.find(row => row.id === progressId);
     if (!item?.certificate_path) return;
-    const tab = window.open('about:blank','_blank');
-    try {
-      const {data,error} = await client.storage.from('cap-certificates').createSignedUrl(item.certificate_path,60);
-      if (error) throw error;
-      if (manager() && !item.certificate_viewed_at) await client.rpc('cap_mark_certificate_viewed',{target_progress:item.id});
-      if (tab) tab.location.href = data.signedUrl;
-      else window.location.href = data.signedUrl;
-      await load(); if (document.querySelector('.page.active')?.id === 'pageCapTrackDetail') renderDetail();
-    } catch (error) { if (tab) tab.close(); alert('Não foi possível abrir o certificado: '+error.message); }
+    if (!await openCertificatePreview(item.certificate_path,item.certificate_name || 'Certificado')) return;
+    if (manager() && !item.certificate_viewed_at) {
+      const {error}=await client.rpc('cap_mark_certificate_viewed',{target_progress:item.id});
+      if (error) { alert('O arquivo abriu, mas não foi possível registrar a conferência: '+error.message); return; }
+      try { await refreshCourseProgress(item.enrollment_id,item.course_id); if (document.querySelector('.page.active')?.id === 'pageCapTrackDetail') renderDetail(); }
+      catch (error) { alert('O arquivo abriu, mas a tela não sincronizou: '+error.message); }
+    }
   }
   async function viewTrackCertificate(enrollmentId) {
     const item = enrollments.find(row => row.id === enrollmentId);
     if (!item?.track_certificate_path) return;
-    const tab = window.open('about:blank','_blank');
-    try {
-      const {data,error} = await client.storage.from('cap-certificates').createSignedUrl(item.track_certificate_path,60);
-      if (error) throw error;
-      if (manager() && !item.track_certificate_viewed_at) {
-        const marked = await client.rpc('cap_mark_track_certificate_viewed',{target_enrollment:item.id});
-        if (marked.error) throw marked.error;
-      }
-      if (tab) tab.location.href = data.signedUrl; else window.location.href = data.signedUrl;
-      await load(); if (document.querySelector('.page.active')?.id === 'pageCapTrackDetail') renderDetail();
-    } catch (error) { if (tab) tab.close(); alert('Não foi possível abrir o certificado: '+error.message); }
+    if (!await openCertificatePreview(item.track_certificate_path,item.track_certificate_name || 'Certificado final')) return;
+    if (manager() && !item.track_certificate_viewed_at) {
+      const {error}=await client.rpc('cap_mark_track_certificate_viewed',{target_enrollment:item.id});
+      if (error) { alert('O arquivo abriu, mas não foi possível registrar a conferência: '+error.message); return; }
+      const {data,error:reloadError}=await client.from('cap_enrollments').select('*').eq('id',item.id).single();
+      if (reloadError) { alert('O arquivo abriu, mas a tela não sincronizou: '+reloadError.message); return; }
+      const index=enrollments.findIndex(row=>row.id===item.id);if(index>=0)enrollments[index]=data;
+      if (document.querySelector('.page.active')?.id === 'pageCapTrackDetail') renderDetail();
+    }
   }
   async function reviewTrackCertificate(enrollmentId, decision) {
     if (!manager() || busy) return;
@@ -569,13 +637,7 @@
   }
   async function viewHistoryCertificate(path) {
     if (!client || !path || !access) return;
-    const tab = window.open('about:blank','_blank');
-    try {
-      const {data,error} = await client.storage.from('cap-certificates').createSignedUrl(path,60);
-      if (error) throw error;
-      if (tab) tab.location.href = data.signedUrl;
-      else window.location.href = data.signedUrl;
-    } catch (error) { if (tab) tab.close(); alert('Não foi possível abrir o certificado: '+error.message); }
+    await openCertificatePreview(path,'Certificado da capacitação');
   }
   function delegate(event) {
     const button = event.target.closest('[data-cap-action]'); if (!button) return;
@@ -589,8 +651,8 @@
     if (action==='employee') { focusedEnrollment=id; renderEmployeeFocus(); $('capEmployeeFocus').scrollIntoView({behavior:'smooth'}); }
     if (action==='remove-enrollment') removeEnrollment(id);
     if (action==='complete') setState(id,'completed');
-    if (action==='start-course') advanceCourse(id,'started');
-    if (action==='finish-course') advanceCourse(id,'finished');
+    if (action==='start-course') advanceCourse(id,'started',button);
+    if (action==='finish-course') advanceCourse(id,'finished',button);
     if (action==='approve') reviewCertificate(id,'approved');
     if (action==='reject') reviewCertificate(id,'rejected');
     if (action==='edit-rejection') editRejectionReason(id);
@@ -603,6 +665,7 @@
   $('capTrackForm').addEventListener('submit',saveTrack);
   $('capCourseForm').addEventListener('submit',saveCourse);
   $('capCourseEditor').addEventListener('close',() => { editingCourse = null; });
+  $('capCertificatePreview').addEventListener('close',closeCertificatePreview);
   $('pageCapacitation').addEventListener('click',delegate);
   $('pageCapTrackDetail').addEventListener('click',delegate);
   $('pageCapTrackDetail').addEventListener('change',event => {
@@ -615,6 +678,6 @@
     const button = event.target.closest('[data-cap-history-cert]');
     if (button) viewHistoryCertificate(button.dataset.capHistoryCert);
   });
-  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];},updateSectors(next){sectors=next||[];}};
+  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeCertificatePreview,downloadCertificatePreview,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];},updateSectors(next){sectors=next||[];}};
   window.SPFLY_CAP_TEST = {addDays,remaining,percent,validUrl};
 })();

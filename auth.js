@@ -484,6 +484,7 @@
   }
 
   window.SPFLY_AUTH = { persist, createSector, renameSector, renderAdmins, uploadFile, deleteFile, previewFile, logout, canPage, canEdit,
+    getClient: () => client,
     isAdmin: () => currentAccess?.active && currentAccess.access_role === 'admin',
     updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };
 

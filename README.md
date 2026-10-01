@@ -1,4 +1,16 @@
-# SPFLY Admin — V24
+# SPFLY Admin — V25
+
+## Ajuste da V25
+
+Em **Funcionários**, pessoas com permissão de edição podem usar **Importar Funcionários**. O botão **Baixar modelo de importação** entrega um CSV UTF-8 com os campos do cadastro atual. A prévia valida CPF/CNPJ, datas, setor, campos obrigatórios e duplicidades no arquivo e no cadastro. Cada erro mostra a linha e pode ser corrigido na própria prévia. A confirmação salva somente as linhas válidas numa atualização única do cadastro compartilhado; um conflito de versão exige recarregar e validar novamente.
+
+Em **Funcionários > Visualizar > Certificados**, aparecem certificados da Capacitação e certificados externos. Pessoas com permissão de edição em Funcionários podem adicionar, editar, substituir o arquivo e excluir certificados externos. Arquivos PDF, JPG e PNG ficam no bucket privado `employee-certificates`, com links temporários para visualizar ou baixar. O histórico de Capacitação e as regras existentes continuam independentes.
+
+Em **Funcionários > Visualizar > Anexos gerais**, é possível guardar documentos que não são certificados, com nome, categoria e observações. Pessoas com permissão de edição em Funcionários podem adicionar, editar, substituir e excluir esses anexos mediante confirmação. PDF e imagens abrem em nova visualização; DOCX, XLSX e TXT são baixados. Os arquivos ficam no bucket privado `employee-attachments` e seguem as mesmas permissões de Funcionários.
+
+Em **Minhas Capacitações**, os botões **Iniciar** e **Concluir** atualizam o curso logo após o salvamento, sem esperar o recarregamento de todas as trilhas. Se a leitura de confirmação falhar, a tela ainda mostra o estado gravado. O certificado anexado pelo próprio funcionário abre em uma janela do portal, com opções de abrir em outra aba ou baixar. A migração desta versão permite a leitura do certificado já registrado pelo dono da inscrição ativa, mesmo que seu setor tenha sido alterado depois da inscrição; a leitura continua limitada ao caminho do arquivo registrado.
+
+Execute `supabase/migration-v25-employee-files.sql` **antes** de publicar `index.html`, `auth.js` e `employee-tools.js`. A migração cria as tabelas de certificados externos e anexos gerais e seus buckets privados. O cadastro de funcionários permanece no `app_state` existente. Esta versão usa CSV, que pode ser gerado pelo Excel; não há importação direta de `.xlsx`.
 
 ## Ajuste da V24
 
