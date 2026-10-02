@@ -1,4 +1,12 @@
-# SPFLY Admin — V25
+# SPFLY Admin — V26
+
+## Ajuste da V26
+
+Em **Capacitação**, novas trilhas e cursos exigem a modalidade **Online**, **Presencial** ou **Híbrido**. A modalidade aparece nos cartões e detalhes. Registros anteriores continuam sem valor atribuído e aparecem como **Não informada** até serem editados. Execute `supabase/migration-v26-course-modality.sql` antes de publicar os arquivos desta versão; ela acrescenta os campos sem alterar os dados existentes e exige modalidade somente em novos cadastros.
+
+Em **Relatórios > Carga Horária dos Cursos**, consulte a carga prevista e as horas realizadas por funcionário e por curso, além do detalhamento de capacitações e treinamentos. Horas realizadas contam apenas cursos concluídos e treinamentos ministrados com funcionário vinculado. Os filtros incluem busca, funcionário, modalidade, situação e período de conclusão. **Exportar CSV para Excel** inclui os dois totais consolidados e o detalhamento.
+
+Certificados em PDF da Capacitação e certificados e anexos gerais da ficha de Funcionários abrem dentro do portal, com nome do arquivo, opção **Visualizar PDF**, abertura em nova aba e download. O acesso continua usando URL temporária dos buckets privados e as políticas existentes. Arquivos antigos permanecem acessíveis pelo mesmo caminho registrado.
 
 ## Ajuste da V25
 
