@@ -18,7 +18,7 @@
 
   const pageNames = { dashboard: 'dashboard', pageEmployees: 'employees', pageNewEmployee: 'employees',
     pageTrainings: 'trainings', pageNewTraining: 'trainings', pageTrainingDetail: 'trainings',
-    pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports',
+    pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports', pageReportHours: 'reports',
     pageCapacitation: 'capacitation', pageCapTrackForm: 'capacitation', pageCapTrackDetail: 'capacitation' };
   const roleNames = { admin: 'Administrador', usuario: 'Usuário' };
   const permissionPages = { dashboard:'Início', employees:'Funcionários', trainings:'Treinamentos', reports:'Relatórios', capacitation:'Capacitação' };
@@ -452,7 +452,7 @@
       image.alt = item.name;
       image.style.cssText = 'max-width:100%;max-height:65vh;display:block;margin:auto;border-radius:8px';
       body.append(image);
-    } else if (url && item.type === 'application/pdf') {
+    } else if (url && (item.type === 'application/pdf' || /\.pdf$/i.test(item.name || item.path || ''))) {
       const frame = document.createElement('iframe');
       frame.src = url;
       frame.title = item.name;

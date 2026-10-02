@@ -12,6 +12,7 @@
     datadenascimento:'birth',datadeadmissao:'hire',setor:'sector',cargo:'role',email:'email',telefone:'phone',status:'status'};
   let imported = [], importedFile = '', editingLine = null, currentEmployeeId = null;
   let externalCertificates = [], platformCertificates = [], editingCertificateId = null, savingCertificate = false, certificateLoad = 0;
+  let currentPreview = null, previewRevision = 0;
   let attachments = [], editingAttachmentId = null, savingAttachment = false, attachmentLoad = 0;
   const normalize = value => clean(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
   const error = (message, line) => ({message, line});
@@ -173,7 +174,7 @@
   function certificateTable(){
     const editable=auth().canEdit('employees'), all=[...externalCertificates.map(x=>({...x,origin:'Externo',bucket:'employee-certificates'})),...platformCertificates];
     if(!all.length)return '<div class="empty">Nenhum certificado registrado.</div>';
-    return `<div class="employee-cert-list"><table><thead><tr><th>Certificado</th><th>Instituição</th><th>Conclusão</th><th>Carga horária</th><th>Validade</th><th>Origem</th><th>Ações</th></tr></thead><tbody>${all.map((c,i)=>`<tr><td><strong>${safe(c.course_name)}</strong>${c.category?`<div class="employee-cert-meta">${safe(c.category)}</div>`:''}${c.notes?`<div class="employee-cert-meta">${safe(c.notes)}</div>`:''}</td><td>${safe(c.institution)}</td><td>${certDate(c.completed_on)}</td><td>${c.workload_hours?`${safe(c.workload_hours)}h`:'—'}</td><td>${certDate(c.expires_on)}</td><td><span class="badge ${c.origin==='Externo'?'badge-orange':'badge-green'}">${c.origin}</span></td><td><div class="employee-cert-actions"><button type="button" class="btn btn-secondary btn-sm" data-cert-view="${i}">Visualizar</button><button type="button" class="btn btn-secondary btn-sm" data-cert-download="${i}">Baixar</button>${editable&&c.origin==='Externo'?`<button type="button" class="btn btn-secondary btn-sm" data-cert-edit="${safe(c.id)}">Editar</button><button type="button" class="btn btn-danger btn-sm" data-cert-delete="${safe(c.id)}">Excluir</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`;
+    return `<div class="employee-cert-list"><table><thead><tr><th>Certificado</th><th>Instituição</th><th>Conclusão</th><th>Carga horária</th><th>Validade</th><th>Origem</th><th>Ações</th></tr></thead><tbody>${all.map((c,i)=>`<tr><td><strong>${safe(c.course_name)}</strong><div class="employee-cert-meta">${safe(c.file_name)}</div>${c.category?`<div class="employee-cert-meta">${safe(c.category)}</div>`:''}${c.notes?`<div class="employee-cert-meta">${safe(c.notes)}</div>`:''}</td><td>${safe(c.institution)}</td><td>${certDate(c.completed_on)}</td><td>${c.workload_hours?`${safe(c.workload_hours)}h`:'—'}</td><td>${certDate(c.expires_on)}</td><td><span class="badge ${c.origin==='Externo'?'badge-orange':'badge-green'}">${c.origin}</span></td><td><div class="employee-cert-actions"><button type="button" class="btn btn-secondary btn-sm" data-cert-view="${i}">${/\.pdf$/i.test(c.file_path)?'Visualizar PDF':'Visualizar'}</button><button type="button" class="btn btn-secondary btn-sm" data-cert-download="${i}">Baixar</button>${editable&&c.origin==='Externo'?`<button type="button" class="btn btn-secondary btn-sm" data-cert-edit="${safe(c.id)}">Editar</button><button type="button" class="btn btn-danger btn-sm" data-cert-delete="${safe(c.id)}">Excluir</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`;
   }
   function drawCertificates(){
     const node=$('employeeCertificates');if(!node||Number(node.dataset.employeeId)!==currentEmployeeId)return;
@@ -250,17 +251,44 @@
   }
   async function openCertificate(index,download=false){
     const item=[...externalCertificates.map(x=>({...x,bucket:'employee-certificates'})),...platformCertificates][Number(index)];if(!item)return;
-    const tab=download?null:window.open('about:blank','_blank');
-    try{const {data,error}=await client().storage.from(item.bucket).createSignedUrl(item.file_path,60,download?{download:item.file_name}:{ });
-      if(error)throw error;
-      if(download){const a=document.createElement('a');a.href=data.signedUrl;a.download=item.file_name;a.click();}
-      else if(tab)tab.location.href=data.signedUrl;else window.location.href=data.signedUrl;
-    }catch(e){tab?.close();alert('Não foi possível abrir o certificado: '+e.message);}
+    if(download)await downloadFile(item);
+    else await previewFileRecord(item);
   }
+  async function previewFileRecord(item){
+    const dialog=$('employeeFilePreview'),revision=++previewRevision;
+    currentPreview=null;$('employeeFilePreviewName').textContent=item.file_name||item.title||'Arquivo';
+    $('employeeFileViewer').textContent='Carregando arquivo...';
+    $('employeeFileOpenTab').hidden=true;$('employeeFileOpenTab').removeAttribute('href');
+    if(!dialog.open)dialog.showModal();
+    try{
+      const {data,error}=await client().storage.from(item.bucket).createSignedUrl(item.file_path,300);
+      if(error)throw error;
+      if(revision!==previewRevision||!dialog.open)return;
+      currentPreview=item;
+      $('employeeFileOpenTab').href=data.signedUrl;$('employeeFileOpenTab').hidden=false;
+      const node=$('employeeFileViewer');node.replaceChildren();
+      const pdf=/\.pdf$/i.test(item.file_path)||item.mime_type==='application/pdf';
+      const visual=document.createElement(pdf?'iframe':'img');visual.src=data.signedUrl;
+      if(pdf)visual.title=item.file_name||'PDF';else visual.alt=item.file_name||'Imagem';
+      node.append(visual);
+    }catch(e){if(revision===previewRevision&&dialog.open)$('employeeFileViewer').textContent='Não foi possível abrir o arquivo: '+e.message;}
+  }
+  function closeFilePreview(){
+    previewRevision++;currentPreview=null;$('employeeFileViewer').replaceChildren();
+    $('employeeFileOpenTab').hidden=true;$('employeeFileOpenTab').removeAttribute('href');
+    if($('employeeFilePreview').open)$('employeeFilePreview').close();
+  }
+  async function downloadFile(item){
+    try{const {data,error}=await client().storage.from(item.bucket).createSignedUrl(item.file_path,60,{download:item.file_name});
+      if(error)throw error;const link=document.createElement('a');link.href=data.signedUrl;link.download=item.file_name;
+      document.body.append(link);link.click();link.remove();
+    }catch(e){alert('Não foi possível baixar o arquivo: '+e.message);}
+  }
+  async function downloadPreview(){if(currentPreview)await downloadFile(currentPreview);}
   function drawAttachments(){
     const node=$('employeeAttachments');if(!node||Number(node.dataset.employeeId)!==currentEmployeeId)return;
     const editable=auth().canEdit('employees');
-    node.innerHTML=attachments.length?`<div class="employee-cert-list"><table><thead><tr><th>Anexo</th><th>Categoria</th><th>Arquivo</th><th>Incluído em</th><th>Ações</th></tr></thead><tbody>${attachments.map(item=>`<tr><td><strong>${safe(item.title)}</strong>${item.notes?`<div class="employee-cert-meta">${safe(item.notes)}</div>`:''}</td><td>${safe(item.category||'—')}</td><td>${safe(item.file_name)}</td><td>${certDate(item.created_at)}</td><td><div class="employee-cert-actions"><button type="button" class="btn btn-secondary btn-sm" data-attach-view="${safe(item.id)}">${['application/pdf','image/jpeg','image/png'].includes(item.mime_type)?'Visualizar':'Abrir/baixar'}</button><button type="button" class="btn btn-secondary btn-sm" data-attach-download="${safe(item.id)}">Baixar</button>${editable?`<button type="button" class="btn btn-secondary btn-sm" data-attach-edit="${safe(item.id)}">Editar</button><button type="button" class="btn btn-danger btn-sm" data-attach-delete="${safe(item.id)}">Excluir</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nenhum anexo geral registrado.</div>';
+    node.innerHTML=attachments.length?`<div class="employee-cert-list"><table><thead><tr><th>Anexo</th><th>Categoria</th><th>Arquivo</th><th>Incluído em</th><th>Ações</th></tr></thead><tbody>${attachments.map(item=>`<tr><td><strong>${safe(item.title)}</strong>${item.notes?`<div class="employee-cert-meta">${safe(item.notes)}</div>`:''}</td><td>${safe(item.category||'—')}</td><td>${safe(item.file_name)}</td><td>${certDate(item.created_at)}</td><td><div class="employee-cert-actions"><button type="button" class="btn btn-secondary btn-sm" data-attach-view="${safe(item.id)}">${/\.pdf$/i.test(item.file_path)?'Visualizar PDF':(/\.(jpe?g|png)$/i.test(item.file_path)?'Visualizar':'Abrir/baixar')}</button><button type="button" class="btn btn-secondary btn-sm" data-attach-download="${safe(item.id)}">Baixar</button>${editable?`<button type="button" class="btn btn-secondary btn-sm" data-attach-edit="${safe(item.id)}">Editar</button><button type="button" class="btn btn-danger btn-sm" data-attach-delete="${safe(item.id)}">Excluir</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nenhum anexo geral registrado.</div>';
   }
   async function renderAttachments(employeeId){
     if(!auth().canPage('pageEmployees'))return;
@@ -335,15 +363,11 @@
   }
   async function openAttachment(id,download=false){
     const item=attachments.find(x=>x.id===id);if(!item)return;
-    const directDownload=download||!['application/pdf','image/jpeg','image/png'].includes(item.mime_type);
-    const tab=directDownload?null:window.open('about:blank','_blank');
-    try{
-      const {data,error}=await client().storage.from('employee-attachments').createSignedUrl(item.file_path,60,directDownload?{download:item.file_name}:{});
-      if(error)throw error;
-      if(directDownload){const link=document.createElement('a');link.href=data.signedUrl;link.download=item.file_name;link.click();}
-      else if(tab)tab.location.href=data.signedUrl;else window.location.href=data.signedUrl;
-    }catch(e){tab?.close();alert('Não foi possível abrir o anexo: '+e.message);}
+    const file={...item,bucket:'employee-attachments'};
+    if(download||!(/\.(pdf|jpe?g|png)$/i.test(item.file_path)))await downloadFile(file);
+    else await previewFileRecord(file);
   }
+  $('employeeFilePreview').addEventListener('close',closeFilePreview);
   document.addEventListener('click',event=>{
     const button=event.target.closest('[data-import-line],[data-cert-view],[data-cert-download],[data-cert-edit],[data-cert-delete],[data-attach-view],[data-attach-download],[data-attach-edit],[data-attach-delete]');if(!button)return;
     if(button.dataset.importLine)editImportLine(button.dataset.importLine);
@@ -358,5 +382,5 @@
   });
   window.SPFLY_EMPLOYEE={openImport,closeImport,downloadTemplate,readImportFile,closeImportEdit,saveImportEdit,confirmImport,
     renderCertificates,openCertificateForm,closeCertificateForm,saveCertificate,
-    renderAttachments,openAttachmentForm,closeAttachmentForm,saveAttachment};
+    renderAttachments,openAttachmentForm,closeAttachmentForm,saveAttachment,closeFilePreview,downloadPreview};
 })();
