@@ -19,12 +19,15 @@
   const pageNames = { dashboard: 'dashboard', pageEmployees: 'employees', pageNewEmployee: 'employees',
     pageTrainings: 'trainings', pageNewTraining: 'trainings', pageTrainingDetail: 'trainings',
     pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports', pageReportHours: 'reports',
-    pageCapacitation: 'capacitation', pageCapTrackForm: 'capacitation', pageCapTrackDetail: 'capacitation' };
+    pageCapacitation: 'capacitation', pageCapTrackForm: 'capacitation', pageCapTrackDetail: 'capacitation',
+    pagePerfAssessments: 'trainings', pagePerfCompetencies: 'trainings', pagePerfModels: 'trainings',
+    pagePerfHistory: 'trainings', pagePerfEditor: 'trainings' };
   const roleNames = { admin: 'Administrador', usuario: 'Usuário' };
   const permissionPages = { dashboard:'Início', employees:'Funcionários', trainings:'Treinamentos', reports:'Relatórios', capacitation:'Capacitação' };
   function canPage(pageId) {
     if (!currentAccess?.active || currentAccess.must_change_password) return false;
     if (currentAccess.access_role === 'admin') return true;
+    if (pageId?.startsWith('pagePerf')) return canEdit('employees') && canEdit('trainings');
     if (pageId === 'pageCapTrackForm') return false;
     if (['pageNewEmployee','pageNewTraining'].includes(pageId)) return canEdit(pageNames[pageId]);
     const page = pageNames[pageId];
@@ -40,6 +43,10 @@
     document.querySelectorAll('.nav-btn[data-menu]').forEach(button => {
       button.hidden = button.dataset.menu === 'reports' ? !canPage('pageReportEmployee') : currentAccess.access_role !== 'admin';
     });
+    const performanceAccess = canEdit('employees') && canEdit('trainings');
+    document.getElementById('trainingForms').hidden = !performanceAccess;
+    document.querySelector('.perf-menu-chevron').hidden = !performanceAccess;
+    document.querySelectorAll('#trainingForms [data-page]').forEach(button => { button.hidden = !performanceAccess; });
     document.querySelectorAll('[data-requires-page]').forEach(button => { button.hidden = !canPage(button.dataset.requiresPage); });
     document.querySelectorAll('[data-requires-edit]').forEach(button => { button.hidden = !canEdit(button.dataset.requiresEdit); });
     app.classList.toggle('employees-view-only', !canEdit('employees'));
@@ -155,6 +162,7 @@
       return;
     }
     window.SPFLY_CAP?.configure(client, admin, user, employees);
+    window.SPFLY_PERF?.configure(client, admin, () => employees);
     renderCreateEmployeeOptions();
 
     const displayName = admin.full_name.trim();

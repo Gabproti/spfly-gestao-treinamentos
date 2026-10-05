@@ -1,4 +1,10 @@
-# SPFLY Admin — V30
+# SPFLY Admin — V31
+
+## Avaliação de Desempenho (V31)
+
+Em **Treinamentos > Formulários**, administradores e usuários com permissão de edição simultânea em Funcionários e Treinamentos podem cadastrar competências, compor modelos, criar avaliações, salvar rascunhos, finalizar, consultar o histórico e imprimir em A4. A implantação cria três modelos vazios: Lideranças, Administrativo e Operacional. Cadastre competências e distribua pesos que somem 100% em cada modelo antes de finalizar avaliações.
+
+Execute `supabase/migration-v31-performance-evaluations.sql` após a V30. As avaliações usam dados do cadastro de funcionários e preservam cópias dos dados do colaborador, modelo e competências no momento da criação. Avaliações finalizadas ficam imutáveis. As novas tabelas têm RLS e concedem leitura apenas aos perfis autorizados; a escrita ocorre por funções com validação no banco. O script `supabase/hotfix-v30-course-id-ambiguity.sql` documenta a correção pontual de salvamento de curso já aplicada ao ambiente de produção.
 
 ## Sistema definido na trilha (V30)
 

@@ -259,6 +259,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 }
 </style>
 <link rel="stylesheet" href="capacitation.css?v=30">
+<link rel="stylesheet" href="performance.css?v=31">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -310,7 +311,8 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div class="brand"><img class="spfly-logo" src="spfly_logo.png?v=7" alt="SPFLY Logística"><small>GESTÃO DE TREINAMENTOS</small></div>
   <div class="nav-section">
     <button class="nav-btn active" data-page="dashboard"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-home"/></svg><span class="nav-label">Início</span></button>
-    <button class="nav-btn" data-page="pageTrainings"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg><span class="nav-label">Treinamentos</span></button>
+    <button class="nav-btn" data-page="pageTrainings"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg><span class="nav-label">Treinamentos</span><span class="nav-chevron perf-menu-chevron" hidden>⌄</span></button>
+    <div class="subnav" id="trainingForms" hidden><button data-page="pagePerfAssessments">Formulários · Avaliações de Desempenho</button><button data-page="pagePerfCompetencies">Competências</button><button data-page="pagePerfModels">Modelos de Avaliação</button><button data-page="pagePerfHistory">Histórico de Avaliações</button></div>
     <button class="nav-btn" data-page="pageCapacitation"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-cap"/></svg><span class="nav-label">Capacitação</span></button>
     <button class="nav-btn" data-page="pageEmployees"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Funcionários</span></button>
     <button class="nav-btn" data-menu="reports"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg><span class="nav-label">Relatórios</span><span class="nav-chevron">⌄</span></button>
@@ -329,6 +331,14 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 </header>
 
 <section class="content">
+<div id="pagePerfAssessments" class="page perf-page"><div class="header-row"><div><h1>Avaliações de Desempenho</h1><div class="muted">Formulários vinculados aos colaboradores.</div></div><button type="button" class="btn btn-primary" onclick="SPFLY_PERF.newAssessment()">+ Nova Avaliação</button></div><div class="card"><p>Selecione um modelo e um colaborador para iniciar. Você poderá salvar um rascunho e continuar depois.</p><div id="perfOverview"></div></div></div>
+<div id="pagePerfCompetencies" class="page perf-page"><div class="header-row"><div><h1>Competências</h1><div class="muted">Cadastre significado e peso para usar nos modelos.</div></div><button type="button" class="btn btn-primary" onclick="SPFLY_PERF.editCompetency()">+ Nova Competência</button></div><div class="card"><div id="perfCompetencyList"></div></div></div>
+<div id="pagePerfModels" class="page perf-page"><div class="header-row"><div><h1>Modelos de Avaliação</h1><div class="muted">Monte e ordene as competências de cada formulário.</div></div><button type="button" class="btn btn-primary" onclick="SPFLY_PERF.editModel()">+ Novo Modelo</button></div><div id="perfModelList"></div></div>
+<div id="pagePerfHistory" class="page perf-page"><div class="header-row"><div><h1>Histórico de Avaliações</h1><div class="muted">Rascunhos e avaliações finalizadas.</div></div><button type="button" class="btn btn-primary" onclick="SPFLY_PERF.newAssessment()">+ Nova Avaliação</button></div><div class="card"><input type="search" id="perfHistorySearch" placeholder="Buscar colaborador, modelo ou responsável..." aria-label="Buscar avaliações" oninput="SPFLY_PERF.renderHistory()"><select id="perfHistoryStatus" aria-label="Filtrar status" onchange="SPFLY_PERF.renderHistory()"><option value="">Todos os status</option><option value="draft">Rascunho</option><option value="finalized">Finalizada</option></select><div id="perfHistoryList"></div></div></div>
+<div id="pagePerfEditor" class="page perf-page"><div class="header-row"><div><h1 id="perfEditorTitle">Nova Avaliação</h1><div class="muted">Competência, significado e peso são fixos. Preencha apenas a avaliação.</div></div><button type="button" class="btn btn-secondary" onclick="showPage('pagePerfHistory')">Voltar</button></div><div class="card form-card"><div class="form-grid"><div class="field"><label for="perfEmployee">Colaborador *</label><select id="perfEmployee" onchange="SPFLY_PERF.changeEmployee()"></select></div><div class="field"><label for="perfModel">Modelo *</label><select id="perfModel" onchange="SPFLY_PERF.changeModel()"></select></div><div class="field"><label for="perfDepartment">Departamento</label><input id="perfDepartment" readonly></div><div class="field"><label for="perfPosition">Cargo</label><input id="perfPosition" readonly></div><div class="field"><label for="perfAdmission">Data de admissão</label><input id="perfAdmission" type="date" readonly></div><div class="field"><label for="perfEvaluator">Responsável pela avaliação *</label><input id="perfEvaluator" maxlength="160"></div><div class="field"><label for="perfDate">Data da avaliação *</label><input id="perfDate" type="date"></div></div><div id="perfScoreTable"></div><div id="perfResult" class="perf-result"></div><div id="perfEditorMessage" role="status"></div><div class="actions" id="perfEditorActions"><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.saveAssessment(false)">Salvar rascunho</button><button type="button" class="btn btn-primary" onclick="SPFLY_PERF.saveAssessment(true)">Finalizar avaliação</button><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.preview()">Visualizar impressão</button></div></div></div>
+<dialog id="perfCompetencyDialog" class="employee-dialog employee-edit-dialog"><div class="modal-head"><h2 id="perfCompetencyTitle">Competência</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfCompetencyDialog')" aria-label="Fechar">✕</button></div><form id="perfCompetencyForm" class="form-grid" onsubmit="event.preventDefault();SPFLY_PERF.saveCompetency()"><div class="field full"><label for="perfCompetencyName">Nome *</label><input id="perfCompetencyName" required maxlength="160"></div><div class="field full"><label for="perfCompetencyMeaning">Significado *</label><textarea id="perfCompetencyMeaning" required maxlength="2000"></textarea></div><div class="field"><label for="perfCompetencyWeight">Peso máximo (%) *</label><input id="perfCompetencyWeight" type="number" min="0.01" max="100" step="0.01" required></div><div class="field"><label for="perfCompetencyActive">Status</label><select id="perfCompetencyActive"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></form><div id="perfCompetencyMessage" role="status"></div><div class="actions"><button class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfCompetencyDialog')">Cancelar</button><button class="btn btn-primary" onclick="SPFLY_PERF.saveCompetency()">Salvar</button></div></dialog>
+<dialog id="perfModelDialog" class="employee-dialog"><div class="modal-head"><h2 id="perfModelTitle">Modelo de Avaliação</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfModelDialog')" aria-label="Fechar">✕</button></div><div class="form-grid"><div class="field full"><label for="perfModelName">Nome *</label><input id="perfModelName" required maxlength="160"></div><div class="field"><label for="perfModelAudience">Público</label><input id="perfModelAudience" maxlength="120"></div><div class="field"><label for="perfModelActive">Status</label><select id="perfModelActive"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></div><h3>Competências do modelo</h3><div class="perf-model-picker"><select id="perfModelAdd"></select><button class="btn btn-secondary" onclick="SPFLY_PERF.addModelCompetency()">Adicionar</button></div><div id="perfModelChoices"></div><div id="perfModelTotal" class="perf-result"></div><div id="perfModelMessage" role="status"></div><div class="actions"><button class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfModelDialog')">Cancelar</button><button class="btn btn-primary" onclick="SPFLY_PERF.saveModel()">Salvar modelo</button></div></dialog>
+<dialog id="perfPrintDialog" class="employee-dialog perf-print-dialog"><div class="modal-head perf-no-print"><h2>Visualizar impressão</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfPrintDialog')" aria-label="Fechar">✕</button></div><div id="perfPrintContent"></div><div class="actions perf-no-print"><button class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfPrintDialog')">Fechar</button><button class="btn btn-primary" onclick="window.print()">Imprimir</button></div></dialog>
 <div id="pageAdmins" class="page">
   <div class="header-row"><div><h1>Gestão de acessos</h1><div class="muted">Cadastre administradores e usuários. Escolha visualização e edição por tela.</div></div></div>
   <div class="card form-card">
@@ -527,7 +537,7 @@ function showPage(id){
  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
  const page=document.getElementById(id);
  if(page) page.classList.add("active");
- const parent=id==="pageNewEmployee"?"pageEmployees":(["pageNewTraining","pageTrainingDetail"].includes(id)?"pageTrainings":(["pageCapTrackForm","pageCapTrackDetail"].includes(id)?"pageCapacitation":id));
+ const parent=id==="pageNewEmployee"?"pageEmployees":(["pageNewTraining","pageTrainingDetail"].includes(id)||id.startsWith('pagePerf')?"pageTrainings":(["pageCapTrackForm","pageCapTrackDetail"].includes(id)?"pageCapacitation":id));
  document.querySelectorAll(".nav-btn").forEach(button=>button.classList.toggle("active",button.dataset.page===parent||(parent?.startsWith("pageReport")&&button.dataset.menu==="reports")));
  if(id==="pageEmployees")renderEmployees();
  if(id==="pageTrainings")renderTrainings();
@@ -538,12 +548,14 @@ function showPage(id){
  if(id==="pageAdmins")window.SPFLY_AUTH.renderAdmins();
  if(id==="pageAdmins")window.SPFLY_AUTH.renderCreateEmployeeOptions();
  if(id==="pageCapacitation"||id==="pageCapTrackDetail")window.SPFLY_CAP?.render();
+ if(id.startsWith('pagePerf'))window.SPFLY_PERF?.render(id);
  if(id==="dashboard")renderDashboard();
  applyTheme();
  return true;
 }
 document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
 document.querySelectorAll("[data-menu]").forEach(b=>b.addEventListener("click",()=>document.getElementById(b.dataset.menu).classList.toggle("open")));
+document.querySelector('[data-page="pageTrainings"]').addEventListener('click',()=>{if(!document.getElementById('trainingForms').hidden)document.getElementById('trainingForms').classList.toggle('open')});
 
 function applyTheme(){
  const dark=localStorage.getItem("spfly_theme")==="dark";
@@ -1128,7 +1140,8 @@ applyTheme();
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="capacitation.js?v=30"></script>
-<script src="auth.js?v=26"></script>
+<script src="performance.js?v=31"></script>
+<script src="auth.js?v=31"></script>
 <script src="employee-tools.js?v=26"></script>
 <script src="course-hours.js?v=30"></script>
 </body>
