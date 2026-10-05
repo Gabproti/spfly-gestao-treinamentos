@@ -1,4 +1,10 @@
-# SPFLY Admin — V28
+# SPFLY Admin — V29
+
+## Classificação por sistema (V29)
+
+No cadastro de curso, selecione TMS, WMS ou ambos e, se necessário, escolha funcionários específicos no mesmo formulário. Em **Funcionários > Novo/Editar**, marque os sistemas usados pela pessoa. A classificação atua junto com o setor e a inscrição; uma liberação individual continua permitindo o curso escolhido. Cursos anteriores sem classificação permanecem disponíveis pelas regras atuais até serem editados. O sistema aparece nos cursos, no perfil do funcionário e no relatório de carga horária, que também tem filtro e exportação CSV com essa coluna.
+
+Execute `supabase/migration-v29-course-systems.sql` antes de publicar os arquivos V29. A migração cria um catálogo de sistemas e vínculos separados para cursos e funcionários, sem converter nem excluir registros existentes.
 
 ## Ajuste da V28
 

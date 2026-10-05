@@ -17,10 +17,18 @@
   const modality = value => ['Online','Presencial','Híbrido'].includes(value) ? value : value === 'Local' ? 'Presencial' : 'Não informada';
   let allRows = [], visibleRows = [], revision = 0;
 
-  function buildRows(people, trainings, tracks, courses, enrollments, progress) {
+  function buildRows(people, trainings, tracks, courses, enrollments, progress, courseSystems = [], employeeSystems = [], courseGrants = []) {
     const personById = new Map(people.map(person => [String(person.id),person]));
     const trackById = new Map(tracks.filter(track => !track.deleted_at).map(track => [track.id,track]));
     const progressByPair = new Map(progress.map(item => [`${item.enrollment_id}:${item.course_id}`,item]));
+    const systemByCourse = new Map();
+    for (const item of courseSystems) {
+      if (!systemByCourse.has(item.course_id)) systemByCourse.set(item.course_id,[]);
+      systemByCourse.get(item.course_id).push(item.system_code);
+    }
+    const systemsByEmployee=new Map();
+    for(const item of employeeSystems){const key=String(item.employee_id);if(!systemsByEmployee.has(key))systemsByEmployee.set(key,new Set());systemsByEmployee.get(key).add(item.system_code)}
+    const grants=new Set(courseGrants.map(item=>`${item.employee_id}:${item.course_id}`));
     const enrollByTrack = new Map();
     for (const enrollment of enrollments) {
       if (enrollment.removed_at || !trackById.has(enrollment.track_id)) continue;
@@ -33,13 +41,18 @@
       if (!track) continue;
       const members = enrollByTrack.get(track.id) || [null];
       for (const enrollment of members) {
+        if(enrollment){const codes=systemByCourse.get(course.id)||[];const direct=grants.has(`${enrollment.employee_id}:${course.id}`);
+          const person=personById.get(String(enrollment.employee_id));
+          const sectors=Array.isArray(track.sectors)?track.sectors:(track.sector?[track.sector]:[]);
+          if(!direct && (enrollment.individual_only || sectors.length && !sectors.includes(person?.sector) ||
+            codes.length && !codes.some(code=>systemsByEmployee.get(String(enrollment.employee_id))?.has(code))))continue;}
         const progressRow = enrollment ? progressByPair.get(`${enrollment.id}:${course.id}`) : null;
         if (!course.active && !progressRow?.completed_at) continue;
         const person = enrollment ? personById.get(String(enrollment.employee_id)) : null;
         const duration = minutes(course.duration_minutes);
         const completed = !!progressRow?.completed_at;
         rows.push({key:`cap:${course.id}`,source:'Capacitação',track:track.name,course:course.name,
-          modality:modality(course.modality || track.modality),employeeId:enrollment?.employee_id ?? null,
+          modality:modality(course.modality || track.modality),system:(systemByCourse.get(course.id)||[]).sort().join(' + ')||'Não classificado',employeeId:enrollment?.employee_id ?? null,
           employee:person?.name || (enrollment ? `Funcionário #${enrollment.employee_id}` : ''),
           durationMinutes:duration,realizedMinutes:completed&&enrollment?duration:0,
           completedOn:completed?isoDate(progressRow.completed_at):'',status:completed?'Concluído':'Pendente'});
@@ -52,7 +65,7 @@
       for (const employeeId of participants) {
         const person = employeeId == null ? null : personById.get(String(employeeId));
         rows.push({key:`training:${training.id}`,source:'Treinamento',track:'',course:training.name,
-          modality:modality(training.modality),employeeId,
+          modality:modality(training.modality),system:'Não classificado',employeeId,
           employee:person?.name || (employeeId == null ? '' : `Funcionário #${employeeId}`),
           durationMinutes:duration,realizedMinutes:completed&&employeeId!=null?duration:0,
           completedOn:completed?isoDate(training.deliveredAt || training.date):'',status:completed?'Concluído':'Pendente'});
@@ -64,7 +77,7 @@
   async function fetchAll(table) {
     const rows = [], client = window.SPFLY_AUTH.getClient();
     for (let offset = 0; ; offset += 1000) {
-      const {data,error} = await client.from(table).select('*').order('id').range(offset,offset+999);
+      const {data,error} = await client.from(table).select('*').order(['cap_course_systems','cap_course_grants'].includes(table)?'course_id':table==='cap_employee_systems'?'employee_id':'id').range(offset,offset+999);
       if (error) throw error;
       rows.push(...(data || []));
       if (!data || data.length < 1000) return rows;
@@ -78,17 +91,17 @@
     select.innerHTML='<option value="">Todos os funcionários</option>'+people.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).map(person=>`<option value="${safe(person.id)}">${safe(person.name)}</option>`).join('');
     select.value=previous;
     try {
-      const [tracks,courses,enrollments,progress]=await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress'].map(fetchAll));
+      const [tracks,courses,enrollments,progress,courseSystems,employeeSystems,courseGrants]=await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress','cap_course_systems','cap_employee_systems','cap_course_grants'].map(fetchAll));
       if (current!==revision) return;
-      allRows=buildRows(people,trainings,tracks,courses,enrollments,progress);
+      allRows=buildRows(people,trainings,tracks,courses,enrollments,progress,courseSystems,employeeSystems,courseGrants);
       filter();
     } catch (error) { if(current===revision)$('hoursMessage').textContent='Não foi possível carregar o relatório: '+error.message; }
   }
   function filter() {
-    const term=fold($('hoursSearch').value.trim()),person=$('hoursEmployee').value,mode=$('hoursModality').value,
+    const term=fold($('hoursSearch').value.trim()),person=$('hoursEmployee').value,mode=$('hoursModality').value,system=$('hoursSystem').value,
       status=$('hoursStatus').value,from=$('hoursFrom').value,to=$('hoursTo').value;
     visibleRows=allRows.filter(row => (!term || fold(`${row.course} ${row.track}`).includes(term))
-      && (!person || String(row.employeeId)===person) && (!mode || row.modality===mode)
+      && (!person || String(row.employeeId)===person) && (!mode || row.modality===mode) && (!system || row.system===system)
       && (!status || row.status===status) && (!from && !to || !!row.completedOn && (!from || row.completedOn>=from) && (!to || row.completedOn<=to)));
     $('hoursMessage').textContent=visibleRows.length?`${visibleRows.length} registro(s) encontrado(s). Horas realizadas contam somente conclusões com funcionário vinculado.`:'Nenhum registro encontrado para os filtros.';
     const completed=visibleRows.filter(row=>row.realizedMinutes>0);
@@ -98,7 +111,7 @@
     const byCourse=group(visibleRows,row=>row.key,row=>row.track?`${row.course} · ${row.track}`:row.course);
     $('hoursByEmployee').innerHTML=summaryTable('Total por funcionário','Funcionário',byEmployee);
     $('hoursByCourse').innerHTML=summaryTable('Total por curso','Curso / origem',byCourse,true);
-    $('hoursDetails').innerHTML=`<h3>Detalhamento</h3><div class="table-scroll"><table><thead><tr><th>Origem / trilha</th><th>Curso</th><th>Carga horária</th><th>Modalidade</th><th>Funcionário</th><th>Conclusão</th><th>Situação</th><th>Horas realizadas</th></tr></thead><tbody>${visibleRows.map(row=>`<tr><td>${safe(row.track||row.source)}</td><td>${safe(row.course)}</td><td>${hours(row.durationMinutes)}</td><td>${safe(row.modality)}</td><td>${safe(row.employee||'—')}</td><td>${fmtDate(row.completedOn)}</td><td>${safe(row.status)}</td><td>${hours(row.realizedMinutes)}</td></tr>`).join('')||'<tr><td colspan="8" class="empty">Nenhum registro.</td></tr>'}</tbody></table></div>`;
+    $('hoursDetails').innerHTML=`<h3>Detalhamento</h3><div class="table-scroll"><table><thead><tr><th>Origem / trilha</th><th>Curso</th><th>Sistema</th><th>Carga horária</th><th>Modalidade</th><th>Funcionário</th><th>Conclusão</th><th>Situação</th><th>Horas realizadas</th></tr></thead><tbody>${visibleRows.map(row=>`<tr><td>${safe(row.track||row.source)}</td><td>${safe(row.course)}</td><td>${safe(row.system)}</td><td>${hours(row.durationMinutes)}</td><td>${safe(row.modality)}</td><td>${safe(row.employee||'—')}</td><td>${fmtDate(row.completedOn)}</td><td>${safe(row.status)}</td><td>${hours(row.realizedMinutes)}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">Nenhum registro.</td></tr>'}</tbody></table></div>`;
   }
   function card(label,value){return `<div class="card kpi"><div><div class="num">${safe(value)}</div><div class="label">${safe(label)}</div></div></div>`;}
   function group(rows,keyOf,labelOf){
@@ -113,8 +126,8 @@
     if(!visibleRows.length){alert('Não há dados para exportar.');return;}
     const people=group(visibleRows.filter(row=>row.employee),row=>String(row.employeeId),row=>row.employee);
     const courses=group(visibleRows,row=>row.key,row=>row.track?`${row.course} · ${row.track}`:row.course);
-    const header=['Origem','Trilha','Curso','Carga horária (h)','Modalidade','Funcionário','Conclusão','Situação','Horas realizadas (h)'];
-    const rows=visibleRows.map(row=>[row.source,row.track,row.course,(row.durationMinutes/60).toFixed(2).replace('.',','),row.modality,row.employee,fmtDate(row.completedOn),row.status,(row.realizedMinutes/60).toFixed(2).replace('.',',')]);
+    const header=['Origem','Trilha','Curso','Sistema','Carga horária (h)','Modalidade','Funcionário','Conclusão','Situação','Horas realizadas (h)'];
+    const rows=visibleRows.map(row=>[row.source,row.track,row.course,row.system,(row.durationMinutes/60).toFixed(2).replace('.',','),row.modality,row.employee,fmtDate(row.completedOn),row.status,(row.realizedMinutes/60).toFixed(2).replace('.',',')]);
     const decimal=value=>(value/60).toFixed(2).replace('.',',');
     const sections=[
       ['TOTAL POR FUNCIONÁRIO'],['Funcionário','Conclusões','Horas realizadas (h)'],

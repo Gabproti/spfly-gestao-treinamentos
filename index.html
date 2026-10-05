@@ -258,7 +258,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   body.dark #pageTrainingDetail .field input,body.dark #pageTrainingDetail .field select,body.dark #pageTrainingDetail .field textarea{background:#fff!important;color:#111!important;border-color:#ccc!important}
 }
 </style>
-<link rel="stylesheet" href="capacitation.css?v=26">
+<link rel="stylesheet" href="capacitation.css?v=29">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -380,6 +380,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="field"><label>E-mail</label><input id="efEmail" type="email"></div>
     <div class="field"><label>Telefone</label><input id="efPhone"></div>
     <div class="field"><label for="efStatus">Status</label><select id="efStatus"><option>Ativo</option><option>Inativo</option></select></div>
+    <div class="field full"><h3>Sistemas utilizados</h3><p class="muted">Selecione os ambientes usados pelo funcionário. Cursos antigos sem classificação continuam disponíveis conforme as regras atuais.</p><div id="efSystems" class="cap-sector-options" role="group" aria-label="Sistemas utilizados"><label><input type="checkbox" value="TMS"> TMS</label><label><input type="checkbox" value="WMS"> WMS</label></div><small id="efSystemsMessage" class="help" role="status"></small></div>
     <div class="field full"><h3>Cursos específicos</h3><p class="muted">Marque cursos para liberar individualmente, além das regras atuais de setor e trilha.</p><input id="efCourseSearch" type="search" placeholder="Pesquisar curso..." oninput="filterEmployeeCourses()"><div id="efCourseChoices" class="employee-course-choices" role="group" aria-label="Cursos específicos" onchange="filterEmployeeCourses()"></div><div id="efCourseCount" class="muted"></div></div>
   </div><div class="actions"><button class="btn btn-secondary" onclick="cancelEmployeeForm()">Cancelar</button><button id="employeeSaveButton" class="btn btn-primary" onclick="saveEmployee()">Salvar Funcionário</button></div></div>
 </div>
@@ -483,9 +484,11 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="field full"><label for="capCourseUrl">Link externo do curso *</label><input id="capCourseUrl" type="url" placeholder="https://..." maxlength="2000" required></div>
     <div class="field"><label for="capCourseMinutes">Carga horária, em minutos *</label><input id="capCourseMinutes" type="number" min="1" max="100000" value="40" required></div>
     <div class="field"><label for="capCourseModality">Modalidade do curso *</label><select id="capCourseModality" required><option value="">Selecione</option><option>Online</option><option>Presencial</option><option>Híbrido</option></select></div>
+    <div class="field full"><label>Sistema / Ambiente *</label><div id="capCourseSystems" class="cap-sector-options" role="group" aria-label="Sistema ou ambiente"><label><input type="checkbox" value="TMS"> TMS</label><label><input type="checkbox" value="WMS"> WMS</label></div><small class="help">Marque os dois para TMS + WMS.</small></div>
     <div class="field"><label for="capCourseOrder">Ordem na trilha *</label><input id="capCourseOrder" type="number" min="1" value="1" required></div>
     <div class="field"><label for="capCourseCertificate">Certificado obrigatório</label><select id="capCourseCertificate"><option value="false">Não</option><option value="true">Sim</option></select></div>
     <div class="field"><label for="capCourseActive">Status</label><select id="capCourseActive"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
+    <div class="field full"><label for="capCourseAudienceSearch">Usuários específicos</label><p class="muted">Opcional. A liberação individual permite este curso mesmo fora do setor ou sistema do funcionário.</p><input id="capCourseAudienceSearch" type="search" placeholder="Buscar funcionário..." oninput="SPFLY_CAP.filterCourseAudience()"><div id="capCourseAudience" class="cap-employee-choices" role="group" aria-label="Funcionários com liberação individual"></div></div>
   </div><div id="capCourseFormMessage" role="status"></div><div class="actions"><button type="button" class="btn btn-secondary" onclick="SPFLY_CAP.closeCourseEditor()">Cancelar</button><button type="submit" class="btn btn-primary">Salvar Curso</button></div></form>
 </dialog>
 <dialog id="capCertificatePreview" class="cap-certificate-preview" aria-labelledby="capCertificatePreviewTitle"><div class="cap-course-dialog-head"><div><h2 id="capCertificatePreviewTitle">Certificado</h2><p class="muted" id="capCertificatePreviewName"></p></div><button type="button" class="cap-course-dialog-close" aria-label="Fechar certificado" onclick="SPFLY_CAP.closeCertificatePreview()">✕</button></div><div id="capCertificateViewer" class="cap-certificate-viewer"></div><div class="actions"><a id="capCertificateOpenTab" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" hidden>Abrir em nova aba</a><button type="button" class="btn btn-secondary" onclick="SPFLY_CAP.downloadCertificatePreview()">Baixar arquivo</button><button type="button" class="btn btn-primary" onclick="SPFLY_CAP.closeCertificatePreview()">Fechar</button></div></dialog>
@@ -494,7 +497,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 <div id="pageReportEmployee" class="page"><div class="header-row"><div><h1>Relatório por Funcionário</h1><div class="muted">Consulte o histórico de participação e seus anexos.</div></div></div><div class="card"><div class="filters"><select id="reportEmpSelect" onchange="renderEmployeeReport()"><option value="">Selecione um funcionário</option></select></div><div id="employeeReportDash"></div><div id="employeeReport"></div></div></div>
 <div id="pageReportTraining" class="page"><div class="header-row"><div><h1>Relatório por Treinamento</h1><div class="muted">Visão geral dos treinamentos, participantes e documentação.</div></div></div><div id="trainingReportDash"></div><div class="card"><div id="trainingReport"></div></div></div>
 <div id="pageReportSector" class="page"><div class="header-row"><div><h1>Relatório por Setor</h1><div class="muted">Visão consolidada de participação por setor.</div></div></div><div id="sectorReportDash"></div><div class="card"><div id="sectorReport"></div></div></div>
-<div id="pageReportHours" class="page"><div class="header-row"><div><h1>Carga Horária dos Cursos</h1><div class="muted">Consulte horas previstas e realizadas em cursos de capacitação e treinamentos.</div></div><button type="button" class="btn btn-secondary" onclick="SPFLY_HOURS.exportCsv()">Exportar CSV para Excel</button></div><div class="card"><div class="filters"><input id="hoursSearch" type="search" placeholder="Buscar curso ou trilha..." aria-label="Buscar curso ou trilha" oninput="SPFLY_HOURS.filter()"><select id="hoursEmployee" aria-label="Filtrar funcionário" onchange="SPFLY_HOURS.filter()"><option value="">Todos os funcionários</option></select><select id="hoursModality" aria-label="Filtrar modalidade" onchange="SPFLY_HOURS.filter()"><option value="">Todas as modalidades</option><option>Online</option><option>Presencial</option><option>Híbrido</option><option value="Não informada">Não informada</option></select><select id="hoursStatus" aria-label="Filtrar situação" onchange="SPFLY_HOURS.filter()"><option value="">Todas as situações</option><option>Concluído</option><option>Pendente</option></select><label class="field-inline">De <input id="hoursFrom" type="date" onchange="SPFLY_HOURS.filter()"></label><label class="field-inline">Até <input id="hoursTo" type="date" onchange="SPFLY_HOURS.filter()"></label></div><div id="hoursMessage" class="muted" role="status"></div><div id="hoursSummary"></div><div id="hoursByEmployee"></div><div id="hoursByCourse"></div><div id="hoursDetails"></div></div></div>
+<div id="pageReportHours" class="page"><div class="header-row"><div><h1>Carga Horária dos Cursos</h1><div class="muted">Consulte horas previstas e realizadas em cursos de capacitação e treinamentos.</div></div><button type="button" class="btn btn-secondary" onclick="SPFLY_HOURS.exportCsv()">Exportar CSV para Excel</button></div><div class="card"><div class="filters"><input id="hoursSearch" type="search" placeholder="Buscar curso ou trilha..." aria-label="Buscar curso ou trilha" oninput="SPFLY_HOURS.filter()"><select id="hoursEmployee" aria-label="Filtrar funcionário" onchange="SPFLY_HOURS.filter()"><option value="">Todos os funcionários</option></select><select id="hoursModality" aria-label="Filtrar modalidade" onchange="SPFLY_HOURS.filter()"><option value="">Todas as modalidades</option><option>Online</option><option>Presencial</option><option>Híbrido</option><option value="Não informada">Não informada</option></select><select id="hoursSystem" aria-label="Filtrar sistema" onchange="SPFLY_HOURS.filter()"><option value="">Todos os sistemas</option><option>TMS</option><option>WMS</option><option>TMS + WMS</option><option>Não classificado</option></select><select id="hoursStatus" aria-label="Filtrar situação" onchange="SPFLY_HOURS.filter()"><option value="">Todas as situações</option><option>Concluído</option><option>Pendente</option></select><label class="field-inline">De <input id="hoursFrom" type="date" onchange="SPFLY_HOURS.filter()"></label><label class="field-inline">Até <input id="hoursTo" type="date" onchange="SPFLY_HOURS.filter()"></label></div><div id="hoursMessage" class="muted" role="status"></div><div id="hoursSummary"></div><div id="hoursByEmployee"></div><div id="hoursByCourse"></div><div id="hoursDetails"></div></div></div>
 
 </section>
 </main>
@@ -515,7 +518,7 @@ function toggleDeletedTrainings(){showDeletedTrainings=!showDeletedTrainings;cal
 let selectedParticipants=new Set();
 let currentStep=1;
 let editingEmployeeId=null;
-let employeeCoursesReady=false,employeeCourseLoad=0;
+let employeeCoursesReady=false,employeeCourseLoad=0,employeeSystemsReady=false,employeeSystemLoad=0;
 let sectors=[];
 
 function persist(){return window.SPFLY_AUTH.persist(employees,trainings);}
@@ -620,11 +623,26 @@ async function loadEmployeeCourses(employeeId=null){
  const revision=++employeeCourseLoad, choices=document.getElementById('efCourseChoices');
  employeeCoursesReady=false;choices.textContent='Carregando cursos...';document.getElementById('efCourseCount').textContent='';
  try{
-  const {data,error}=await SPFLY_AUTH.getClient().rpc('cap_employee_course_options',{target_employee_id:employeeId});
+  const [{data,error},{data:systemRows,error:systemsError}]=await Promise.all([
+   SPFLY_AUTH.getClient().rpc('cap_employee_course_options',{target_employee_id:employeeId}),
+   SPFLY_AUTH.getClient().from('cap_course_systems').select('course_id,system_code')
+  ]);
+  if(systemsError)throw systemsError;
   if(error)throw error;if(revision!==employeeCourseLoad)return;
-  choices.innerHTML=(data||[]).map(course=>`<label data-course-search="${esc(foldEmployeeCourseSearch(course.course_name+' '+course.track_name))}"><input type="checkbox" value="${esc(course.course_id)}" ${course.granted?'checked':''}><span><strong>${esc(course.course_name)}</strong><small>${esc(course.track_name)} · ${esc(course.modality||'Modalidade não informada')}</small></span></label>`).join('')||'<div class="muted">Nenhum curso ativo cadastrado.</div>';
+  choices.innerHTML=(data||[]).map(course=>{const codes=(systemRows||[]).filter(row=>row.course_id===course.course_id).map(row=>row.system_code).sort();const system=codes.length?codes.join(' + '):'Não classificado';return `<label data-course-search="${esc(foldEmployeeCourseSearch(course.course_name+' '+course.track_name+' '+system))}"><input type="checkbox" value="${esc(course.course_id)}" ${course.granted?'checked':''}><span><strong>${esc(course.course_name)}</strong><small>${esc(course.track_name)} · ${esc(course.modality||'Modalidade não informada')} · ${esc(system)}</small></span></label>`}).join('')||'<div class="muted">Nenhum curso ativo cadastrado.</div>';
   employeeCoursesReady=true;filterEmployeeCourses();
  }catch(error){if(revision===employeeCourseLoad)choices.textContent='Não foi possível carregar os cursos: '+error.message;}
+}
+async function loadEmployeeSystems(employeeId=null){
+ const revision=++employeeSystemLoad;employeeSystemsReady=false;
+ const choices=[...document.querySelectorAll('#efSystems input')];choices.forEach(input=>input.checked=false);
+ const message=document.getElementById('efSystemsMessage');message.textContent='';
+ if(employeeId==null){employeeSystemsReady=true;return}
+ try{
+  const {data,error}=await SPFLY_AUTH.getClient().from('cap_employee_systems').select('system_code').eq('employee_id',employeeId);
+  if(error)throw error;if(revision!==employeeSystemLoad)return;
+  const selected=new Set((data||[]).map(row=>row.system_code));choices.forEach(input=>input.checked=selected.has(input.value));employeeSystemsReady=true;
+ }catch(error){if(revision===employeeSystemLoad)message.textContent='Não foi possível carregar os sistemas: '+error.message}
 }
 function foldEmployeeCourseSearch(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR')}
 function filterEmployeeCourses(){
@@ -637,14 +655,15 @@ function filterEmployeeCourses(){
 function newEmployee(){
  if(!SPFLY_AUTH.canEdit('employees'))return;
  editingEmployeeId=null;
- document.querySelectorAll('#pageNewEmployee input').forEach(input=>input.value='');
+ document.querySelectorAll('#pageNewEmployee input:not([type="checkbox"])').forEach(input=>input.value='');
+ document.querySelectorAll('#pageNewEmployee input[type="checkbox"]').forEach(input=>input.checked=false);
  document.getElementById('efDocumentType').value='CPF';document.getElementById('efStatus').value='Ativo';
  updateEmployeeDocumentType();fillEmployeeSectors();
  document.getElementById('employeeFormTitle').textContent='Novo Funcionário';
  document.getElementById('employeeFormHint').textContent='Cadastre um novo colaborador.';
  document.getElementById('employeeSaveButton').textContent='Salvar Funcionário';
  showPage('pageNewEmployee');
- loadEmployeeCourses();
+ loadEmployeeCourses();loadEmployeeSystems();
 }
 function editEmployee(id){
  if(!SPFLY_AUTH.canEdit('employees'))return;
@@ -658,7 +677,7 @@ function editEmployee(id){
  document.getElementById('employeeFormHint').textContent='Atualize os dados deste colaborador.';
  document.getElementById('employeeSaveButton').textContent='Salvar alterações';
  closeModal();showPage('pageNewEmployee');
- document.getElementById('efCourseSearch').value='';loadEmployeeCourses(employee.id);
+ document.getElementById('efCourseSearch').value='';loadEmployeeCourses(employee.id);loadEmployeeSystems(employee.id);
 }
 function formatBrazilianDocument(value,type){
  const digits=String(value||"").replace(/\D/g,"").slice(0,type==="CNPJ"?14:11);
@@ -677,7 +696,7 @@ function formatEmployeeDocumentInput(){
 }
 async function saveEmployee(){
  if(!SPFLY_AUTH.canEdit('employees'))return;
- if(!employeeCoursesReady){alert('Aguarde o carregamento dos cursos específicos.');return}
+ if(!employeeCoursesReady||!employeeSystemsReady){alert('Aguarde o carregamento dos cursos e sistemas.');return}
  const name=document.getElementById("efName").value.trim(), type=document.getElementById("efDocumentType").value, cpf=formatBrazilianDocument(document.getElementById("efCpf").value,type), mat=document.getElementById("efMat").value.trim();
  const digits=cpf.replace(/\D/g,"");
  if(!name||!cpf||!mat){alert("Preencha Nome, documento e Matrícula.");return}
@@ -686,9 +705,12 @@ async function saveEmployee(){
  const fields={mat,name,cpf,documentType:type,sector:document.getElementById('efSector').value,role:document.getElementById('efRole').value.trim()||'Não informado',status:document.getElementById('efStatus').value,birth:document.getElementById('efBirth').value,hire:document.getElementById('efHire').value,email:document.getElementById('efEmail').value.trim(),phone:document.getElementById('efPhone').value.trim()};
  const employeeId=editingEmployeeId===null?Date.now():editingEmployeeId;
  const selectedCourses=[...document.querySelectorAll('#efCourseChoices input:checked')].map(input=>input.value);
+ const selectedSystems=[...document.querySelectorAll('#efSystems input:checked')].map(input=>input.value);
  const next=editingEmployeeId===null?[...employees,{id:employeeId,...fields}]:employees.map(e=>Number(e.id)===Number(editingEmployeeId)?{...e,...fields}:e);
  if(!await SPFLY_AUTH.persist(next,trainings))return;
  employees=next;window.SPFLY_CAP?.updateEmployees(employees);editingEmployeeId=employeeId;
+ const {error:systemsError}=await SPFLY_AUTH.getClient().rpc('cap_set_employee_systems',{target_employee_id:employeeId,target_systems:selectedSystems});
+ if(systemsError){alert('Funcionário salvo, mas não foi possível atualizar os sistemas: '+systemsError.message+'. Tente salvar novamente.');return}
  const {error}=await SPFLY_AUTH.getClient().rpc('cap_set_employee_course_grants',{target_employee_id:employeeId,target_course_ids:selectedCourses});
  if(error){alert('Funcionário salvo, mas não foi possível atualizar os cursos específicos: '+error.message+'. Tente salvar novamente.');return}
  editingEmployeeId=null;showPage('pageEmployees');
@@ -696,7 +718,7 @@ async function saveEmployee(){
 function viewEmployee(id){
  const e=employees.find(x=>x.id===id), hist=activeTrainings().filter(t=>t.participants.includes(id));
  document.getElementById("modalTitle").textContent=e.name;
- document.getElementById("modalBody").innerHTML=`<p><strong>${esc(e.documentType||"CPF")}:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p>${SPFLY_AUTH.canEdit('employees')?`<button class="btn btn-secondary" onclick="editEmployee(${Number(e.id)})">Editar funcionário</button>`:''}<hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
+ document.getElementById("modalBody").innerHTML=`<p><strong>${esc(e.documentType||"CPF")}:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p><p id="employeeSystemsView" data-employee-id="${Number(e.id)}"><strong>Sistemas utilizados:</strong> Carregando...</p>${SPFLY_AUTH.canEdit('employees')?`<button class="btn btn-secondary" onclick="editEmployee(${Number(e.id)})">Editar funcionário</button>`:''}<hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
  const showCapHistory=window.SPFLY_CAP?.canViewEmployeeHistory(id);
  if(showCapHistory){
    const section=document.createElement('section');
@@ -704,6 +726,7 @@ function viewEmployee(id){
    document.getElementById('modalBody').append(section);
  }
  document.getElementById("modal").classList.add("open");
+ SPFLY_AUTH.getClient().from('cap_employee_systems').select('system_code').eq('employee_id',id).then(({data,error})=>{const node=document.querySelector(`#employeeSystemsView[data-employee-id="${Number(id)}"]`);if(node)node.innerHTML='<strong>Sistemas utilizados:</strong> '+esc(error?'Não disponível':(data||[]).map(row=>row.system_code).sort().join(' + ')||'Não informado')});
  if(showCapHistory)window.SPFLY_CAP.renderEmployeeHistory(id);
  window.SPFLY_EMPLOYEE?.renderCertificates(id);
  window.SPFLY_EMPLOYEE?.renderAttachments(id);
@@ -1102,9 +1125,9 @@ applyTheme();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="capacitation.js?v=28"></script>
+<script src="capacitation.js?v=29"></script>
 <script src="auth.js?v=26"></script>
 <script src="employee-tools.js?v=26"></script>
-<script src="course-hours.js?v=26"></script>
+<script src="course-hours.js?v=29"></script>
 </body>
 </html>
