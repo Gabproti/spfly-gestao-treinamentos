@@ -1,4 +1,10 @@
-# SPFLY Admin — V31
+# SPFLY Admin — V32
+
+## Ações no histórico de avaliações (V32)
+
+Em **Formulários > Histórico de Avaliações**, usuários com acesso de leitura a Funcionários e Treinamentos podem visualizar e imprimir avaliações. Administradores e usuários com edição nas duas telas também podem editar e excluir. A edição altera os dados registrados do colaborador, responsável, data e percentuais, recalcula o resultado e mantém competência, significado e peso como cópias fixas da avaliação. Cada edição registra o estado anterior para auditoria. Excluir exige confirmação e marca a avaliação como removida, sem apagar modelos, competências ou funcionários.
+
+Execute `supabase/migration-v32-evaluation-actions.sql` após a V31 e antes de publicar `index.html`, `auth.js`, `performance.js` e `performance.css` V32.
 
 ## Avaliação de Desempenho (V31)
 

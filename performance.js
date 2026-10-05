@@ -4,14 +4,16 @@
   let access = null;
   let getEmployees = () => [];
   let competencies = [], models = [], links = [], assessments = [], items = [];
-  let competencyId = null, modelId = null, modelChoices = [], assessmentId = null, frozenItems = [];
+  let competencyId = null, modelId = null, modelChoices = [], assessmentId = null, frozenItems = [], editingAssessment = false;
   let loading = null;
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = n => Number(n || 0).toLocaleString('pt-BR',{maximumFractionDigits:2});
   const dateBR = value => value ? new Date(value + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
-  const allowed = () => !!access?.active && !access.must_change_password &&
+  const canManage = () => !!access?.active && !access.must_change_password &&
     (access.access_role === 'admin' || (access.editable_pages || []).includes('employees') && (access.editable_pages || []).includes('trainings'));
+  const canView = () => !!access?.active && !access.must_change_password &&
+    (access.access_role === 'admin' || (access.allowed_pages || []).includes('employees') && (access.allowed_pages || []).includes('trainings'));
   function message(id, value) { $(id).textContent = value || ''; }
   function employeeById(id) { return getEmployees().find(e => String(e.id) === String(id)); }
   function modelById(id) { return models.find(m => m.id === id); }
@@ -21,7 +23,7 @@
   function openDialog(id) { const d = $(id); if (!d.open) d.showModal(); }
   function closeDialog(id) { $(id).close(); }
   async function refresh() {
-    if (!allowed()) return;
+    if (!canView()) return;
     if (loading) return loading;
     loading = (async () => {
       const names = ['perf_competencies','perf_models','perf_model_competencies','perf_assessments','perf_assessment_items'];
@@ -35,7 +37,7 @@
     return loading;
   }
   async function render(page) {
-    if (!allowed()) return;
+    if (!canView()) return;
     try {
       await refresh();
       if (page === 'pagePerfAssessments') renderOverview();
@@ -50,7 +52,7 @@
   function renderOverview() {
     const done = assessments.filter(a => a.status === 'finalized').length;
     const drafts = assessments.length-done;
-    $('perfOverview').innerHTML = `<div class="perf-summary"><div><strong>${models.filter(m=>m.active).length}</strong><span>modelos ativos</span></div><div><strong>${competencies.filter(c=>c.active).length}</strong><span>competências ativas</span></div><div><strong>${drafts}</strong><span>rascunhos</span></div><div><strong>${done}</strong><span>finalizadas</span></div></div><div class="actions"><button class="btn btn-secondary" onclick="showPage('pagePerfCompetencies')">Competências</button><button class="btn btn-secondary" onclick="showPage('pagePerfModels')">Modelos</button><button class="btn btn-secondary" onclick="showPage('pagePerfHistory')">Ver histórico</button></div>`;
+    $('perfOverview').innerHTML = `<div class="perf-summary"><div><strong>${models.filter(m=>m.active).length}</strong><span>modelos ativos</span></div><div><strong>${competencies.filter(c=>c.active).length}</strong><span>competências ativas</span></div><div><strong>${drafts}</strong><span>rascunhos</span></div><div><strong>${done}</strong><span>finalizadas</span></div></div><div class="actions">${canManage()?'<button class="btn btn-secondary" onclick="showPage(\'pagePerfCompetencies\')">Competências</button><button class="btn btn-secondary" onclick="showPage(\'pagePerfModels\')">Modelos</button>':''}<button class="btn btn-secondary" onclick="showPage('pagePerfHistory')">Ver histórico</button></div>`;
   }
   function renderCompetencies() {
     $('perfCompetencyList').innerHTML = competencies.length ? `<div class="table-scroll"><table><thead><tr><th>Competência</th><th>Significado</th><th>Peso máximo</th><th>Status</th><th>Ação</th></tr></thead><tbody>${competencies.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.meaning)}</td><td>${fmt(c.max_weight)}%</td><td><span class="badge ${c.active?'badge-green':'badge-red'}">${c.active?'Ativa':'Inativa'}</span></td><td><button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.editCompetency('${c.id}')">Editar</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Nenhuma competência cadastrada.</div>';
@@ -115,7 +117,10 @@
   function renderHistory() {
     const term=$('perfHistorySearch').value.trim().toLocaleLowerCase('pt-BR'),status=$('perfHistoryStatus').value;
     const rows=assessments.filter(a=>(!status||a.status===status)&&(!term||[a.employee_name,a.model_name,a.evaluator,a.department].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(term))));
-    $('perfHistoryList').innerHTML = rows.length ? `<div class="table-scroll"><table><thead><tr><th>Colaborador</th><th>Departamento / cargo</th><th>Modelo</th><th>Responsável</th><th>Data</th><th>Resultado</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(a=>`<tr><td><strong>${esc(a.employee_name)}</strong></td><td>${esc(a.department)}<br><small>${esc(a.position_name)}</small></td><td>${esc(a.model_name)}</td><td>${esc(a.evaluator)}</td><td>${dateBR(a.evaluation_date)}</td><td>${a.final_result===null?'—':fmt(a.final_result)+'%'}</td><td><span class="badge ${a.status==='finalized'?'badge-green':'badge-orange'}">${a.status==='finalized'?'Finalizada':'Rascunho'}</span></td><td><button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.openAssessment('${a.id}')">${a.status==='draft'?'Continuar':'Visualizar'}</button> <button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.preview('${a.id}')">Imprimir</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Nenhuma avaliação encontrada.</div>';
+    $('perfHistoryList').innerHTML = rows.length ? `<div class="table-scroll"><table><thead><tr><th>Colaborador</th><th>Departamento / cargo</th><th>Modelo</th><th>Responsável</th><th>Data</th><th>Resultado</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(a=>{
+      const actions=`<div class="perf-row-actions"><button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.openAssessment('${a.id}',false)">Visualizar</button>${canManage()?`<button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.openAssessment('${a.id}',true)">Editar</button>`:''}<button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.preview('${a.id}')">Imprimir</button>${canManage()?`<button class="btn btn-secondary btn-sm perf-delete" onclick="SPFLY_PERF.deleteAssessment('${a.id}')">Excluir</button>`:''}</div>`;
+      return `<tr><td><strong>${esc(a.employee_name)}</strong></td><td>${esc(a.department)}<br><small>${esc(a.position_name)}</small></td><td>${esc(a.model_name)}</td><td>${esc(a.evaluator)}</td><td>${dateBR(a.evaluation_date)}</td><td>${a.final_result===null?'—':fmt(a.final_result)+'%'}</td><td><span class="badge ${a.status==='finalized'?'badge-green':'badge-orange'}">${a.status==='finalized'?'Finalizada':'Rascunho'}</span></td><td>${actions}</td></tr>`;
+    }).join('')}</tbody></table></div>` : '<div class="empty">Nenhuma avaliação encontrada.</div>';
   }
   function fillAssessmentFields(a=null) {
     $('perfEmployee').innerHTML = '<option value="">Selecione</option>'+getEmployees().map(e=>`<option value="${esc(e.id)}">${esc(e.name)} — ${esc(e.mat||'')}</option>`).join('');
@@ -126,23 +131,29 @@
     $('perfEvaluator').value = a?.evaluator || access?.full_name || '';
     const today=new Date();
     $('perfDate').value = a?.evaluation_date || `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    ['perfEmployee','perfModel'].forEach(id=>$(id).disabled=!!a);
-    ['perfEvaluator','perfDate'].forEach(id=>$(id).readOnly=a?.status==='finalized');
-    $('perfEditorActions').hidden = a?.status==='finalized';
-    $('perfEditorTitle').textContent = a ? (a.status==='finalized'?'Avaliação finalizada':'Continuar rascunho') : 'Nova Avaliação';
+    ['perfEmployee','perfModel'].forEach(id=>$(id).disabled=!!a || !canManage());
+    ['perfEmployeeName','perfDepartment','perfPosition','perfAdmission'].forEach(id=>$(id).readOnly=!a || !editingAssessment);
+    ['perfEvaluator','perfDate'].forEach(id=>$(id).readOnly=!editingAssessment);
+    $('perfEditorActions').innerHTML = !editingAssessment
+      ? '<button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.preview()">Visualizar impressão</button>'
+      : a ? `<button type="button" class="btn btn-primary" onclick="SPFLY_PERF.saveExisting(false)">Salvar alterações</button>${a.status==='draft'?'<button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.saveExisting(true)">Finalizar avaliação</button>':''}<button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.preview()">Visualizar impressão</button>`
+        : '<button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.saveAssessment(false)">Salvar rascunho</button><button type="button" class="btn btn-primary" onclick="SPFLY_PERF.saveAssessment(true)">Finalizar avaliação</button><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.preview()">Visualizar impressão</button>';
+    $('perfEditorTitle').textContent = a ? (editingAssessment?'Editar avaliação':'Visualizar avaliação') : 'Nova Avaliação';
     message('perfEditorMessage','');changeEmployee();changeModel();
   }
-  function newAssessment() { assessmentId=null;frozenItems=[];fillAssessmentFields();showPage('pagePerfEditor'); }
-  function openAssessment(id) {
+  function newAssessment() { if(!canManage())return; assessmentId=null;frozenItems=[];editingAssessment=true;fillAssessmentFields();showPage('pagePerfEditor'); }
+  function openAssessment(id,edit=false) {
     const a=assessments.find(x=>x.id===id);if(!a)return;
+    editingAssessment=!!edit && canManage();
     assessmentId=id;frozenItems=items.filter(x=>x.assessment_id===id).sort((x,y)=>x.display_order-y.display_order);
     fillAssessmentFields(a);showPage('pagePerfEditor');
   }
   function changeEmployee() {
     const current=assessments.find(x=>x.id===assessmentId),e=employeeById($('perfEmployee').value);
-    $('perfDepartment').value=current?.department||e?.sector||'';
-    $('perfPosition').value=current?.position_name||e?.role||'';
-    $('perfAdmission').value=current?.admission_date||e?.hire||'';
+    $('perfEmployeeName').value=current?.employee_name??e?.name??'';
+    $('perfDepartment').value=current?.department??e?.sector??'';
+    $('perfPosition').value=current?.position_name??e?.role??'';
+    $('perfAdmission').value=current?.admission_date??e?.hire??'';
   }
   function currentRows() {
     if(assessmentId)return frozenItems;
@@ -150,17 +161,17 @@
   }
   function changeModel() {
     const a=assessments.find(x=>x.id===assessmentId),rows=currentRows();
-    $('perfScoreTable').innerHTML=rows.length?`<div class="table-scroll"><table><thead><tr><th>Competência</th><th>Significado</th><th>Peso</th><th>Avaliação (%)</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${esc(r.competency_name)}</strong></td><td>${esc(r.meaning)}</td><td>${fmt(r.weight)}%</td><td><input class="perf-score" data-competency="${r.competency_id}" type="number" min="0" max="100" step="0.01" value="${r.percentage??''}" ${a?.status==='finalized'?'readonly':''} oninput="SPFLY_PERF.updateResult()" aria-label="Avaliação de ${esc(r.competency_name)}"></td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">Selecione um modelo com competências configuradas.</p>';
+    $('perfScoreTable').innerHTML=rows.length?`<div class="table-scroll"><table><thead><tr><th>Competência</th><th>Significado</th><th>Peso</th><th>Avaliação (%)</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${esc(r.competency_name)}</strong></td><td>${esc(r.meaning)}</td><td>${fmt(r.weight)}%</td><td><input class="perf-score" data-competency="${r.competency_id}" type="number" min="0" max="100" step="0.01" value="${r.percentage??''}" ${!editingAssessment?'readonly':''} oninput="SPFLY_PERF.updateResult()" aria-label="Avaliação de ${esc(r.competency_name)}"></td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">Selecione um modelo com competências configuradas.</p>';
     updateResult();
   }
   function scoreMap(){const map={};document.querySelectorAll('.perf-score').forEach(input=>{map[input.dataset.competency]=input.value===''?null:Number(input.value)});return map;}
   function updateResult() {
     const rows=currentRows(),scores=scoreMap(),sum=totalWeight(rows);
     const total=rows.reduce((n,r)=>n+(scores[r.competency_id]===null?0:Number(r.weight)*scores[r.competency_id]/100),0);
-    $('perfResult').textContent=`Peso total: ${fmt(sum)}% · Resultado parcial: ${fmt(total)}%${sum!==100?' · O modelo precisa somar 100% para finalizar.':''}`;
+    $('perfResult').textContent=`Peso total: ${fmt(sum)}% · ${assessmentId && assessments.find(a=>a.id===assessmentId)?.status==='finalized'?'Resultado final':'Resultado parcial'}: ${fmt(total)}%${sum!==100?' · O modelo precisa somar 100% para finalizar.':''}`;
   }
   async function saveAssessment(finalize) {
-    if(!allowed())return;
+    if(!canManage() || assessmentId)return;
     const model=$('perfModel').value,employee=Number($('perfEmployee').value),evaluator=$('perfEvaluator').value.trim(),date=$('perfDate').value;
     if(!model||!employee||evaluator.length<2||!date){message('perfEditorMessage','Preencha colaborador, modelo, responsável e data.');return;}
     const rows=currentRows(),scores=scoreMap();
@@ -170,7 +181,31 @@
     const {data,error}=await client.rpc('perf_save_assessment',{target_id:assessmentId,target_model:model,target_employee_id:employee,
       next_evaluator:evaluator,next_date:date,next_scores:scores,finalize});
     if(error){message('perfEditorMessage','Não foi possível salvar: '+error.message);return;}
-    assessmentId=data;await refresh();openAssessment(data);message('perfEditorMessage',finalize?'Avaliação finalizada.':'Rascunho salvo.');
+    assessmentId=data;await refresh();openAssessment(data,!finalize);message('perfEditorMessage',finalize?'Avaliação finalizada.':'Rascunho salvo.');
+  }
+  async function saveExisting(finalize) {
+    if(!canManage() || !assessmentId || !editingAssessment)return;
+    const a=assessments.find(x=>x.id===assessmentId),rows=currentRows(),scores=scoreMap();
+    const name=$('perfEmployeeName').value.trim(),department=$('perfDepartment').value.trim(),
+      position=$('perfPosition').value.trim(),admission=$('perfAdmission').value||null,
+      evaluator=$('perfEvaluator').value.trim(),date=$('perfDate').value;
+    if(!a || name.length<2 || evaluator.length<2 || !date){message('perfEditorMessage','Preencha nome do colaborador, responsável e data.');return;}
+    if(Object.values(scores).some(v=>v!==null&&(!Number.isFinite(v)||v<0||v>100))){message('perfEditorMessage','Use avaliações entre 0% e 100%.');return;}
+    if((a.status==='finalized'||finalize)&&(totalWeight(rows)!==100||Object.values(scores).some(v=>v===null))){message('perfEditorMessage','Para finalizar, os pesos devem somar 100% e todas as avaliações devem estar preenchidas.');return;}
+    const {error}=await client.rpc('perf_update_assessment',{target_id:assessmentId,next_employee_name:name,
+      next_department:department,next_position:position,next_admission_date:admission,
+      next_evaluator:evaluator,next_date:date,next_scores:scores,next_finalize:!!finalize});
+    if(error){message('perfEditorMessage','Não foi possível alterar: '+error.message);return;}
+    const id=assessmentId;await refresh();openAssessment(id,false);
+    message('perfEditorMessage',finalize?'Avaliação finalizada.':'Alterações salvas.');
+  }
+  async function deleteAssessment(id) {
+    if(!canManage() || !assessments.some(a=>a.id===id))return;
+    if(!window.confirm('Tem certeza que deseja excluir esta avaliação? Essa ação não poderá ser desfeita.'))return;
+    const {error}=await client.rpc('perf_delete_assessment',{target_id:id});
+    if(error){alert('Não foi possível excluir a avaliação: '+error.message);return;}
+    if(assessmentId===id){assessmentId=null;editingAssessment=false;}
+    await refresh();renderHistory();
   }
   function printMarkup(a,rows){
     const total=a.final_result===null?rows.reduce((s,r)=>s+(r.percentage===null?0:Number(r.weight)*Number(r.percentage)/100),0):Number(a.final_result);
@@ -178,7 +213,16 @@
   }
   function preview(id=null) {
     const a=id?assessments.find(x=>x.id===id):assessments.find(x=>x.id===assessmentId);
-    if(a){$('perfPrintContent').innerHTML=printMarkup(a,items.filter(x=>x.assessment_id===a.id).sort((x,y)=>x.display_order-y.display_order));openDialog('perfPrintDialog');return;}
+    if(a){
+      const liveRows=editingAssessment&&!id&&assessmentId===a.id
+        ? currentRows().map(r=>({...r,percentage:scoreMap()[r.competency_id]}))
+        : items.filter(x=>x.assessment_id===a.id).sort((x,y)=>x.display_order-y.display_order);
+      const shown=editingAssessment&&!id&&assessmentId===a.id
+        ? {...a,employee_name:$('perfEmployeeName').value,department:$('perfDepartment').value,
+            position_name:$('perfPosition').value,admission_date:$('perfAdmission').value||null,
+            evaluator:$('perfEvaluator').value,evaluation_date:$('perfDate').value,final_result:null} : a;
+      $('perfPrintContent').innerHTML=printMarkup(shown,liveRows);openDialog('perfPrintDialog');return;
+    }
     const employee=employeeById($('perfEmployee').value),model=modelById($('perfModel').value),rows=currentRows(),scores=scoreMap();
     if(!employee||!model||!rows.length){message('perfEditorMessage','Selecione colaborador e modelo antes de visualizar a impressão.');return;}
     const draft={status:'draft',employee_name:employee.name,department:employee.sector,position_name:employee.role,
@@ -188,5 +232,5 @@
   }
   window.SPFLY_PERF={configure(c,a,employees){client=c;access=a;getEmployees=employees;refresh().catch(()=>{});},render,refresh,
     editCompetency,saveCompetency,editModel,saveModel,addModelCompetency,moveModelCompetency,removeModelCompetency,
-    newAssessment,openAssessment,changeEmployee,changeModel,updateResult,saveAssessment,renderHistory,preview,closeDialog};
+    newAssessment,openAssessment,changeEmployee,changeModel,updateResult,saveAssessment,saveExisting,deleteAssessment,renderHistory,preview,closeDialog};
 })();
