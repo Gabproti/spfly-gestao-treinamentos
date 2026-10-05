@@ -1,6 +1,12 @@
-# SPFLY Admin — V29
+# SPFLY Admin — V30
 
-## Classificação por sistema (V29)
+## Sistema definido na trilha (V30)
+
+Em **Capacitação > Nova/Editar Trilha**, selecione TMS, WMS ou ambos. Todos os cursos da trilha herdam essa classificação. A lista de trilhas tem filtro por sistema, combinado com busca e setor. A classificação aparece na trilha, nos cursos herdados, na ficha do funcionário e no relatório de carga horária. A liberação individual de cursos continua funcionando como exceção.
+
+Execute `supabase/migration-v30-track-systems.sql` depois da V29 e antes de publicar os arquivos V30. Ela consolida na trilha os sistemas já marcados nos cursos da V29; se uma trilha tiver cursos de sistemas diferentes, recebe ambos. Trilhas antigas sem classificação continuam disponíveis até serem editadas. A migração preserva cursos, inscrições, progresso e liberações individuais.
+
+## Classificação por sistema (V29, substituída pela V30)
 
 No cadastro de curso, selecione TMS, WMS ou ambos e, se necessário, escolha funcionários específicos no mesmo formulário. Em **Funcionários > Novo/Editar**, marque os sistemas usados pela pessoa. A classificação atua junto com o setor e a inscrição; uma liberação individual continua permitindo o curso escolhido. Cursos anteriores sem classificação permanecem disponíveis pelas regras atuais até serem editados. O sistema aparece nos cursos, no perfil do funcionário e no relatório de carga horária, que também tem filtro e exportação CSV com essa coluna.
 

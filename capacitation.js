@@ -2,9 +2,9 @@
   'use strict';
 
   let client, access, currentUser, employees = [], sectors = [];
-  let tracks = [], courses = [], enrollments = [], progress = [], courseGrants = [], courseSystems = [], employeeSystems = [];
+  let tracks = [], courses = [], enrollments = [], progress = [], courseGrants = [], employeeSystems = [];
   let selectedTrack = null, selectedTab = 'courses', focusedEnrollment = null;
-  let editingTrack = null, editingCourse = null, selectedSystemFilter = '', busy = false, loadRevision = 0, previewRevision = 0, previewPath = null, previewName = '';
+  let editingTrack = null, editingCourse = null, busy = false, loadRevision = 0, previewRevision = 0, previewPath = null, previewName = '';
   const $ = id => document.getElementById(id);
   const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const fold = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
@@ -44,11 +44,11 @@
   const statusTone = status => status === 'Concluído' ? 'green' : status === 'Em atraso' || status === 'Rejeitado' ? 'red' : 'orange';
   const trackCourses = id => courses.filter(course => course.track_id === id).sort((a,b) => a.sort_order-b.sort_order || a.name.localeCompare(b.name,'pt-BR'));
   const activeCourses = id => trackCourses(id).filter(course => course.active);
-  const systemCodes = courseId => courseSystems.filter(row => row.course_id === courseId).map(row => row.system_code).sort();
-  const systemLabel = courseId => systemCodes(courseId).join(' + ') || 'Não classificado';
+  const systemCodes = trackId => tracks.find(track => track.id === trackId)?.system_codes || [];
+  const systemLabel = trackId => [...systemCodes(trackId)].sort().join(' + ') || 'Não classificado';
   const courseGranted = (courseId,employeeId) => courseGrants.some(grant => String(grant.employee_id) === String(employeeId) && grant.course_id === courseId);
-  const courseMatchesEmployee = (courseId,employeeId) => !systemCodes(courseId).length || employeeSystems.some(row => String(row.employee_id) === String(employeeId) && systemCodes(courseId).includes(row.system_code));
-  const enrollmentCourses = enrollment => activeCourses(enrollment.track_id).filter(course => courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(course.id,enrollment.employee_id)));
+  const courseMatchesEmployee = (trackId,employeeId) => !systemCodes(trackId).length || employeeSystems.some(row => String(row.employee_id) === String(employeeId) && systemCodes(trackId).includes(row.system_code));
+  const enrollmentCourses = enrollment => activeCourses(enrollment.track_id).filter(course => courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(enrollment.track_id,enrollment.employee_id)));
   const trackEnrollments = id => enrollments.filter(enrollment => enrollment.track_id === id && !enrollment.removed_at);
   const courseProgress = (enrollmentId, courseId) => progress.find(item => item.enrollment_id === enrollmentId && item.course_id === courseId);
   const remaining = due => Math.round((date(due) - date(today())) / 86400000);
@@ -116,7 +116,7 @@
     async function allRows(table) {
       const rows = [];
       for (let offset = 0; ; offset += 1000) {
-        let query = client.from(table).select('*').order(['cap_course_grants','cap_course_systems'].includes(table) ? 'course_id' : table === 'cap_employee_systems' ? 'employee_id' : 'id');
+        let query = client.from(table).select('*').order(table === 'cap_course_grants' ? 'course_id' : table === 'cap_employee_systems' ? 'employee_id' : 'id');
         if (table === 'cap_course_grants') query = query.order('employee_id');
         const {data,error} = await query.range(offset,offset+999);
         if (error) throw error;
@@ -124,9 +124,9 @@
         if (!data || data.length < 1000) return rows;
       }
     }
-    const rows = await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress','cap_course_grants','cap_course_systems','cap_employee_systems'].map(allRows));
+    const rows = await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress','cap_course_grants','cap_employee_systems'].map(allRows));
     if (revision !== loadRevision) return false;
-    [tracks,courses,enrollments,progress,courseGrants,courseSystems,employeeSystems] = rows;
+    [tracks,courses,enrollments,progress,courseGrants,employeeSystems] = rows;
     return true;
   }
   function configure(nextClient, nextAccess, nextUser, nextEmployees) {
@@ -153,9 +153,11 @@
     const sectorFilter = $('capSectorFilter');
     fillSectorSelect('capSectorFilter',sectorFilter.value);
     sectorFilter.hidden = mine;
+    $('capSystemFilter').querySelector('[value="Não classificado"]').hidden = mine;
     const selectedSector = mine ? '' : sectorFilter.value;
+    const selectedSystem = $('capSystemFilter').value;
     const term = fold($('capTrackSearch').value.trim());
-    const visible = tracks.filter(track => (!mine || trackEnrollments(track.id).length) && (!selectedSector || !trackSectors(track).length || trackSectors(track).includes(selectedSector)) && (!term || [track.name,track.description,track.sequence_name].some(value => fold(value).includes(term)))).sort((a,b) => (a.sequence_name || '').localeCompare(b.sequence_name || '','pt-BR') || (a.sequence_order || 1)-(b.sequence_order || 1) || a.name.localeCompare(b.name,'pt-BR'));
+    const visible = tracks.filter(track => (!mine || trackEnrollments(track.id).length) && (!selectedSector || !trackSectors(track).length || trackSectors(track).includes(selectedSector)) && (!selectedSystem || (selectedSystem === 'Não classificado' ? !systemCodes(track.id).length : systemCodes(track.id).includes(selectedSystem))) && (!term || [track.name,track.description,track.sequence_name].some(value => fold(value).includes(term)))).sort((a,b) => (a.sequence_name || '').localeCompare(b.sequence_name || '','pt-BR') || (a.sequence_order || 1)-(b.sequence_order || 1) || a.name.localeCompare(b.name,'pt-BR'));
     const visibleIds = new Set(visible.map(track => track.id));
     const filteredEnrollments = enrollments.filter(item => visibleIds.has(item.track_id));
     const eStats = filteredEnrollments.map(enrollmentStats);
@@ -171,7 +173,7 @@
       const shownPct = mineEnrollment ? enrollmentStats(mineEnrollment).pct : completion;
       const days = mineEnrollment ? `<span>Prazo: ${fmtDate(mineEnrollment.due_date)}</span><span>${deadline(mineEnrollment)}</span>` : `<span>Prazo: ${track.duration_days} dias</span><span>${participants.length} funcionário(s)</span>`;
       const status = mineEnrollment && enrollmentStats(mineEnrollment).overdue ? badge('Em atraso','red') : badge(track.status,track.status==='Ativa'?'green':'gray');
-      return `<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}"><div class="cap-card-head"><h3>${safe(track.name)}</h3>${status}</div><p>${safe(track.description || 'Sem descrição.')}</p><div class="cap-meta"><span>${safe(track.track_type)}</span><span>Modalidade: ${safe(modalityLabel(track))}</span>${track.sequence_name?`<span>Sequência: ${safe(sequenceLabel(track))}</span>`:''}<span>Setores: ${safe(sectorLabel(track))}</span>${mineEnrollment?.individual_only?'<span>Liberação individual</span>':''}<span>${mineEnrollment?enrollmentCourses(mineEnrollment).length:activeCourses(track.id).length} curso(s)</span>${days}</div>${bar(shownPct)}<div class="cap-card-foot"><span>Progresso ${mine?'individual':'médio'}</span><strong>${shownPct}%</strong></div></button>`;
+      return `<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}"><div class="cap-card-head"><h3>${safe(track.name)}</h3>${status}</div><p>${safe(track.description || 'Sem descrição.')}</p><div class="cap-meta"><span>${safe(track.track_type)}</span><span>Modalidade: ${safe(modalityLabel(track))}</span><span>Sistema: ${safe(systemLabel(track.id))}</span>${track.sequence_name?`<span>Sequência: ${safe(sequenceLabel(track))}</span>`:''}<span>Setores: ${safe(sectorLabel(track))}</span>${mineEnrollment?.individual_only?'<span>Liberação individual</span>':''}<span>${mineEnrollment?enrollmentCourses(mineEnrollment).length:activeCourses(track.id).length} curso(s)</span>${days}</div>${bar(shownPct)}<div class="cap-card-foot"><span>Progresso ${mine?'individual':'médio'}</span><strong>${shownPct}%</strong></div></button>`;
     }).join('') : empty(term ? 'Nenhuma trilha encontrada para esta busca.' : mine ? 'Você ainda não foi inscrito em uma trilha.' : selectedSector ? 'Nenhuma trilha destinada a este setor.' : 'Nenhuma trilha cadastrada. Crie a primeira trilha para começar.');
   }
   function filterTracks() { renderList(); }
@@ -199,6 +201,7 @@
     $('capTrackSequenceNames').innerHTML = [...new Set(tracks.map(item => item.sequence_name).filter(Boolean))].map(name => `<option value="${safe(name)}"></option>`).join('');
     $('capTrackStart').value = today(); $('capTrackDays').value = 30; $('capTrackModality').value = ''; $('capTrackAudience').hidden = false;
     fillTrackSectorChoices();
+    $('capTrackSystems').querySelectorAll('input').forEach(input => { input.checked = false; });
     $('capEmployeeSearch').value = ''; choices('capEmployeeChoices'); notice('capTrackFormMessage',''); showPage('pageCapTrackForm');
   }
   function editTrack(id) {
@@ -211,6 +214,7 @@
     $('capTrackCertificateMode').value = certificateMode(item);
     $('capTrackType').value = item.track_type; $('capTrackModality').value = item.modality || ''; $('capTrackDays').value = item.duration_days;
     fillTrackSectorChoices(trackSectors(item));
+    $('capTrackSystems').querySelectorAll('input').forEach(input => { input.checked = systemCodes(item.id).includes(input.value); });
     $('capTrackStart').value = item.start_date; $('capTrackStatus').value = item.status;
     $('capTrackAudience').hidden = true; notice('capTrackFormMessage',''); showPage('pageCapTrackForm');
   }
@@ -222,9 +226,11 @@
     const sequenceOrder = Number($('capTrackSequenceOrder').value || 1);
     if (!Number.isInteger(sequenceOrder) || sequenceOrder < 1 || sequenceOrder > 999) { notice('capTrackFormMessage','Informe uma posição de 1 a 999 para a sequência.',true); return; }
     if (!['Online','Presencial','Híbrido'].includes($('capTrackModality').value)) { notice('capTrackFormMessage','Selecione a modalidade da trilha.',true); return; }
+    const systems = [...$('capTrackSystems').querySelectorAll('input:checked')].map(input => input.value);
+    if (!systems.length) { notice('capTrackFormMessage','Selecione TMS, WMS ou ambos para a trilha.',true); return; }
     if (editingTrack && $('capTrackCertificateMode').value !== certificateMode(tracks.find(item => item.id === editingTrack)) && enrollments.some(item => item.track_id === editingTrack)) { notice('capTrackFormMessage','Não é possível trocar o modo de certificado de uma trilha que já teve inscritos.',true); return; }
     const fields = { name:$('capTrackName').value.trim(), description:$('capTrackDescription').value.trim(),
-      track_type:$('capTrackType').value, modality:$('capTrackModality').value, sectors:chosenTrackSectors(), duration_days:days, start_date:$('capTrackStart').value,
+      track_type:$('capTrackType').value, modality:$('capTrackModality').value, sectors:chosenTrackSectors(), system_codes:systems, duration_days:days, start_date:$('capTrackStart').value,
       sequence_name:$('capTrackSequence').value.trim(),sequence_order:sequenceOrder,certificate_mode:$('capTrackCertificateMode').value,
       status:$('capTrackStatus').value, updated_at:new Date().toISOString() };
     if (editingTrack && fields.sectors.length && trackEnrollments(editingTrack).some(item => !fields.sectors.includes(employees.find(person => String(person.id) === String(item.employee_id))?.sector))) {
@@ -260,7 +266,7 @@
     $('capDetailTabs').hidden = !manager();
     $('capDetailTabs').querySelectorAll('button').forEach(button => button.classList.toggle('active',button.dataset.capTab === selectedTab));
     $('capDetailCourses').hidden = selectedTab !== 'courses'; $('capDetailEmployees').hidden = selectedTab !== 'employees';
-    $('capTrackHero').innerHTML = `${badge(track.status,track.status==='Ativa'?'green':'gray')} <span class="muted">${safe(track.track_type)} · Modalidade: ${safe(modalityLabel(track))} · Setores: ${safe(sectorLabel(track))} · Certificado: ${certificateMode(track)==='after_all'?'único ao final':'por curso'}${enrollment?.individual_only?' · Liberação individual':''}</span><h1>${safe(track.name)}</h1><p>${safe(track.description || 'Sem descrição.')}</p>
+    $('capTrackHero').innerHTML = `${badge(track.status,track.status==='Ativa'?'green':'gray')} <span class="muted">${safe(track.track_type)} · Modalidade: ${safe(modalityLabel(track))} · Sistema: ${safe(systemLabel(track.id))} · Setores: ${safe(sectorLabel(track))} · Certificado: ${certificateMode(track)==='after_all'?'único ao final':'por curso'}${enrollment?.individual_only?' · Liberação individual':''}</span><h1>${safe(track.name)}</h1><p>${safe(track.description || 'Sem descrição.')}</p>
       ${related.length>1?`<div class="cap-sequence"><strong>Sequência: ${safe(track.sequence_name)}</strong><div>${related.map(item => `<button type="button" class="btn btn-secondary" data-cap-action="track" data-id="${safe(item.id)}" ${item.id===track.id?'disabled aria-current="step"':''}>${item.sequence_order || 1}. ${safe(item.name)}</button>`).join('')}</div><small>As trilhas podem ser acessadas em qualquer ordem.</small></div>`:''}
       ${enrollment ? `<div class="cap-status-line"><strong>Seu prazo: ${fmtDate(enrollment.due_date)}</strong>${deadline(enrollment)}${badge(stats.status,statusTone(stats.status))}</div>${bar(stats.pct)}<div class="cap-card-foot">Prazo utilizado <strong>${timeUsed(enrollment)}%</strong></div>` : ''}
       <div class="cap-hero-stats"><div><strong>${enrollment?enrollmentCourses(enrollment).length:activeCourses(track.id).length}</strong><span>Cursos ativos</span></div><div><strong>${track.duration_days} dias</strong><span>Prazo da trilha</span></div><div><strong>${enrollment?stats.done:participants.length}</strong><span>${enrollment?'Cursos concluídos':'Funcionários inscritos'}</span></div><div><strong>${enrollment?stats.pct:mean}%</strong><span>${enrollment?'Seu progresso':'Progresso médio'}</span></div></div>`;
@@ -269,18 +275,16 @@
   }
   function renderCourses(track, enrollment, reviewEnrollment = null) {
     const list = trackCourses(track.id).filter(course => (manager() || course.active || courseProgress(enrollment?.id,course.id)?.completed_at)
-      && (!enrollment || courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(course.id,enrollment.employee_id)))
-      && (!manager() || !selectedSystemFilter || systemLabel(course.id) === selectedSystemFilter));
+      && (!enrollment || courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(track.id,enrollment.employee_id))));
     const viewed = reviewEnrollment || enrollment;
     $('capDetailCourses').innerHTML = `<div class="cap-section-head"><div><h2>Cursos da Trilha</h2><p class="muted">${manager()?'Links externos, ordem, conclusão e certificados.':'Acesse o curso e envie o certificado para validação.'}</p></div>${manager()?'<button type="button" class="btn btn-primary" data-cap-action="new-course">+ Adicionar Curso</button>':''}</div>
-      ${manager()?`<div class="filters"><select aria-label="Filtrar cursos por sistema" onchange="SPFLY_CAP.filterCourses(this.value)"><option value="">Todos os sistemas</option><option ${selectedSystemFilter==='TMS'?'selected':''}>TMS</option><option ${selectedSystemFilter==='WMS'?'selected':''}>WMS</option><option ${selectedSystemFilter==='TMS + WMS'?'selected':''}>TMS + WMS</option><option ${selectedSystemFilter==='Não classificado'?'selected':''}>Não classificado</option></select></div>`:''}
       <div class="cap-course-list">${list.length ? list.map(course => {
         const item = viewed ? courseProgress(viewed.id,course.id) : null;
         const state = viewed ? courseState(viewed,course) : null;
         const certificate = certificateMode(track)==='per_course' && course.certificate_required ? certificateState(item) : null;
         const url = validUrl(course.external_url);
         return `<article class="cap-course"><div class="cap-course-head"><div><h3><span class="cap-course-order">${course.sort_order}.</span>${safe(course.name)}</h3><p>${safe(course.description || 'Sem descrição.')}</p></div>${state?badge(state[0],state[1]):badge(course.active?'Ativo':'Inativo',course.active?'green':'gray')}</div>
-          <div class="cap-course-meta"><span>◷ ${course.duration_minutes} min</span><span>Modalidade: ${safe(modalityLabel(course))}</span><span>Sistema: ${safe(systemLabel(course.id))}</span><span>${certificateMode(track)==='after_all'?'Certificado único ao final':`Certificado ${course.certificate_required?'obrigatório':'opcional'}`}</span>${!course.active?'<span>Curso inativo</span>':''}${item?.completed_at?`<span>Concluído em ${fmtTime(item.completed_at)}</span>`:''}</div>
+          <div class="cap-course-meta"><span>◷ ${course.duration_minutes} min</span><span>Modalidade: ${safe(modalityLabel(course))}</span><span>Sistema da trilha: ${safe(systemLabel(track.id))}</span><span>${certificateMode(track)==='after_all'?'Certificado único ao final':`Certificado ${course.certificate_required?'obrigatório':'opcional'}`}</span>${!course.active?'<span>Curso inativo</span>':''}${item?.completed_at?`<span>Concluído em ${fmtTime(item.completed_at)}</span>`:''}</div>
           ${certificate?`<div class="cap-status-line">Certificado: ${badge(certificate[0],certificate[1])}${item?.certificate_name?`<span class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</span>`:''}${item?.validation_status==='rejected'?`<span class="cap-due-alert">Motivo: ${safe(item.rejection_reason||'Não informado')}</span>`:''}</div>`:''}
           <div class="cap-course-actions">${canUpload() && enrollment && track.status==='Ativa' && course.active && !item?.started_at?`<button type="button" class="btn btn-primary" data-cap-action="start-course" data-id="${safe(course.id)}">Iniciar</button>`:''}
             ${url && !reviewEnrollment && (manager() || item?.started_at)?`<a class="btn btn-secondary" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${manager()?'Abrir link ↗':'Acessar curso ↗'}</a>`:''}
@@ -290,7 +294,6 @@
             ${manager()?`<button type="button" class="btn btn-secondary" data-cap-action="edit-course" data-id="${safe(course.id)}">Editar Curso</button>`:''}</div></article>`;
       }).join('') : empty('Esta trilha ainda não tem cursos.')} </div>${certificateMode(track)==='after_all' && enrollment ? renderTrackCertificate(enrollment) : ''}`;
   }
-  function filterCourses(value) { selectedSystemFilter=value; renderDetail(); }
   function renderTrackCertificate(enrollment, adminView = false) {
     const stats = enrollmentStats(enrollment), state = trackCertificateState(enrollment);
     const ready = stats.total > 0 && stats.done === stats.total;
@@ -306,7 +309,6 @@
     $('capCourseName').value = item?.name || ''; $('capCourseDescription').value = item?.description || '';
     $('capCourseUrl').value = item?.external_url || ''; $('capCourseMinutes').value = item?.duration_minutes || 40;
     $('capCourseModality').value = item?.modality || tracks.find(track => track.id === selectedTrack)?.modality || '';
-    $('capCourseSystems').querySelectorAll('input').forEach(input => { input.checked = !!item && systemCodes(item.id).includes(input.value); });
     $('capCourseOrder').value = item?.sort_order || trackCourses(selectedTrack).length+1;
     $('capCourseCertificate').value = String(item?.certificate_required || false);
     const finalMode = certificateMode(tracks.find(track => track.id === selectedTrack)) === 'after_all';
@@ -327,9 +329,7 @@
     const url = validUrl($('capCourseUrl').value.trim());
     if (!url) { notice('capCourseFormMessage','Use um link http ou https válido.',true); return; }
     if (!['Online','Presencial','Híbrido'].includes($('capCourseModality').value)) { notice('capCourseFormMessage','Selecione a modalidade do curso.',true); return; }
-    const systems=[...$('capCourseSystems').querySelectorAll('input:checked')].map(input=>input.value);
     const audience=[...$('capCourseAudience').querySelectorAll('input:checked')].map(input=>Number(input.value));
-    if (!systems.length) { notice('capCourseFormMessage','Selecione TMS, WMS ou ambos.',true); return; }
     const fields = {name:$('capCourseName').value.trim(),description:$('capCourseDescription').value.trim(),external_url:url,
       duration_minutes:Number($('capCourseMinutes').value),modality:$('capCourseModality').value,sort_order:Number($('capCourseOrder').value),
       certificate_required:certificateMode(tracks.find(track => track.id === selectedTrack))==='per_course' && $('capCourseCertificate').value==='true',active:$('capCourseActive').value==='true',updated_at:new Date().toISOString()};
@@ -342,7 +342,7 @@
         target_course:editingCourse,target_track:selectedTrack,course_name:fields.name,
         course_description:fields.description,course_url:fields.external_url,course_minutes:fields.duration_minutes,
         course_modality:fields.modality,course_order:fields.sort_order,
-        course_certificate_required:fields.certificate_required,course_active:fields.active,target_systems:systems,
+        course_certificate_required:fields.certificate_required,course_active:fields.active,target_systems:[],
         target_employee_ids:audience
       });
       if (error) throw error; closeCourseEditor(); await load(); renderDetail();
@@ -383,7 +383,7 @@
     const node = $('capEmployeeFocus'); if (!node || !enrollment) return;
     const stats = enrollmentStats(enrollment);
     const track = tracks.find(item => item.id === selectedTrack);
-    node.innerHTML = `<div class="card"><h3>${safe(employeeName(enrollment.employee_id))}</h3><p class="muted">Início: ${fmtDate(enrollment.start_date)} · Prazo: ${fmtDate(enrollment.due_date)} · ${deadline(enrollment)} · Prazo utilizado: ${timeUsed(enrollment)}%</p><p>Concluídos ${stats.done} de ${stats.total} · Pendentes ${stats.pending} · Certificados enviados ${certificateMode(track)==='after_all'?(enrollment.track_certificate_path?1:0):enrollmentCourses(enrollment).filter(course=>courseProgress(enrollment.id,course.id)?.certificate_path).length}</p>${bar(stats.pct)}<div class="cap-course-list">${trackCourses(selectedTrack).filter(course => courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(course.id,enrollment.employee_id))).map(course => {
+    node.innerHTML = `<div class="card"><h3>${safe(employeeName(enrollment.employee_id))}</h3><p class="muted">Início: ${fmtDate(enrollment.start_date)} · Prazo: ${fmtDate(enrollment.due_date)} · ${deadline(enrollment)} · Prazo utilizado: ${timeUsed(enrollment)}%</p><p>Concluídos ${stats.done} de ${stats.total} · Pendentes ${stats.pending} · Certificados enviados ${certificateMode(track)==='after_all'?(enrollment.track_certificate_path?1:0):enrollmentCourses(enrollment).filter(course=>courseProgress(enrollment.id,course.id)?.certificate_path).length}</p>${bar(stats.pct)}<div class="cap-course-list">${trackCourses(selectedTrack).filter(course => courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(selectedTrack,enrollment.employee_id))).map(course => {
       const item = courseProgress(enrollment.id,course.id), state = courseState(enrollment,course);
       const cert = certificateMode(track)==='per_course' && course.certificate_required ? certificateState(item) : null;
       const rejected = item?.validation_status === 'rejected';
@@ -635,18 +635,14 @@
       if (!visibleRows.length) { node.innerHTML = empty('Nenhuma capacitação registrada para este funcionário.'); return; }
       const enrollmentIds = [...new Set(visibleRows.map(row => row.enrollment_id))];
       const trackIds = [...new Set(visibleRows.map(row => row.track_id))];
-      const courseIds=[...new Set(visibleRows.map(row=>row.course_id).filter(Boolean))];
-      const [enrollmentResult,trackResult,systemResult] = await Promise.all([
+      const [enrollmentResult,trackResult] = await Promise.all([
         client.from('cap_enrollments').select('id,track_certificate_path,track_certificate_name,track_certificate_uploaded_at,track_validation_status,track_rejection_reason').in('id',enrollmentIds),
-        client.from('cap_tracks').select('id,certificate_mode').in('id',trackIds),
-        courseIds.length?client.from('cap_course_systems').select('course_id,system_code').in('course_id',courseIds):Promise.resolve({data:[],error:null})
+        client.from('cap_tracks').select('id,certificate_mode,system_codes').in('id',trackIds)
       ]);
       if (enrollmentResult.error) throw enrollmentResult.error;
       if (trackResult.error) throw trackResult.error;
-      if (systemResult.error) throw systemResult.error;
       const historyEnrollments = new Map((enrollmentResult.data || []).map(item => [item.id,item]));
       const historyTracks = new Map((trackResult.data || []).map(item => [item.id,item]));
-      const historySystems=new Map();for(const item of systemResult.data||[]){if(!historySystems.has(item.course_id))historySystems.set(item.course_id,[]);historySystems.get(item.course_id).push(item.system_code)}
       const groups = new Map();
       for (const row of visibleRows) {
         if (!groups.has(row.enrollment_id)) groups.set(row.enrollment_id,{head:row,courses:[]});
@@ -663,7 +659,7 @@
         return `<details class="employee-cap-track"><summary class="employee-cap-trigger"><strong>${safe(head.track_name)}</strong><span class="employee-cap-chevron" aria-hidden="true">⌄</span></summary><div class="employee-cap-expanded"><div class="employee-cap-head"><div class="muted">${safe(head.track_type)} · Início ${fmtDate(head.enrollment_start)} · Prazo ${fmtDate(head.enrollment_due)}</div>${trackStatus}</div><div class="employee-cap-summary"><span>${completed} de ${active.length} curso(s) ativo(s) concluído(s)</span><strong>${progressValue}%</strong></div>${bar(progressValue)}${finalCertificate}<div class="employee-cap-courses">${list.length ? list.map(item => {
           const state = item.completed_at ? badge('Concluído','green') : item.validation_status==='rejected' ? badge('Certificado rejeitado','red') : item.certificate_path ? badge('Certificado anexado','orange') : item.course_finished_at && item.certificate_required ? badge('Aguardando certificado','orange') : item.started_at ? badge('Em andamento','orange') : badge('Não iniciado','gray');
           const certificate = item.certificate_required ? certificateState(item) : null;
-          return `<div class="employee-cap-course"><div><strong>${safe(item.course_name)}</strong>${!item.course_active?' <span class="muted">(inativo)</span>':''}<div class="muted">Sistema: ${safe((historySystems.get(item.course_id)||[]).sort().join(' + ')||'Não classificado')} · ${item.completed_at?'Concluído em '+fmtTime(item.completed_at):item.course_finished_at?'Finalizado em '+fmtTime(item.course_finished_at):'Sem conclusão registrada'}</div>${item.validation_status==='rejected'?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(item.rejection_reason||'Não informado')}</div>`:''}</div><div class="employee-cap-course-state">${state}${certificate?`<span>Certificado: ${badge(certificate[0],certificate[1])}</span>`:''}${item.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-history-cert="${safe(item.certificate_path)}">${fileViewLabel(item.certificate_path)}</button>`:''}</div></div>`;
+          return `<div class="employee-cap-course"><div><strong>${safe(item.course_name)}</strong>${!item.course_active?' <span class="muted">(inativo)</span>':''}<div class="muted">Sistema da trilha: ${safe([...(historyTracks.get(item.track_id)?.system_codes||[])].sort().join(' + ')||'Não classificado')} · ${item.completed_at?'Concluído em '+fmtTime(item.completed_at):item.course_finished_at?'Finalizado em '+fmtTime(item.course_finished_at):'Sem conclusão registrada'}</div>${item.validation_status==='rejected'?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(item.rejection_reason||'Não informado')}</div>`:''}</div><div class="employee-cap-course-state">${state}${certificate?`<span>Certificado: ${badge(certificate[0],certificate[1])}</span>`:''}${item.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-history-cert="${safe(item.certificate_path)}">${fileViewLabel(item.certificate_path)}</button>`:''}</div></div>`;
         }).join('') : empty('Nenhum curso registrado nesta trilha.')}</div></div></details>`;
       }).join('')}</div>`;
     } catch (error) {
@@ -713,6 +709,6 @@
     const button = event.target.closest('[data-cap-history-cert]');
     if (button) viewHistoryCertificate(button.dataset.capHistoryCert);
   });
-  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,filterCourses,filterCourseAudience,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeCertificatePreview,downloadCertificatePreview,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];},updateSectors(next){sectors=next||[];}};
+  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,filterCourseAudience,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeCertificatePreview,downloadCertificatePreview,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];},updateSectors(next){sectors=next||[];}};
   window.SPFLY_CAP_TEST = {addDays,remaining,percent,validUrl};
 })();

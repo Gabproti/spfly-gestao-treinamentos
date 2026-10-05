@@ -17,15 +17,10 @@
   const modality = value => ['Online','Presencial','Híbrido'].includes(value) ? value : value === 'Local' ? 'Presencial' : 'Não informada';
   let allRows = [], visibleRows = [], revision = 0;
 
-  function buildRows(people, trainings, tracks, courses, enrollments, progress, courseSystems = [], employeeSystems = [], courseGrants = []) {
+  function buildRows(people, trainings, tracks, courses, enrollments, progress, employeeSystems = [], courseGrants = []) {
     const personById = new Map(people.map(person => [String(person.id),person]));
     const trackById = new Map(tracks.filter(track => !track.deleted_at).map(track => [track.id,track]));
     const progressByPair = new Map(progress.map(item => [`${item.enrollment_id}:${item.course_id}`,item]));
-    const systemByCourse = new Map();
-    for (const item of courseSystems) {
-      if (!systemByCourse.has(item.course_id)) systemByCourse.set(item.course_id,[]);
-      systemByCourse.get(item.course_id).push(item.system_code);
-    }
     const systemsByEmployee=new Map();
     for(const item of employeeSystems){const key=String(item.employee_id);if(!systemsByEmployee.has(key))systemsByEmployee.set(key,new Set());systemsByEmployee.get(key).add(item.system_code)}
     const grants=new Set(courseGrants.map(item=>`${item.employee_id}:${item.course_id}`));
@@ -41,7 +36,7 @@
       if (!track) continue;
       const members = enrollByTrack.get(track.id) || [null];
       for (const enrollment of members) {
-        if(enrollment){const codes=systemByCourse.get(course.id)||[];const direct=grants.has(`${enrollment.employee_id}:${course.id}`);
+        if(enrollment){const codes=track.system_codes||[];const direct=grants.has(`${enrollment.employee_id}:${course.id}`);
           const person=personById.get(String(enrollment.employee_id));
           const sectors=Array.isArray(track.sectors)?track.sectors:(track.sector?[track.sector]:[]);
           if(!direct && (enrollment.individual_only || sectors.length && !sectors.includes(person?.sector) ||
@@ -52,7 +47,7 @@
         const duration = minutes(course.duration_minutes);
         const completed = !!progressRow?.completed_at;
         rows.push({key:`cap:${course.id}`,source:'Capacitação',track:track.name,course:course.name,
-          modality:modality(course.modality || track.modality),system:(systemByCourse.get(course.id)||[]).sort().join(' + ')||'Não classificado',employeeId:enrollment?.employee_id ?? null,
+          modality:modality(course.modality || track.modality),system:[...(track.system_codes||[])].sort().join(' + ')||'Não classificado',employeeId:enrollment?.employee_id ?? null,
           employee:person?.name || (enrollment ? `Funcionário #${enrollment.employee_id}` : ''),
           durationMinutes:duration,realizedMinutes:completed&&enrollment?duration:0,
           completedOn:completed?isoDate(progressRow.completed_at):'',status:completed?'Concluído':'Pendente'});
@@ -77,7 +72,7 @@
   async function fetchAll(table) {
     const rows = [], client = window.SPFLY_AUTH.getClient();
     for (let offset = 0; ; offset += 1000) {
-      const {data,error} = await client.from(table).select('*').order(['cap_course_systems','cap_course_grants'].includes(table)?'course_id':table==='cap_employee_systems'?'employee_id':'id').range(offset,offset+999);
+      const {data,error} = await client.from(table).select('*').order(table==='cap_course_grants'?'course_id':table==='cap_employee_systems'?'employee_id':'id').range(offset,offset+999);
       if (error) throw error;
       rows.push(...(data || []));
       if (!data || data.length < 1000) return rows;
@@ -91,9 +86,9 @@
     select.innerHTML='<option value="">Todos os funcionários</option>'+people.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).map(person=>`<option value="${safe(person.id)}">${safe(person.name)}</option>`).join('');
     select.value=previous;
     try {
-      const [tracks,courses,enrollments,progress,courseSystems,employeeSystems,courseGrants]=await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress','cap_course_systems','cap_employee_systems','cap_course_grants'].map(fetchAll));
+      const [tracks,courses,enrollments,progress,employeeSystems,courseGrants]=await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress','cap_employee_systems','cap_course_grants'].map(fetchAll));
       if (current!==revision) return;
-      allRows=buildRows(people,trainings,tracks,courses,enrollments,progress,courseSystems,employeeSystems,courseGrants);
+      allRows=buildRows(people,trainings,tracks,courses,enrollments,progress,employeeSystems,courseGrants);
       filter();
     } catch (error) { if(current===revision)$('hoursMessage').textContent='Não foi possível carregar o relatório: '+error.message; }
   }

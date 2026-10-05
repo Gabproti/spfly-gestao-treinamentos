@@ -258,7 +258,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   body.dark #pageTrainingDetail .field input,body.dark #pageTrainingDetail .field select,body.dark #pageTrainingDetail .field textarea{background:#fff!important;color:#111!important;border-color:#ccc!important}
 }
 </style>
-<link rel="stylesheet" href="capacitation.css?v=29">
+<link rel="stylesheet" href="capacitation.css?v=30">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -380,7 +380,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="field"><label>E-mail</label><input id="efEmail" type="email"></div>
     <div class="field"><label>Telefone</label><input id="efPhone"></div>
     <div class="field"><label for="efStatus">Status</label><select id="efStatus"><option>Ativo</option><option>Inativo</option></select></div>
-    <div class="field full"><h3>Sistemas utilizados</h3><p class="muted">Selecione os ambientes usados pelo funcionário. Cursos antigos sem classificação continuam disponíveis conforme as regras atuais.</p><div id="efSystems" class="cap-sector-options" role="group" aria-label="Sistemas utilizados"><label><input type="checkbox" value="TMS"> TMS</label><label><input type="checkbox" value="WMS"> WMS</label></div><small id="efSystemsMessage" class="help" role="status"></small></div>
+    <div class="field full"><h3>Sistemas utilizados</h3><p class="muted">Selecione os ambientes usados pelo funcionário. Trilhas antigas sem classificação continuam disponíveis conforme as regras atuais.</p><div id="efSystems" class="cap-sector-options" role="group" aria-label="Sistemas utilizados"><label><input type="checkbox" value="TMS"> TMS</label><label><input type="checkbox" value="WMS"> WMS</label></div><small id="efSystemsMessage" class="help" role="status"></small></div>
     <div class="field full"><h3>Cursos específicos</h3><p class="muted">Marque cursos para liberar individualmente, além das regras atuais de setor e trilha.</p><input id="efCourseSearch" type="search" placeholder="Pesquisar curso..." oninput="filterEmployeeCourses()"><div id="efCourseChoices" class="employee-course-choices" role="group" aria-label="Cursos específicos" onchange="filterEmployeeCourses()"></div><div id="efCourseCount" class="muted"></div></div>
   </div><div class="actions"><button class="btn btn-secondary" onclick="cancelEmployeeForm()">Cancelar</button><button id="employeeSaveButton" class="btn btn-primary" onclick="saveEmployee()">Salvar Funcionário</button></div></div>
 </div>
@@ -441,7 +441,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div class="header-row cap-heading"><div><h1 id="capPageTitle">Capacitação</h1><div class="muted">Trilhas e cursos para desenvolvimento dos funcionários.</div></div><button id="capNewTrackButton" class="btn btn-primary" onclick="SPFLY_CAP.newTrack()">+ Nova Trilha</button></div>
   <div id="capMessage" class="notice" hidden role="status"></div>
   <div id="capKpis" class="cap-kpis"></div>
-  <div class="cap-section-head"><div><h2 id="capListTitle">Trilhas de Capacitação</h2><p class="muted" id="capListHint">Acompanhe cursos, prazos e certificados em um só lugar.</p></div><div class="cap-list-actions"><input id="capTrackSearch" type="search" placeholder="Buscar trilha ou sequência..." aria-label="Buscar trilha ou sequência" oninput="SPFLY_CAP.filterTracks()"><select id="capSectorFilter" aria-label="Filtrar trilhas por setor" onchange="SPFLY_CAP.filterTracks()"><option value="">Todos os setores</option></select><button class="btn btn-secondary" onclick="SPFLY_CAP.refresh()">Atualizar</button></div></div>
+  <div class="cap-section-head"><div><h2 id="capListTitle">Trilhas de Capacitação</h2><p class="muted" id="capListHint">Acompanhe cursos, prazos e certificados em um só lugar.</p></div><div class="cap-list-actions"><input id="capTrackSearch" type="search" placeholder="Buscar trilha ou sequência..." aria-label="Buscar trilha ou sequência" oninput="SPFLY_CAP.filterTracks()"><select id="capSectorFilter" aria-label="Filtrar trilhas por setor" onchange="SPFLY_CAP.filterTracks()"><option value="">Todos os setores</option></select><select id="capSystemFilter" aria-label="Filtrar trilhas por sistema" onchange="SPFLY_CAP.filterTracks()"><option value="">Todos os sistemas</option><option value="TMS">TMS</option><option value="WMS">WMS</option><option value="Não classificado">Não classificado</option></select><button class="btn btn-secondary" onclick="SPFLY_CAP.refresh()">Atualizar</button></div></div>
   <div id="capTrackGrid" class="cap-track-grid"></div>
 </div>
 
@@ -457,6 +457,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
       <div class="field"><label for="capTrackSequence">Sequência de trilhas</label><input id="capTrackSequence" list="capTrackSequenceNames" maxlength="120" placeholder="Ex.: Formação em Finanças"><datalist id="capTrackSequenceNames"></datalist><small class="help">Trilhas da mesma sequência ficam relacionadas. O acesso continua livre.</small></div>
       <div class="field"><label for="capTrackSequenceOrder">Posição na sequência</label><input id="capTrackSequenceOrder" type="number" min="1" max="999" value="1"></div>
       <div class="field"><label>Setores destinatários</label><div id="capTrackSectors" class="cap-sector-options" onchange="SPFLY_CAP.changeTrackSector(event)"></div><small class="help">Selecione um ou mais setores. Sem setor específico, a trilha fica disponível para todos.</small></div>
+      <div class="field"><label>Sistema / Ambiente *</label><div id="capTrackSystems" class="cap-sector-options" role="group" aria-label="Sistema ou ambiente da trilha"><label><input type="checkbox" value="TMS"> TMS</label><label><input type="checkbox" value="WMS"> WMS</label></div><small class="help">Marque os dois para TMS + WMS. Todos os cursos da trilha herdam essa escolha.</small></div>
       <div class="field"><label for="capTrackDays">Prazo para conclusão, em dias *</label><input id="capTrackDays" type="number" min="1" max="3650" value="30" required></div>
       <div class="field"><label for="capTrackStart">Data de início *</label><input id="capTrackStart" type="date" required></div>
       <div class="field"><label for="capTrackStatus">Status *</label><select id="capTrackStatus"><option>Ativa</option><option>Concluída</option><option>Encerrada</option></select></div>
@@ -484,7 +485,6 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="field full"><label for="capCourseUrl">Link externo do curso *</label><input id="capCourseUrl" type="url" placeholder="https://..." maxlength="2000" required></div>
     <div class="field"><label for="capCourseMinutes">Carga horária, em minutos *</label><input id="capCourseMinutes" type="number" min="1" max="100000" value="40" required></div>
     <div class="field"><label for="capCourseModality">Modalidade do curso *</label><select id="capCourseModality" required><option value="">Selecione</option><option>Online</option><option>Presencial</option><option>Híbrido</option></select></div>
-    <div class="field full"><label>Sistema / Ambiente *</label><div id="capCourseSystems" class="cap-sector-options" role="group" aria-label="Sistema ou ambiente"><label><input type="checkbox" value="TMS"> TMS</label><label><input type="checkbox" value="WMS"> WMS</label></div><small class="help">Marque os dois para TMS + WMS.</small></div>
     <div class="field"><label for="capCourseOrder">Ordem na trilha *</label><input id="capCourseOrder" type="number" min="1" value="1" required></div>
     <div class="field"><label for="capCourseCertificate">Certificado obrigatório</label><select id="capCourseCertificate"><option value="false">Não</option><option value="true">Sim</option></select></div>
     <div class="field"><label for="capCourseActive">Status</label><select id="capCourseActive"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
@@ -623,13 +623,15 @@ async function loadEmployeeCourses(employeeId=null){
  const revision=++employeeCourseLoad, choices=document.getElementById('efCourseChoices');
  employeeCoursesReady=false;choices.textContent='Carregando cursos...';document.getElementById('efCourseCount').textContent='';
  try{
-  const [{data,error},{data:systemRows,error:systemsError}]=await Promise.all([
+  const [{data,error},{data:courseRows,error:coursesError},{data:trackRows,error:tracksError}]=await Promise.all([
    SPFLY_AUTH.getClient().rpc('cap_employee_course_options',{target_employee_id:employeeId}),
-   SPFLY_AUTH.getClient().from('cap_course_systems').select('course_id,system_code')
+   SPFLY_AUTH.getClient().from('cap_courses').select('id,track_id'),
+   SPFLY_AUTH.getClient().from('cap_tracks').select('id,system_codes')
   ]);
-  if(systemsError)throw systemsError;
+  if(coursesError)throw coursesError;if(tracksError)throw tracksError;
   if(error)throw error;if(revision!==employeeCourseLoad)return;
-  choices.innerHTML=(data||[]).map(course=>{const codes=(systemRows||[]).filter(row=>row.course_id===course.course_id).map(row=>row.system_code).sort();const system=codes.length?codes.join(' + '):'Não classificado';return `<label data-course-search="${esc(foldEmployeeCourseSearch(course.course_name+' '+course.track_name+' '+system))}"><input type="checkbox" value="${esc(course.course_id)}" ${course.granted?'checked':''}><span><strong>${esc(course.course_name)}</strong><small>${esc(course.track_name)} · ${esc(course.modality||'Modalidade não informada')} · ${esc(system)}</small></span></label>`}).join('')||'<div class="muted">Nenhum curso ativo cadastrado.</div>';
+  const trackByCourse=new Map((courseRows||[]).map(row=>[row.id,row.track_id]));const systemsByTrack=new Map((trackRows||[]).map(row=>[row.id,row.system_codes||[]]));
+  choices.innerHTML=(data||[]).map(course=>{const codes=[...(systemsByTrack.get(trackByCourse.get(course.course_id))||[])].sort();const system=codes.length?codes.join(' + '):'Não classificado';return `<label data-course-search="${esc(foldEmployeeCourseSearch(course.course_name+' '+course.track_name+' '+system))}"><input type="checkbox" value="${esc(course.course_id)}" ${course.granted?'checked':''}><span><strong>${esc(course.course_name)}</strong><small>${esc(course.track_name)} · ${esc(course.modality||'Modalidade não informada')} · ${esc(system)}</small></span></label>`}).join('')||'<div class="muted">Nenhum curso ativo cadastrado.</div>';
   employeeCoursesReady=true;filterEmployeeCourses();
  }catch(error){if(revision===employeeCourseLoad)choices.textContent='Não foi possível carregar os cursos: '+error.message;}
 }
@@ -1125,9 +1127,9 @@ applyTheme();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="capacitation.js?v=29"></script>
+<script src="capacitation.js?v=30"></script>
 <script src="auth.js?v=26"></script>
 <script src="employee-tools.js?v=26"></script>
-<script src="course-hours.js?v=29"></script>
+<script src="course-hours.js?v=30"></script>
 </body>
 </html>
