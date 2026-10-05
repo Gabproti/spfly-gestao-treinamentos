@@ -1,4 +1,12 @@
-# SPFLY Admin — V26
+# SPFLY Admin — V28
+
+## Ajuste da V28
+
+Em **Funcionários > Novo/Editar**, a seção **Cursos específicos** permite buscar e marcar cursos para uma pessoa. A liberação individual soma-se às inscrições de trilha e às regras de setor; desmarcar remove apenas a liberação individual. A área **Minhas Capacitações** exibe somente os cursos liberados nessa inscrição individual, com início, conclusão e certificado conforme as regras do curso. A relação funcionário–curso é única, protegida por RLS e alterada apenas por quem pode editar Funcionários. Execute `supabase/migration-v28-individual-courses.sql` antes de publicar `index.html` e `capacitation.js`.
+
+## Ajuste da V27
+
+Em **Treinamentos > Detalhes**, o botão **Imprimir** abre o diálogo padrão do navegador. A impressão mostra as informações da tela; o modelo definitivo do documento será definido depois.
 
 ## Ajuste da V26
 

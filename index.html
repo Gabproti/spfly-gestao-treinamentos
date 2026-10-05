@@ -98,6 +98,8 @@ body.dark .notice{background:#332a17;border-color:#65501f;color:#f0d58d}
 body.dark .empty{color:#9aa3ac}
 .employee-dialog{border:1px solid var(--border);border-radius:14px;background:var(--surface);color:inherit;width:min(980px,calc(100vw - 24px));max-height:90vh;overflow:auto;padding:24px;box-shadow:0 20px 70px #0004}.employee-dialog::backdrop{background:#0009}.employee-edit-dialog{width:min(700px,calc(100vw - 24px))}.employee-dialog h2{margin:0}.employee-actions{justify-content:flex-start;flex-wrap:wrap;margin:16px 0}.employee-file-label{display:inline-flex;align-items:center;cursor:pointer}.employee-import-summary{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}.employee-import-summary span{padding:8px 12px;border-radius:8px;background:var(--soft);border:1px solid var(--border);font-size:13px}.employee-import-table{max-height:45vh;overflow:auto;border:1px solid var(--border);border-radius:8px}.employee-import-table table{min-width:650px}.employee-import-error,.employee-error{color:#af3030;font-size:12px}.employee-error{padding:10px;margin-top:12px;background:#fff1f1;border:1px solid #f5bcbc;border-radius:8px}.employee-cert-list{overflow-x:auto;margin-top:12px}.employee-cert-list table{min-width:720px}.employee-cert-actions{display:flex;gap:5px;flex-wrap:wrap}.employee-cert-meta{font-size:12px;color:var(--muted);margin:4px 0 0}body.dark .employee-error{background:#382020;border-color:#8b4545;color:#ffb7b7}
 #pageEmployees .header-row{flex-wrap:wrap;gap:12px}
+.employee-course-choices{max-height:300px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:8px}.employee-course-choices label{display:flex;align-items:center;gap:10px;padding:9px;border-bottom:1px solid var(--border);cursor:pointer}.employee-course-choices label:last-child{border-bottom:0}.employee-course-choices small{display:block;color:var(--muted)}
+.employee-course-choices label[hidden]{display:none}
 
 .field-inline{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .field-inline input{min-width:145px}
@@ -246,6 +248,15 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 @media(max-width:1300px){.dashboard-agenda-layout{grid-template-columns:minmax(0,1fr) minmax(360px,.85fr)}.dashboard-calendar .calendar-day{min-height:70px}.dashboard-summary{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:1050px){.dashboard-agenda-layout{grid-template-columns:1fr}.dashboard-summary{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:700px){.sidebar{position:relative;width:100%;height:auto;padding:0 12px 10px;overflow:visible}.sidebar:before,.sidebar:after,.sidebar-footer{display:none}.brand{min-height:68px;margin:0 -12px 4px;padding:9px}.brand-wordmark{font-size:31px}.brand-arrow{font-size:25px}.brand small{font-size:8px}.nav-section{display:flex;gap:4px;overflow-x:auto;padding-bottom:5px}.nav-btn{min-width:max-content;width:auto;height:43px;padding:0 10px;gap:6px;font-size:12px}.nav-icon{width:18px;height:18px;flex-basis:18px}.nav-chevron,.subnav{display:none}.main{margin-left:0;width:100%}.topbar{height:64px;padding:0 12px}.topbar-search{width:48%}.topbar-search .search{height:40px;font-size:12px}.topbar-profile .avatar{width:36px;height:36px}.topbar-profile strong{font-size:12px}.topbar-profile small{font-size:10px}.user{gap:8px}.user #themeToggle{width:37px;height:37px}.content{padding:16px 12px}.dashboard-page-head{margin:0 0 15px;gap:12px}.dashboard-page-head h1{font-size:26px}.dashboard-page-head .btn-primary{height:42px}.dashboard-summary{grid-template-columns:repeat(2,1fr)}.dashboard-calendar .calendar-day{min-height:57px;padding:5px}.dashboard-calendar .calendar-grid{padding:0 7px 10px;gap:3px}.dashboard-calendar .calendar-legend{font-size:10px;padding:6px 8px 10px}.dashboard-calendar .status-dot{width:9px;height:9px}.dashboard-calendar .status-dots{left:5px;bottom:5px;gap:3px}.dashboard-calendar .status-dot-mini{width:7px;height:7px}.dashboard-calendar .calendar-head{padding:10px 8px}.dashboard-calendar .calendar-head strong{font-size:15px}.dashboard-calendar .calendar-head .btn-secondary{width:33px;min-width:33px;height:34px;padding:0 5px}.dashboard-calendar .calendar-head .btn-secondary:nth-child(4){min-width:48px;font-size:11px}.dashboard-calendar .calendar-day.selected .day-num{font-size:16px}}
+@media print{
+  .sidebar,.topbar,#authScreen,.training-header-actions,#pageTrainingDetail button{display:none!important}
+  .app,.main,.content{display:block!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important;min-height:0!important}
+  .page:not(#pageTrainingDetail){display:none!important}
+  #pageTrainingDetail{display:block!important}
+  #pageTrainingDetail .card{box-shadow:none!important;break-inside:avoid}
+  body,body.dark,body.dark #pageTrainingDetail .card{background:#fff!important;color:#111!important}
+  body.dark #pageTrainingDetail .field input,body.dark #pageTrainingDetail .field select,body.dark #pageTrainingDetail .field textarea{background:#fff!important;color:#111!important;border-color:#ccc!important}
+}
 </style>
 <link rel="stylesheet" href="capacitation.css?v=26">
 </head>
@@ -369,6 +380,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="field"><label>E-mail</label><input id="efEmail" type="email"></div>
     <div class="field"><label>Telefone</label><input id="efPhone"></div>
     <div class="field"><label for="efStatus">Status</label><select id="efStatus"><option>Ativo</option><option>Inativo</option></select></div>
+    <div class="field full"><h3>Cursos específicos</h3><p class="muted">Marque cursos para liberar individualmente, além das regras atuais de setor e trilha.</p><input id="efCourseSearch" type="search" placeholder="Pesquisar curso..." oninput="filterEmployeeCourses()"><div id="efCourseChoices" class="employee-course-choices" role="group" aria-label="Cursos específicos" onchange="filterEmployeeCourses()"></div><div id="efCourseCount" class="muted"></div></div>
   </div><div class="actions"><button class="btn btn-secondary" onclick="cancelEmployeeForm()">Cancelar</button><button id="employeeSaveButton" class="btn btn-primary" onclick="saveEmployee()">Salvar Funcionário</button></div></div>
 </div>
 
@@ -419,7 +431,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
       <h1 id="detailTitle">Gerenciar treinamento</h1>
       <div class="muted">Complete o registro após a realização do treinamento.</div>
     </div>
-    <div class="training-header-actions"><button id="detailEditBtn" class="btn btn-secondary">🔒 Bloquear edição</button><button id="detailDeleteBtn" class="btn btn-danger" hidden>Excluir treinamento</button></div>
+    <div class="training-header-actions"><button type="button" id="detailPrintBtn" class="btn btn-secondary" onclick="window.print()">Imprimir</button><button id="detailEditBtn" class="btn btn-secondary">🔒 Bloquear edição</button><button id="detailDeleteBtn" class="btn btn-danger" hidden>Excluir treinamento</button></div>
   </div>
   <div id="detailContent"></div>
 </div>
@@ -503,6 +515,7 @@ function toggleDeletedTrainings(){showDeletedTrainings=!showDeletedTrainings;cal
 let selectedParticipants=new Set();
 let currentStep=1;
 let editingEmployeeId=null;
+let employeeCoursesReady=false,employeeCourseLoad=0;
 let sectors=[];
 
 function persist(){return window.SPFLY_AUTH.persist(employees,trainings);}
@@ -603,6 +616,24 @@ function fillEmployeeSectors(value=''){
  if(value)select.value=value;
 }
 function cancelEmployeeForm(){editingEmployeeId=null;showPage('pageEmployees')}
+async function loadEmployeeCourses(employeeId=null){
+ const revision=++employeeCourseLoad, choices=document.getElementById('efCourseChoices');
+ employeeCoursesReady=false;choices.textContent='Carregando cursos...';document.getElementById('efCourseCount').textContent='';
+ try{
+  const {data,error}=await SPFLY_AUTH.getClient().rpc('cap_employee_course_options',{target_employee_id:employeeId});
+  if(error)throw error;if(revision!==employeeCourseLoad)return;
+  choices.innerHTML=(data||[]).map(course=>`<label data-course-search="${esc(foldEmployeeCourseSearch(course.course_name+' '+course.track_name))}"><input type="checkbox" value="${esc(course.course_id)}" ${course.granted?'checked':''}><span><strong>${esc(course.course_name)}</strong><small>${esc(course.track_name)} · ${esc(course.modality||'Modalidade não informada')}</small></span></label>`).join('')||'<div class="muted">Nenhum curso ativo cadastrado.</div>';
+  employeeCoursesReady=true;filterEmployeeCourses();
+ }catch(error){if(revision===employeeCourseLoad)choices.textContent='Não foi possível carregar os cursos: '+error.message;}
+}
+function foldEmployeeCourseSearch(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR')}
+function filterEmployeeCourses(){
+ const term=foldEmployeeCourseSearch(document.getElementById('efCourseSearch').value.trim());
+ const labels=[...document.querySelectorAll('#efCourseChoices label')];
+ labels.forEach(label=>{label.hidden=!!term&&!label.dataset.courseSearch.includes(term)});
+ const selected=labels.filter(label=>label.querySelector('input').checked).length;
+ document.getElementById('efCourseCount').textContent=`${selected} curso(s) liberado(s) individualmente`;
+}
 function newEmployee(){
  if(!SPFLY_AUTH.canEdit('employees'))return;
  editingEmployeeId=null;
@@ -613,6 +644,7 @@ function newEmployee(){
  document.getElementById('employeeFormHint').textContent='Cadastre um novo colaborador.';
  document.getElementById('employeeSaveButton').textContent='Salvar Funcionário';
  showPage('pageNewEmployee');
+ loadEmployeeCourses();
 }
 function editEmployee(id){
  if(!SPFLY_AUTH.canEdit('employees'))return;
@@ -626,6 +658,7 @@ function editEmployee(id){
  document.getElementById('employeeFormHint').textContent='Atualize os dados deste colaborador.';
  document.getElementById('employeeSaveButton').textContent='Salvar alterações';
  closeModal();showPage('pageNewEmployee');
+ document.getElementById('efCourseSearch').value='';loadEmployeeCourses(employee.id);
 }
 function formatBrazilianDocument(value,type){
  const digits=String(value||"").replace(/\D/g,"").slice(0,type==="CNPJ"?14:11);
@@ -644,15 +677,21 @@ function formatEmployeeDocumentInput(){
 }
 async function saveEmployee(){
  if(!SPFLY_AUTH.canEdit('employees'))return;
+ if(!employeeCoursesReady){alert('Aguarde o carregamento dos cursos específicos.');return}
  const name=document.getElementById("efName").value.trim(), type=document.getElementById("efDocumentType").value, cpf=formatBrazilianDocument(document.getElementById("efCpf").value,type), mat=document.getElementById("efMat").value.trim();
  const digits=cpf.replace(/\D/g,"");
  if(!name||!cpf||!mat){alert("Preencha Nome, documento e Matrícula.");return}
  if(digits.length!==(type==="CNPJ"?14:11)){alert("Informe um "+type+" completo.");return}
  if(employees.some(e=>Number(e.id)!==Number(editingEmployeeId)&&(String(e.cpf||"").replace(/\D/g,"")===digits||e.mat===mat))){alert("Documento ou matrícula já cadastrados.");return}
  const fields={mat,name,cpf,documentType:type,sector:document.getElementById('efSector').value,role:document.getElementById('efRole').value.trim()||'Não informado',status:document.getElementById('efStatus').value,birth:document.getElementById('efBirth').value,hire:document.getElementById('efHire').value,email:document.getElementById('efEmail').value.trim(),phone:document.getElementById('efPhone').value.trim()};
- const next=editingEmployeeId===null?[...employees,{id:Date.now(),...fields}]:employees.map(e=>Number(e.id)===Number(editingEmployeeId)?{...e,...fields}:e);
+ const employeeId=editingEmployeeId===null?Date.now():editingEmployeeId;
+ const selectedCourses=[...document.querySelectorAll('#efCourseChoices input:checked')].map(input=>input.value);
+ const next=editingEmployeeId===null?[...employees,{id:employeeId,...fields}]:employees.map(e=>Number(e.id)===Number(editingEmployeeId)?{...e,...fields}:e);
  if(!await SPFLY_AUTH.persist(next,trainings))return;
- employees=next;window.SPFLY_CAP?.updateEmployees(employees);editingEmployeeId=null;showPage('pageEmployees');
+ employees=next;window.SPFLY_CAP?.updateEmployees(employees);editingEmployeeId=employeeId;
+ const {error}=await SPFLY_AUTH.getClient().rpc('cap_set_employee_course_grants',{target_employee_id:employeeId,target_course_ids:selectedCourses});
+ if(error){alert('Funcionário salvo, mas não foi possível atualizar os cursos específicos: '+error.message+'. Tente salvar novamente.');return}
+ editingEmployeeId=null;showPage('pageEmployees');
 }
 function viewEmployee(id){
  const e=employees.find(x=>x.id===id), hist=activeTrainings().filter(t=>t.participants.includes(id));
@@ -1063,7 +1102,7 @@ applyTheme();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="capacitation.js?v=26"></script>
+<script src="capacitation.js?v=28"></script>
 <script src="auth.js?v=26"></script>
 <script src="employee-tools.js?v=26"></script>
 <script src="course-hours.js?v=26"></script>

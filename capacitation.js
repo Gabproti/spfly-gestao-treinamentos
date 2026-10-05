@@ -2,7 +2,7 @@
   'use strict';
 
   let client, access, currentUser, employees = [], sectors = [];
-  let tracks = [], courses = [], enrollments = [], progress = [];
+  let tracks = [], courses = [], enrollments = [], progress = [], courseGrants = [];
   let selectedTrack = null, selectedTab = 'courses', focusedEnrollment = null;
   let editingTrack = null, editingCourse = null, busy = false, loadRevision = 0, previewRevision = 0, previewPath = null, previewName = '';
   const $ = id => document.getElementById(id);
@@ -44,6 +44,7 @@
   const statusTone = status => status === 'Concluído' ? 'green' : status === 'Em atraso' || status === 'Rejeitado' ? 'red' : 'orange';
   const trackCourses = id => courses.filter(course => course.track_id === id).sort((a,b) => a.sort_order-b.sort_order || a.name.localeCompare(b.name,'pt-BR'));
   const activeCourses = id => trackCourses(id).filter(course => course.active);
+  const enrollmentCourses = enrollment => activeCourses(enrollment.track_id).filter(course => !enrollment.individual_only || courseGrants.some(grant => String(grant.employee_id) === String(enrollment.employee_id) && grant.course_id === course.id));
   const trackEnrollments = id => enrollments.filter(enrollment => enrollment.track_id === id && !enrollment.removed_at);
   const courseProgress = (enrollmentId, courseId) => progress.find(item => item.enrollment_id === enrollmentId && item.course_id === courseId);
   const remaining = due => Math.round((date(due) - date(today())) / 86400000);
@@ -62,7 +63,7 @@
   const badge = (label, tone = 'gray') => `<span class="cap-badge cap-badge-${tone}">${safe(label)}</span>`;
   const bar = value => `<div class="cap-progress-line" role="progressbar" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100"><span style="width:${value}%"></span></div>`;
   function enrollmentStats(enrollment) {
-    const list = activeCourses(enrollment.track_id);
+    const list = enrollmentCourses(enrollment);
     const done = list.filter(course => courseProgress(enrollment.id, course.id)?.completed_at).length;
     const started = list.filter(course => { const p = courseProgress(enrollment.id, course.id); return p?.started_at && !p.completed_at; }).length;
     const overdue = remaining(enrollment.due_date) < 0 && done < list.length ? list.length - done : 0;
@@ -94,7 +95,7 @@
       const state = trackCertificateState(enrollment);
       return badge(state[0],state[1]);
     }
-    const required = activeCourses(enrollment.track_id).filter(course => course.certificate_required);
+    const required = enrollmentCourses(enrollment).filter(course => course.certificate_required);
     if (!required.length) return badge('Não exigido','gray');
     const states = required.map(course => certificateState(courseProgress(enrollment.id,course.id))[0]);
     const completed = states.filter(state => state === 'Concluído').length;
@@ -111,15 +112,17 @@
     async function allRows(table) {
       const rows = [];
       for (let offset = 0; ; offset += 1000) {
-        const {data,error} = await client.from(table).select('*').order('id').range(offset,offset+999);
+        let query = client.from(table).select('*').order(table === 'cap_course_grants' ? 'course_id' : 'id');
+        if (table === 'cap_course_grants') query = query.order('employee_id');
+        const {data,error} = await query.range(offset,offset+999);
         if (error) throw error;
         rows.push(...(data || []));
         if (!data || data.length < 1000) return rows;
       }
     }
-    const rows = await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress'].map(allRows));
+    const rows = await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress','cap_course_grants'].map(allRows));
     if (revision !== loadRevision) return false;
-    [tracks,courses,enrollments,progress] = rows;
+    [tracks,courses,enrollments,progress,courseGrants] = rows;
     return true;
   }
   function configure(nextClient, nextAccess, nextUser, nextEmployees) {
@@ -164,7 +167,7 @@
       const shownPct = mineEnrollment ? enrollmentStats(mineEnrollment).pct : completion;
       const days = mineEnrollment ? `<span>Prazo: ${fmtDate(mineEnrollment.due_date)}</span><span>${deadline(mineEnrollment)}</span>` : `<span>Prazo: ${track.duration_days} dias</span><span>${participants.length} funcionário(s)</span>`;
       const status = mineEnrollment && enrollmentStats(mineEnrollment).overdue ? badge('Em atraso','red') : badge(track.status,track.status==='Ativa'?'green':'gray');
-      return `<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}"><div class="cap-card-head"><h3>${safe(track.name)}</h3>${status}</div><p>${safe(track.description || 'Sem descrição.')}</p><div class="cap-meta"><span>${safe(track.track_type)}</span><span>Modalidade: ${safe(modalityLabel(track))}</span>${track.sequence_name?`<span>Sequência: ${safe(sequenceLabel(track))}</span>`:''}<span>Setores: ${safe(sectorLabel(track))}</span><span>${trackCourses(track.id).filter(c=>c.active).length} curso(s)</span>${days}</div>${bar(shownPct)}<div class="cap-card-foot"><span>Progresso ${mine?'individual':'médio'}</span><strong>${shownPct}%</strong></div></button>`;
+      return `<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}"><div class="cap-card-head"><h3>${safe(track.name)}</h3>${status}</div><p>${safe(track.description || 'Sem descrição.')}</p><div class="cap-meta"><span>${safe(track.track_type)}</span><span>Modalidade: ${safe(modalityLabel(track))}</span>${track.sequence_name?`<span>Sequência: ${safe(sequenceLabel(track))}</span>`:''}<span>Setores: ${safe(sectorLabel(track))}</span>${mineEnrollment?.individual_only?'<span>Liberação individual</span>':''}<span>${mineEnrollment?enrollmentCourses(mineEnrollment).length:activeCourses(track.id).length} curso(s)</span>${days}</div>${bar(shownPct)}<div class="cap-card-foot"><span>Progresso ${mine?'individual':'médio'}</span><strong>${shownPct}%</strong></div></button>`;
     }).join('') : empty(term ? 'Nenhuma trilha encontrada para esta busca.' : mine ? 'Você ainda não foi inscrito em uma trilha.' : selectedSector ? 'Nenhuma trilha destinada a este setor.' : 'Nenhuma trilha cadastrada. Crie a primeira trilha para começar.');
   }
   function filterTracks() { renderList(); }
@@ -253,15 +256,15 @@
     $('capDetailTabs').hidden = !manager();
     $('capDetailTabs').querySelectorAll('button').forEach(button => button.classList.toggle('active',button.dataset.capTab === selectedTab));
     $('capDetailCourses').hidden = selectedTab !== 'courses'; $('capDetailEmployees').hidden = selectedTab !== 'employees';
-    $('capTrackHero').innerHTML = `${badge(track.status,track.status==='Ativa'?'green':'gray')} <span class="muted">${safe(track.track_type)} · Modalidade: ${safe(modalityLabel(track))} · Setores: ${safe(sectorLabel(track))} · Certificado: ${certificateMode(track)==='after_all'?'único ao final':'por curso'}</span><h1>${safe(track.name)}</h1><p>${safe(track.description || 'Sem descrição.')}</p>
+    $('capTrackHero').innerHTML = `${badge(track.status,track.status==='Ativa'?'green':'gray')} <span class="muted">${safe(track.track_type)} · Modalidade: ${safe(modalityLabel(track))} · Setores: ${safe(sectorLabel(track))} · Certificado: ${certificateMode(track)==='after_all'?'único ao final':'por curso'}${enrollment?.individual_only?' · Liberação individual':''}</span><h1>${safe(track.name)}</h1><p>${safe(track.description || 'Sem descrição.')}</p>
       ${related.length>1?`<div class="cap-sequence"><strong>Sequência: ${safe(track.sequence_name)}</strong><div>${related.map(item => `<button type="button" class="btn btn-secondary" data-cap-action="track" data-id="${safe(item.id)}" ${item.id===track.id?'disabled aria-current="step"':''}>${item.sequence_order || 1}. ${safe(item.name)}</button>`).join('')}</div><small>As trilhas podem ser acessadas em qualquer ordem.</small></div>`:''}
       ${enrollment ? `<div class="cap-status-line"><strong>Seu prazo: ${fmtDate(enrollment.due_date)}</strong>${deadline(enrollment)}${badge(stats.status,statusTone(stats.status))}</div>${bar(stats.pct)}<div class="cap-card-foot">Prazo utilizado <strong>${timeUsed(enrollment)}%</strong></div>` : ''}
-      <div class="cap-hero-stats"><div><strong>${activeCourses(track.id).length}</strong><span>Cursos ativos</span></div><div><strong>${track.duration_days} dias</strong><span>Prazo da trilha</span></div><div><strong>${enrollment?stats.done:participants.length}</strong><span>${enrollment?'Cursos concluídos':'Funcionários inscritos'}</span></div><div><strong>${enrollment?stats.pct:mean}%</strong><span>${enrollment?'Seu progresso':'Progresso médio'}</span></div></div>`;
+      <div class="cap-hero-stats"><div><strong>${enrollment?enrollmentCourses(enrollment).length:activeCourses(track.id).length}</strong><span>Cursos ativos</span></div><div><strong>${track.duration_days} dias</strong><span>Prazo da trilha</span></div><div><strong>${enrollment?stats.done:participants.length}</strong><span>${enrollment?'Cursos concluídos':'Funcionários inscritos'}</span></div><div><strong>${enrollment?stats.pct:mean}%</strong><span>${enrollment?'Seu progresso':'Progresso médio'}</span></div></div>`;
     if (selectedTab === 'courses') renderCourses(track,enrollment);
     else renderEmployees(track);
   }
   function renderCourses(track, enrollment, reviewEnrollment = null) {
-    const list = trackCourses(track.id).filter(course => manager() || course.active || courseProgress(enrollment?.id,course.id)?.completed_at);
+    const list = trackCourses(track.id).filter(course => (manager() || course.active || courseProgress(enrollment?.id,course.id)?.completed_at) && (!enrollment?.individual_only || courseGrants.some(grant => String(grant.employee_id) === String(enrollment.employee_id) && grant.course_id === course.id)));
     const viewed = reviewEnrollment || enrollment;
     $('capDetailCourses').innerHTML = `<div class="cap-section-head"><div><h2>Cursos da Trilha</h2><p class="muted">${manager()?'Links externos, ordem, conclusão e certificados.':'Acesse o curso e envie o certificado para validação.'}</p></div>${manager()?'<button type="button" class="btn btn-primary" data-cap-action="new-course">+ Adicionar Curso</button>':''}</div>
       <div class="cap-course-list">${list.length ? list.map(course => {
@@ -357,7 +360,7 @@
     const node = $('capEmployeeFocus'); if (!node || !enrollment) return;
     const stats = enrollmentStats(enrollment);
     const track = tracks.find(item => item.id === selectedTrack);
-    node.innerHTML = `<div class="card"><h3>${safe(employeeName(enrollment.employee_id))}</h3><p class="muted">Início: ${fmtDate(enrollment.start_date)} · Prazo: ${fmtDate(enrollment.due_date)} · ${deadline(enrollment)} · Prazo utilizado: ${timeUsed(enrollment)}%</p><p>Concluídos ${stats.done} de ${stats.total} · Pendentes ${stats.pending} · Certificados enviados ${certificateMode(track)==='after_all'?(enrollment.track_certificate_path?1:0):activeCourses(selectedTrack).filter(course=>courseProgress(enrollment.id,course.id)?.certificate_path).length}</p>${bar(stats.pct)}<div class="cap-course-list">${trackCourses(selectedTrack).map(course => {
+    node.innerHTML = `<div class="card"><h3>${safe(employeeName(enrollment.employee_id))}</h3><p class="muted">Início: ${fmtDate(enrollment.start_date)} · Prazo: ${fmtDate(enrollment.due_date)} · ${deadline(enrollment)} · Prazo utilizado: ${timeUsed(enrollment)}%</p><p>Concluídos ${stats.done} de ${stats.total} · Pendentes ${stats.pending} · Certificados enviados ${certificateMode(track)==='after_all'?(enrollment.track_certificate_path?1:0):enrollmentCourses(enrollment).filter(course=>courseProgress(enrollment.id,course.id)?.certificate_path).length}</p>${bar(stats.pct)}<div class="cap-course-list">${trackCourses(selectedTrack).filter(course => !enrollment.individual_only || courseGrants.some(grant => String(grant.employee_id) === String(enrollment.employee_id) && grant.course_id === course.id)).map(course => {
       const item = courseProgress(enrollment.id,course.id), state = courseState(enrollment,course);
       const cert = certificateMode(track)==='per_course' && course.certificate_required ? certificateState(item) : null;
       const rejected = item?.validation_status === 'rejected';
