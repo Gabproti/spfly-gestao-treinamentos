@@ -47,10 +47,6 @@
     document.querySelectorAll('.nav-btn[data-menu]').forEach(button => {
       button.hidden = button.dataset.menu === 'reports' ? !canPage('pageReportEmployee') : currentAccess.access_role !== 'admin';
     });
-    const performanceAccess = canPage('pagePerfHistory');
-    document.getElementById('formsMenu').hidden = !performanceAccess;
-    document.querySelector('.perf-menu-chevron').hidden = !performanceAccess;
-    document.querySelectorAll('#formsMenu [data-page]').forEach(button => { button.hidden = !canPage(button.dataset.page); });
     document.querySelectorAll('[data-perf-manage]').forEach(button => { button.hidden = !(canEdit('employees') && canEdit('trainings')); });
     document.querySelectorAll('[data-requires-page]').forEach(button => { button.hidden = !canPage(button.dataset.requiresPage); });
     document.querySelectorAll('[data-requires-edit]').forEach(button => { button.hidden = !canEdit(button.dataset.requiresEdit); });
