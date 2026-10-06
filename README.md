@@ -1,3 +1,4 @@
+<!-- Publicação V32 reiniciada em 2026-10-06 após incidente do GitHub Actions. -->
 # SPFLY Admin — V32
 
 ## Ações no histórico de avaliações (V32)
