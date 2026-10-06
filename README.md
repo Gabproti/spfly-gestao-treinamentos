@@ -1,5 +1,12 @@
-<!-- Publicação V32 reiniciada em 2026-10-06 após incidente do GitHub Actions. -->
-# SPFLY Admin — V32
+# SPFLY Admin — V33
+
+## Menu Formulários e importação de competências (V33)
+
+**Formulários** agora é um menu próprio, com Competências, Modelos de Avaliação e Histórico de Avaliações. A lista de competências permite cadastrar, editar e inativar. **Importar Competências** lê a primeira aba de um arquivo Excel `.xlsx` ou `.xls` (até 5 MB e 500 linhas) com as colunas Competência, Significado e Peso Máximo. A prévia mostra pesos inválidos e nomes duplicados antes da confirmação; o banco confirma todas as linhas juntas ou nenhuma. Pesos aceitos: 0% a 100%, com até duas casas decimais. O leitor de Excel é carregado sob demanda do CDN oficial do SheetJS.
+
+Os três modelos padrão, a ordem de competências, a criação e impressão das avaliações permanecem. O histórico agora filtra por colaborador, departamento, modelo, responsável, período e status. A escrita continua restrita a administradores ou usuários com edição simultânea em Funcionários e Treinamentos.
+
+Execute `supabase/migration-v33-forms-import.sql` após a V32 e antes de publicar `index.html`, `auth.js`, `performance.js` e `performance.css` V33. Ela preserva os dados existentes e acrescenta a importação atômica de competências.
 
 ## Ações no histórico de avaliações (V32)
 

@@ -5,6 +5,9 @@
   let getEmployees = () => [];
   let competencies = [], models = [], links = [], assessments = [], items = [];
   let competencyId = null, modelId = null, modelChoices = [], assessmentId = null, frozenItems = [], editingAssessment = false;
+  let importRows = [];
+  let xlsxLoading = null;
+  let importReadVersion = 0;
   let loading = null;
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -43,7 +46,7 @@
       if (page === 'pagePerfAssessments') renderOverview();
       if (page === 'pagePerfCompetencies') renderCompetencies();
       if (page === 'pagePerfModels') renderModels();
-      if (page === 'pagePerfHistory') renderHistory();
+      if (page === 'pagePerfHistory') { populateHistoryFilters(); renderHistory(); }
     } catch (error) {
       const id = {pagePerfAssessments:'perfOverview',pagePerfCompetencies:'perfCompetencyList',pagePerfModels:'perfModelList',pagePerfHistory:'perfHistoryList'}[page];
       if (id) $(id).textContent = 'Não foi possível carregar avaliações: ' + error.message;
@@ -55,7 +58,7 @@
     $('perfOverview').innerHTML = `<div class="perf-summary"><div><strong>${models.filter(m=>m.active).length}</strong><span>modelos ativos</span></div><div><strong>${competencies.filter(c=>c.active).length}</strong><span>competências ativas</span></div><div><strong>${drafts}</strong><span>rascunhos</span></div><div><strong>${done}</strong><span>finalizadas</span></div></div><div class="actions">${canManage()?'<button class="btn btn-secondary" onclick="showPage(\'pagePerfCompetencies\')">Competências</button><button class="btn btn-secondary" onclick="showPage(\'pagePerfModels\')">Modelos</button>':''}<button class="btn btn-secondary" onclick="showPage('pagePerfHistory')">Ver histórico</button></div>`;
   }
   function renderCompetencies() {
-    $('perfCompetencyList').innerHTML = competencies.length ? `<div class="table-scroll"><table><thead><tr><th>Competência</th><th>Significado</th><th>Peso máximo</th><th>Status</th><th>Ação</th></tr></thead><tbody>${competencies.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.meaning)}</td><td>${fmt(c.max_weight)}%</td><td><span class="badge ${c.active?'badge-green':'badge-red'}">${c.active?'Ativa':'Inativa'}</span></td><td><button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.editCompetency('${c.id}')">Editar</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Nenhuma competência cadastrada.</div>';
+    $('perfCompetencyList').innerHTML = competencies.length ? `<div class="table-scroll"><table><thead><tr><th>Competência</th><th>Significado</th><th>Peso Máximo</th><th>Status</th><th>Ações</th></tr></thead><tbody>${competencies.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.meaning)}</td><td>${fmt(c.max_weight)}%</td><td><span class="badge ${c.active?'badge-green':'badge-red'}">${c.active?'Ativo':'Inativo'}</span></td><td>${canManage()?`<div class="perf-row-actions"><button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.editCompetency('${c.id}')">Editar</button>${c.active?`<button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.inactivateCompetency('${c.id}')">Inativar</button>`:''}</div>`:'—'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Nenhuma competência cadastrada.</div>';
   }
   function editCompetency(id = null) {
     competencyId = id;
@@ -68,6 +71,7 @@
     message('perfCompetencyMessage',''); openDialog('perfCompetencyDialog');
   }
   async function saveCompetency() {
+    if (!canManage()) return;
     if (!$('perfCompetencyForm').reportValidity()) return;
     const { error } = await client.rpc('perf_save_competency', {target_id:competencyId,
       next_name:$('perfCompetencyName').value.trim(),next_meaning:$('perfCompetencyMeaning').value.trim(),
@@ -75,13 +79,114 @@
     if (error) { message('perfCompetencyMessage',error.message); return; }
     closeDialog('perfCompetencyDialog'); await refresh(); renderCompetencies();
   }
+  async function inactivateCompetency(id) {
+    if (!canManage()) return;
+    const c = competencies.find(x => x.id === id);
+    if (!c || !c.active || !window.confirm(`Inativar a competência “${c.name}”?`)) return;
+    const {error} = await client.rpc('perf_save_competency', {target_id:c.id,
+      next_name:c.name,next_meaning:c.meaning,next_weight:c.max_weight,next_active:false});
+    if (error) { alert('Não foi possível inativar: ' + error.message); return; }
+    await refresh(); renderCompetencies();
+  }
+  const competencyKey = value => String(value ?? '').trim().toLocaleLowerCase('pt-BR');
+  const normalizeHeader = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .trim().toLowerCase().replace(/\s+/g,' ');
+  function parseWeight(value) {
+    const raw = String(value ?? '').trim().replace(/\s/g,'').replace(/%$/,'').replace(',','.');
+    if (!/^(?:\d{1,3})(?:\.\d{1,2})?$/.test(raw)) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+  }
+  function openImport() {
+    if (!canManage()) return;
+    importReadVersion++;
+    importRows = [];
+    $('perfImportFile').value = '';
+    message('perfImportMessage','');
+    renderImportPreview();
+    openDialog('perfImportDialog');
+  }
+  function renderImportPreview() {
+    const valid = importRows.length > 0 && importRows.every(row => row.issues.length === 0);
+    $('perfImportConfirm').disabled = !valid;
+    $('perfImportPreview').innerHTML = importRows.length ? `<div class="table-scroll"><table><thead><tr><th>Linha</th><th>Competência</th><th>Significado</th><th>Peso Máximo</th><th>Situação</th></tr></thead><tbody>${importRows.map(row => `<tr><td>${row.line}</td><td>${esc(row.name)}</td><td>${esc(row.meaning)}</td><td>${row.weight===null?esc(row.weightText):fmt(row.weight)+'%'}</td><td class="${row.issues.length?'perf-import-error':'perf-import-valid'}">${esc(row.issues.join('; ') || 'Válida')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Selecione uma planilha para conferir as competências.</div>';
+    if (importRows.length) message('perfImportMessage',valid?`${importRows.length} competência(s) pronta(s) para importar.`:'Corrija as linhas indicadas na planilha e selecione o arquivo novamente.');
+  }
+  async function ensureExcelReader() {
+    if (window.XLSX) return;
+    if (!xlsxLoading) xlsxLoading = new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+      script.async=true;
+      script.onload=()=>window.XLSX?resolve():reject(new Error('O leitor de Excel não iniciou.'));
+      script.onerror=()=>reject(new Error('Não foi possível carregar o leitor de Excel.'));
+      document.head.appendChild(script);
+    }).catch(error=>{xlsxLoading=null;throw error;});
+    return xlsxLoading;
+  }
+  async function readImportFile(file) {
+    const readVersion = ++importReadVersion;
+    importRows = [];
+    renderImportPreview();
+    message('perfImportMessage','');
+    if (!file) return;
+    if (!/\.(xlsx|xls)$/i.test(file.name) || file.size > 5*1024*1024) {
+      message('perfImportMessage','Selecione um arquivo Excel .xlsx ou .xls com até 5 MB.'); return;
+    }
+    try {
+      message('perfImportMessage','Lendo planilha...');
+      await ensureExcelReader();
+      if (readVersion !== importReadVersion) return;
+      const workbook = window.XLSX.read(await file.arrayBuffer(),{type:'array',cellText:true});
+      if (readVersion !== importReadVersion) return;
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      if (!sheet) throw new Error('A primeira aba está vazia.');
+      const matrix = window.XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,defval:''});
+      if (!matrix.length) throw new Error('A primeira aba está vazia.');
+      const headers = matrix[0].map(normalizeHeader);
+      const positions = ['competencia','significado','peso maximo'].map(label => headers.indexOf(label));
+      if (positions.some(i=>i<0)) throw new Error('A primeira linha deve conter Competência, Significado e Peso Máximo.');
+      const data = matrix.slice(1).map((cells,i)=>({cells,line:i+2})).filter(({cells})=>cells.some(cell=>String(cell??'').trim()));
+      if (!data.length) throw new Error('A planilha não contém competências.');
+      if (data.length>500) throw new Error('Importe no máximo 500 competências por arquivo.');
+      const seen = new Set();
+      const existing = new Set(competencies.map(c=>competencyKey(c.name)));
+      importRows = data.map(({cells,line})=>{
+        const name=String(cells[positions[0]]??'').trim(),meaning=String(cells[positions[1]]??'').trim();
+        const weightText=String(cells[positions[2]]??'').trim(),weight=parseWeight(weightText),issues=[];
+        if (name.length<2 || name.length>160) issues.push('Informe a competência (2 a 160 caracteres)');
+        if (meaning.length<2 || meaning.length>2000) issues.push('Informe o significado (2 a 2000 caracteres)');
+        if (weight===null) issues.push('Peso inválido: use 0% a 100%, com até 2 casas decimais');
+        const key=competencyKey(name);
+        if (key && (seen.has(key)||existing.has(key))) issues.push('Competência duplicada');
+        seen.add(key);
+        return {line,name,meaning,weight,weightText,issues};
+      });
+      renderImportPreview();
+    } catch (error) { if (readVersion === importReadVersion) message('perfImportMessage','Não foi possível ler a planilha: '+error.message); }
+  }
+  async function confirmImport() {
+    if (!canManage() || !importRows.length || importRows.some(row=>row.issues.length)) return;
+    const button=$('perfImportConfirm'); button.disabled=true; button.textContent='Importando...';
+    const next_rows=importRows.map(({name,meaning,weight})=>({name,meaning,weight}));
+    try {
+      const {data,error}=await client.rpc('perf_import_competencies',{next_rows});
+      if (error) throw error;
+      closeDialog('perfImportDialog'); importRows=[]; await refresh(); renderCompetencies();
+      $('perfCompetencyNotice').textContent=`${data} competência(s) importada(s) com sucesso.`;
+    } catch (error) {
+      message('perfImportMessage','Não foi possível importar: '+error.message);
+      button.disabled=false;
+    } finally { button.textContent='Confirmar importação'; }
+  }
   function renderModels() {
     $('perfModelList').innerHTML = models.map(m => {
       const selected = modelItems(m.id), weight = totalWeight(selected);
-      return `<div class="card perf-model-card"><div><h2>${esc(m.name)}</h2><div class="muted">${esc(m.audience || 'Público não informado')} · ${selected.length} competência(s) · Peso ${fmt(weight)}% · ${m.active?'Ativo':'Inativo'}</div></div><button class="btn btn-secondary" onclick="SPFLY_PERF.editModel('${m.id}')">Editar modelo</button></div>`;
+      return `<div class="card perf-model-card"><div><h2>${esc(m.name)}</h2><div class="muted">${esc(m.audience || 'Público não informado')} · ${selected.length} competência(s) · Peso ${fmt(weight)}% · ${m.active?'Ativo':'Inativo'}</div></div>${canManage()?`<button class="btn btn-secondary" onclick="SPFLY_PERF.editModel('${m.id}')">Editar modelo</button>`:''}</div>`;
     }).join('') || '<div class="card empty">Nenhum modelo encontrado.</div>';
   }
   function editModel(id = null) {
+    if (!canManage()) return;
     modelId = id;
     const m = modelById(id);
     modelChoices = links.filter(x => x.model_id === id).sort((a,b) => a.display_order-b.display_order).map(x => x.competency_id);
@@ -106,6 +211,7 @@
   function moveModelCompetency(index,offset) { const to=index+offset;if(to<0||to>=modelChoices.length)return;[modelChoices[index],modelChoices[to]]=[modelChoices[to],modelChoices[index]];renderModelChoices(); }
   function removeModelCompetency(index) { modelChoices.splice(index,1);renderModelChoices(); }
   async function saveModel() {
+    if (!canManage()) return;
     const name=$('perfModelName').value.trim(); if(name.length<3){message('perfModelMessage','Informe o nome do modelo.');return;}
     const {data,error}=await client.rpc('perf_save_model',{target_id:modelId,next_name:name,
       next_audience:$('perfModelAudience').value.trim(),next_active:$('perfModelActive').value==='true'});
@@ -114,9 +220,26 @@
     if(linkError){modelId=data;message('perfModelMessage','Modelo salvo, mas as competências não foram atualizadas: '+linkError.message);return;}
     closeDialog('perfModelDialog');await refresh();renderModels();
   }
+  function populateHistoryFilters() {
+    const fields=[['perfHistoryDepartment','department','Todos os departamentos'],
+      ['perfHistoryModel','model_name','Todos os modelos'],['perfHistoryEvaluator','evaluator','Todos os responsáveis']];
+    fields.forEach(([id,key,label])=>{
+      const element=$(id),previous=element.value;
+      const values=[...new Set(assessments.map(a=>String(a[key]||'').trim()).filter(Boolean))]
+        .sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      element.innerHTML=`<option value="">${label}</option>`+values.map(value=>`<option value="${esc(value)}">${esc(value)}</option>`).join('');
+      if(values.includes(previous))element.value=previous;
+    });
+  }
   function renderHistory() {
     const term=$('perfHistorySearch').value.trim().toLocaleLowerCase('pt-BR'),status=$('perfHistoryStatus').value;
-    const rows=assessments.filter(a=>(!status||a.status===status)&&(!term||[a.employee_name,a.model_name,a.evaluator,a.department].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(term))));
+    const department=$('perfHistoryDepartment').value,model=$('perfHistoryModel').value,
+      evaluator=$('perfHistoryEvaluator').value,from=$('perfHistoryFrom').value,to=$('perfHistoryTo').value;
+    const rows=assessments.filter(a=>(!status||a.status===status) &&
+      (!term||String(a.employee_name||'').toLocaleLowerCase('pt-BR').includes(term)) &&
+      (!department||a.department===department) && (!model||a.model_name===model) &&
+      (!evaluator||a.evaluator===evaluator) && (!from||a.evaluation_date>=from) &&
+      (!to||a.evaluation_date<=to));
     $('perfHistoryList').innerHTML = rows.length ? `<div class="table-scroll"><table><thead><tr><th>Colaborador</th><th>Departamento / cargo</th><th>Modelo</th><th>Responsável</th><th>Data</th><th>Resultado</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(a=>{
       const actions=`<div class="perf-row-actions"><button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.openAssessment('${a.id}',false)">Visualizar</button>${canManage()?`<button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.openAssessment('${a.id}',true)">Editar</button>`:''}<button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.preview('${a.id}')">Imprimir</button>${canManage()?`<button class="btn btn-secondary btn-sm perf-delete" onclick="SPFLY_PERF.deleteAssessment('${a.id}')">Excluir</button>`:''}</div>`;
       return `<tr><td><strong>${esc(a.employee_name)}</strong></td><td>${esc(a.department)}<br><small>${esc(a.position_name)}</small></td><td>${esc(a.model_name)}</td><td>${esc(a.evaluator)}</td><td>${dateBR(a.evaluation_date)}</td><td>${a.final_result===null?'—':fmt(a.final_result)+'%'}</td><td><span class="badge ${a.status==='finalized'?'badge-green':'badge-orange'}">${a.status==='finalized'?'Finalizada':'Rascunho'}</span></td><td>${actions}</td></tr>`;
@@ -231,6 +354,7 @@
     openDialog('perfPrintDialog');
   }
   window.SPFLY_PERF={configure(c,a,employees){client=c;access=a;getEmployees=employees;refresh().catch(()=>{});},render,refresh,
-    editCompetency,saveCompetency,editModel,saveModel,addModelCompetency,moveModelCompetency,removeModelCompetency,
+    editCompetency,saveCompetency,inactivateCompetency,openImport,readImportFile,confirmImport,
+    editModel,saveModel,addModelCompetency,moveModelCompetency,removeModelCompetency,
     newAssessment,openAssessment,changeEmployee,changeModel,updateResult,saveAssessment,saveExisting,deleteAssessment,renderHistory,preview,closeDialog};
 })();
