@@ -168,6 +168,7 @@
     }
     window.SPFLY_CAP?.configure(client, admin, user, employees);
     window.SPFLY_PERF?.configure(client, admin, () => employees);
+    window.SPFLY_EFFICACY?.configure(client, admin, () => employees, () => trainings);
     renderCreateEmployeeOptions();
 
     const displayName = admin.full_name.trim();

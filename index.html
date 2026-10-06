@@ -259,7 +259,9 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 }
 </style>
 <link rel="stylesheet" href="capacitation.css?v=30">
-<link rel="stylesheet" href="performance.css?v=33">
+<link rel="stylesheet" href="performance.css?v=34">
+<link rel="stylesheet" href="efficacy.css?v=35">
+<link rel="stylesheet" href="training-print.css?v=36">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -312,8 +314,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div class="nav-section">
     <button class="nav-btn active" data-page="dashboard"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-home"/></svg><span class="nav-label">Início</span></button>
     <button class="nav-btn" data-page="pageTrainings"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg><span class="nav-label">Treinamentos</span></button>
-    <button class="nav-btn" data-page="pagePerfAssessments"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-database"/></svg><span class="nav-label">Formulários</span><span class="nav-chevron perf-menu-chevron" hidden>⌄</span></button>
-    <div class="subnav" id="formsMenu" hidden><button data-page="pagePerfCompetencies">Competências</button><button data-page="pagePerfModels">Modelos de Avaliação</button><button data-page="pagePerfHistory">Histórico de Avaliações</button></div>
+    <button class="nav-btn" data-page="pagePerfAssessments"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-database"/></svg><span class="nav-label">Formulários</span></button>
     <button class="nav-btn" data-page="pageCapacitation"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-cap"/></svg><span class="nav-label">Capacitação</span></button>
     <button class="nav-btn" data-page="pageEmployees"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Funcionários</span></button>
     <button class="nav-btn" data-menu="reports"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg><span class="nav-label">Relatórios</span><span class="nav-chevron">⌄</span></button>
@@ -333,12 +334,12 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 
 <section class="content">
 <div id="pagePerfAssessments" class="page perf-page"><div class="header-row"><div><h1>Avaliações de Desempenho</h1><div class="muted">Formulários vinculados aos colaboradores.</div></div><button type="button" class="btn btn-primary" data-perf-manage onclick="SPFLY_PERF.newAssessment()">+ Nova Avaliação</button></div><div class="card"><p>Selecione um modelo e um colaborador para iniciar. Você poderá salvar um rascunho e continuar depois.</p><div id="perfOverview"></div></div></div>
-<div id="pagePerfCompetencies" class="page perf-page"><div class="header-row"><div><h1>Competências</h1><div class="muted">Cadastre significado e peso para usar nos modelos.</div></div><div class="actions"><button type="button" class="btn btn-secondary" data-perf-manage onclick="SPFLY_PERF.openImport()">Importar Competências</button><button type="button" class="btn btn-primary" data-perf-manage onclick="SPFLY_PERF.editCompetency()">+ Nova Competência</button></div></div><div class="card"><div id="perfCompetencyNotice" role="status"></div><div id="perfCompetencyList"></div></div></div>
+<div id="pagePerfCompetencies" class="page perf-page"><div class="header-row"><div><h1>Competências</h1><div class="muted">Cadastre as competências; defina os pesos em cada modelo.</div></div><div class="actions"><button type="button" class="btn btn-secondary" data-perf-manage onclick="SPFLY_PERF.openImport()">Importar Competências</button><button type="button" class="btn btn-primary" data-perf-manage onclick="SPFLY_PERF.editCompetency()">+ Nova Competência</button></div></div><div class="card"><div id="perfCompetencyNotice" role="status"></div><div id="perfCompetencyList"></div></div></div>
 <div id="pagePerfModels" class="page perf-page"><div class="header-row"><div><h1>Modelos de Avaliação</h1><div class="muted">Monte e ordene as competências de cada formulário.</div></div><button type="button" class="btn btn-primary" data-perf-manage onclick="SPFLY_PERF.editModel()">+ Novo Modelo</button></div><div id="perfModelList"></div></div>
 <div id="pagePerfHistory" class="page perf-page"><div class="header-row"><div><h1>Histórico de Avaliações</h1><div class="muted">Rascunhos e avaliações finalizadas.</div></div><button type="button" class="btn btn-primary" data-perf-manage onclick="SPFLY_PERF.newAssessment()">+ Nova Avaliação</button></div><div class="card"><div class="perf-history-filters"><input type="search" id="perfHistorySearch" placeholder="Buscar colaborador..." aria-label="Buscar colaborador" oninput="SPFLY_PERF.renderHistory()"><select id="perfHistoryDepartment" aria-label="Filtrar departamento" onchange="SPFLY_PERF.renderHistory()"><option value="">Todos os departamentos</option></select><select id="perfHistoryModel" aria-label="Filtrar modelo" onchange="SPFLY_PERF.renderHistory()"><option value="">Todos os modelos</option></select><select id="perfHistoryEvaluator" aria-label="Filtrar responsável" onchange="SPFLY_PERF.renderHistory()"><option value="">Todos os responsáveis</option></select><label>De <input type="date" id="perfHistoryFrom" aria-label="Data inicial" onchange="SPFLY_PERF.renderHistory()"></label><label>Até <input type="date" id="perfHistoryTo" aria-label="Data final" onchange="SPFLY_PERF.renderHistory()"></label><select id="perfHistoryStatus" aria-label="Filtrar status" onchange="SPFLY_PERF.renderHistory()"><option value="">Todos os status</option><option value="draft">Rascunho</option><option value="finalized">Finalizada</option></select></div><div id="perfHistoryList"></div></div></div>
-<div id="pagePerfEditor" class="page perf-page"><div class="header-row"><div><h1 id="perfEditorTitle">Nova Avaliação</h1><div class="muted">Competência, significado e peso são fixos. Preencha apenas a avaliação.</div></div><button type="button" class="btn btn-secondary" onclick="showPage('pagePerfHistory')">Voltar</button></div><div class="card form-card"><div class="form-grid"><div class="field"><label for="perfEmployee">Colaborador *</label><select id="perfEmployee" onchange="SPFLY_PERF.changeEmployee()"></select></div><div class="field"><label for="perfModel">Modelo *</label><select id="perfModel" onchange="SPFLY_PERF.changeModel()"></select></div><div class="field"><label for="perfEmployeeName">Nome do colaborador *</label><input id="perfEmployeeName" maxlength="160" readonly></div><div class="field"><label for="perfDepartment">Departamento</label><input id="perfDepartment" readonly></div><div class="field"><label for="perfPosition">Cargo</label><input id="perfPosition" readonly></div><div class="field"><label for="perfAdmission">Data de admissão</label><input id="perfAdmission" type="date" readonly></div><div class="field"><label for="perfEvaluator">Responsável pela avaliação *</label><input id="perfEvaluator" maxlength="160"></div><div class="field"><label for="perfDate">Data da avaliação *</label><input id="perfDate" type="date"></div></div><div id="perfScoreTable"></div><div id="perfResult" class="perf-result"></div><div id="perfEditorMessage" role="status"></div><div class="actions" id="perfEditorActions"><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.saveAssessment(false)">Salvar rascunho</button><button type="button" class="btn btn-primary" onclick="SPFLY_PERF.saveAssessment(true)">Finalizar avaliação</button><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.preview()">Visualizar impressão</button></div></div></div>
-<dialog id="perfCompetencyDialog" class="employee-dialog employee-edit-dialog"><div class="modal-head"><h2 id="perfCompetencyTitle">Competência</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfCompetencyDialog')" aria-label="Fechar">✕</button></div><form id="perfCompetencyForm" class="form-grid" onsubmit="event.preventDefault();SPFLY_PERF.saveCompetency()"><div class="field full"><label for="perfCompetencyName">Nome *</label><input id="perfCompetencyName" required maxlength="160"></div><div class="field full"><label for="perfCompetencyMeaning">Significado *</label><textarea id="perfCompetencyMeaning" required maxlength="2000"></textarea></div><div class="field"><label for="perfCompetencyWeight">Peso máximo (%) *</label><input id="perfCompetencyWeight" type="number" min="0" max="100" step="0.01" required></div><div class="field"><label for="perfCompetencyActive">Status</label><select id="perfCompetencyActive"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></form><div id="perfCompetencyMessage" role="status"></div><div class="actions"><button class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfCompetencyDialog')">Cancelar</button><button class="btn btn-primary" onclick="SPFLY_PERF.saveCompetency()">Salvar</button></div></dialog>
-<dialog id="perfImportDialog" class="employee-dialog perf-import-dialog"><div class="modal-head"><h2>Importar Competências</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfImportDialog')" aria-label="Fechar">✕</button></div><p class="muted">Selecione uma planilha Excel (.xlsx ou .xls) de até 5 MB. A primeira linha deve conter Competência, Significado e Peso Máximo. Confira todas as linhas antes de importar.</p><label class="field">Arquivo Excel <input id="perfImportFile" type="file" accept=".xlsx,.xls" onchange="SPFLY_PERF.readImportFile(this.files[0])"></label><div id="perfImportMessage" role="status"></div><div id="perfImportPreview"></div><div class="actions"><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfImportDialog')">Cancelar</button><button type="button" id="perfImportConfirm" class="btn btn-primary" onclick="SPFLY_PERF.confirmImport()" disabled>Confirmar importação</button></div></dialog>
+<div id="pagePerfEditor" class="page perf-page"><div class="header-row"><div><h1 id="perfEditorTitle">Nova Avaliação</h1><div class="muted">Competência, significado e peso do modelo são fixos. Preencha apenas a avaliação.</div></div><button type="button" class="btn btn-secondary" onclick="showPage('pagePerfHistory')">Voltar</button></div><div class="card form-card"><div class="form-grid"><div class="field"><label for="perfEmployee">Colaborador *</label><select id="perfEmployee" onchange="SPFLY_PERF.changeEmployee()"></select></div><div class="field"><label for="perfModel">Modelo *</label><select id="perfModel" onchange="SPFLY_PERF.changeModel()"></select></div><div class="field"><label for="perfEmployeeName">Nome do colaborador *</label><input id="perfEmployeeName" maxlength="160" readonly></div><div class="field"><label for="perfDepartment">Departamento</label><input id="perfDepartment" readonly></div><div class="field"><label for="perfPosition">Cargo</label><input id="perfPosition" readonly></div><div class="field"><label for="perfAdmission">Data de admissão</label><input id="perfAdmission" type="date" readonly></div><div class="field"><label for="perfEvaluator">Responsável pela avaliação *</label><input id="perfEvaluator" maxlength="160"></div><div class="field"><label for="perfDate">Data da avaliação *</label><input id="perfDate" type="date"></div></div><div id="perfScoreTable"></div><div id="perfResult" class="perf-result"></div><div id="perfEditorMessage" role="status"></div><div class="actions" id="perfEditorActions"><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.saveAssessment(false)">Salvar rascunho</button><button type="button" class="btn btn-primary" onclick="SPFLY_PERF.saveAssessment(true)">Finalizar avaliação</button><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.preview()">Visualizar impressão</button></div></div></div>
+<dialog id="perfCompetencyDialog" class="employee-dialog employee-edit-dialog"><div class="modal-head"><h2 id="perfCompetencyTitle">Competência</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfCompetencyDialog')" aria-label="Fechar">✕</button></div><form id="perfCompetencyForm" class="form-grid" onsubmit="event.preventDefault();SPFLY_PERF.saveCompetency()"><div class="field full"><label for="perfCompetencyName">Nome *</label><input id="perfCompetencyName" required maxlength="160"></div><div class="field full"><label for="perfCompetencyMeaning">Significado *</label><textarea id="perfCompetencyMeaning" required maxlength="2000"></textarea></div><div class="field"><label for="perfCompetencyActive">Status</label><select id="perfCompetencyActive"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></form><div id="perfCompetencyMessage" role="status"></div><div class="actions"><button class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfCompetencyDialog')">Cancelar</button><button class="btn btn-primary" onclick="SPFLY_PERF.saveCompetency()">Salvar</button></div></dialog>
+<dialog id="perfImportDialog" class="employee-dialog perf-import-dialog"><div class="modal-head"><h2>Importar Competências</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfImportDialog')" aria-label="Fechar">✕</button></div><p class="muted">Selecione uma planilha Excel (.xlsx ou .xls) de até 5 MB. A primeira linha deve conter Competência e Significado. Confira todas as linhas antes de importar.</p><label class="field">Arquivo Excel <input id="perfImportFile" type="file" accept=".xlsx,.xls" onchange="SPFLY_PERF.readImportFile(this.files[0])"></label><div id="perfImportMessage" role="status"></div><div id="perfImportPreview"></div><div class="actions"><button type="button" class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfImportDialog')">Cancelar</button><button type="button" id="perfImportConfirm" class="btn btn-primary" onclick="SPFLY_PERF.confirmImport()" disabled>Confirmar importação</button></div></dialog>
 <dialog id="perfModelDialog" class="employee-dialog"><div class="modal-head"><h2 id="perfModelTitle">Modelo de Avaliação</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfModelDialog')" aria-label="Fechar">✕</button></div><div class="form-grid"><div class="field full"><label for="perfModelName">Nome *</label><input id="perfModelName" required maxlength="160"></div><div class="field"><label for="perfModelAudience">Público</label><input id="perfModelAudience" maxlength="120"></div><div class="field"><label for="perfModelActive">Status</label><select id="perfModelActive"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></div><h3>Competências do modelo</h3><div class="perf-model-picker"><select id="perfModelAdd"></select><button class="btn btn-secondary" onclick="SPFLY_PERF.addModelCompetency()">Adicionar</button></div><div id="perfModelChoices"></div><div id="perfModelTotal" class="perf-result"></div><div id="perfModelMessage" role="status"></div><div class="actions"><button class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfModelDialog')">Cancelar</button><button class="btn btn-primary" onclick="SPFLY_PERF.saveModel()">Salvar modelo</button></div></dialog>
 <dialog id="perfPrintDialog" class="employee-dialog perf-print-dialog"><div class="modal-head perf-no-print"><h2>Visualizar impressão</h2><button class="close" type="button" onclick="SPFLY_PERF.closeDialog('perfPrintDialog')" aria-label="Fechar">✕</button></div><div id="perfPrintContent"></div><div class="actions perf-no-print"><button class="btn btn-secondary" onclick="SPFLY_PERF.closeDialog('perfPrintDialog')">Fechar</button><button class="btn btn-primary" onclick="window.print()">Imprimir</button></div></dialog>
 <div id="pageAdmins" class="page">
@@ -444,7 +445,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
       <h1 id="detailTitle">Gerenciar treinamento</h1>
       <div class="muted">Complete o registro após a realização do treinamento.</div>
     </div>
-    <div class="training-header-actions"><button type="button" id="detailPrintBtn" class="btn btn-secondary" onclick="window.print()">Imprimir</button><button id="detailEditBtn" class="btn btn-secondary">🔒 Bloquear edição</button><button id="detailDeleteBtn" class="btn btn-danger" hidden>Excluir treinamento</button></div>
+    <div class="training-header-actions"><button type="button" id="detailPrintAttendanceBtn" class="btn btn-secondary">Imprimir Lista de Presença</button><button type="button" id="detailPrintExtractBtn" class="btn btn-secondary">Imprimir Extrato</button><button id="detailEditBtn" class="btn btn-secondary">🔒 Bloquear edição</button><button id="detailDeleteBtn" class="btn btn-danger" hidden>Excluir treinamento</button></div>
   </div>
   <div id="detailContent"></div>
 </div>
@@ -514,6 +515,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 </section>
 </main>
 </div>
+<div id="trainingPrintDocument" aria-hidden="true"></div>
 
 <div class="modal" id="modal"><div class="modal-box"><div class="modal-head"><h2 id="modalTitle">Detalhes</h2><button class="close" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
 <dialog id="employeeImportDialog" class="employee-dialog"><div class="modal-head"><h2>Importar Funcionários</h2><button class="close" type="button" onclick="SPFLY_EMPLOYEE.closeImport()" aria-label="Fechar">✕</button></div><p class="muted">Use um CSV UTF-8 com separador ponto e vírgula. Confira os registros antes de salvar.</p><div class="actions employee-actions"><button type="button" class="btn btn-secondary" onclick="SPFLY_EMPLOYEE.downloadTemplate()">Baixar modelo de importação</button><label class="btn btn-primary employee-file-label">Selecionar CSV<input id="employeeImportFile" type="file" accept=".csv,text/csv" onchange="SPFLY_EMPLOYEE.readImportFile(this.files[0])" hidden></label></div><div id="employeeImportPreview"></div><div class="actions"><button type="button" class="btn btn-secondary" onclick="SPFLY_EMPLOYEE.closeImport()">Cancelar</button><button id="employeeImportConfirm" type="button" class="btn btn-primary" onclick="SPFLY_EMPLOYEE.confirmImport()" disabled>Confirmar importação</button></div></dialog>
@@ -541,7 +543,6 @@ function showPage(id){
  if(page) page.classList.add("active");
  const parent=id==="pageNewEmployee"?"pageEmployees":(["pageNewTraining","pageTrainingDetail"].includes(id)?"pageTrainings":(id.startsWith('pagePerf')?"pagePerfAssessments":(["pageCapTrackForm","pageCapTrackDetail"].includes(id)?"pageCapacitation":id)));
  document.querySelectorAll(".nav-btn").forEach(button=>button.classList.toggle("active",button.dataset.page===parent||(parent?.startsWith("pageReport")&&button.dataset.menu==="reports")));
- document.getElementById('formsMenu').classList.toggle('open',id.startsWith('pagePerf'));
  if(id==="pageEmployees")renderEmployees();
  if(id==="pageTrainings")renderTrainings();
  if(id==="pageReportEmployee")fillReportEmployees();
@@ -735,6 +736,11 @@ function viewEmployee(id){
  const e=employees.find(x=>x.id===id), hist=activeTrainings().filter(t=>t.participants.includes(id));
  document.getElementById("modalTitle").textContent=e.name;
  document.getElementById("modalBody").innerHTML=`<p><strong>${esc(e.documentType||"CPF")}:</strong> ${esc(e.cpf)} &nbsp; <strong>Matrícula:</strong> ${esc(e.mat)}</p><p><strong>Setor:</strong> ${esc(e.sector)} &nbsp; <strong>Cargo:</strong> ${esc(e.role)}</p><p id="employeeSystemsView" data-employee-id="${Number(e.id)}"><strong>Sistemas utilizados:</strong> Carregando...</p>${SPFLY_AUTH.canEdit('employees')?`<button class="btn btn-secondary" onclick="editEmployee(${Number(e.id)})">Editar funcionário</button>`:''}<hr><h3>Histórico de treinamentos</h3>${hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${Number(t.id)})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum treinamento registrado.</div>`}`;
+ if(window.SPFLY_EFFICACY?.canView()){
+   const section=document.createElement('section');
+   section.innerHTML=`<hr><h3>Histórico de avaliações de eficácia</h3><div id="employeeEfficacyHistory" data-employee-id="${Number(id)}">Carregando avaliações...</div>`;
+   document.getElementById('modalBody').append(section);
+ }
  const showCapHistory=window.SPFLY_CAP?.canViewEmployeeHistory(id);
  if(showCapHistory){
    const section=document.createElement('section');
@@ -744,6 +750,7 @@ function viewEmployee(id){
  document.getElementById("modal").classList.add("open");
  SPFLY_AUTH.getClient().from('cap_employee_systems').select('system_code').eq('employee_id',id).then(({data,error})=>{const node=document.querySelector(`#employeeSystemsView[data-employee-id="${Number(id)}"]`);if(node)node.innerHTML='<strong>Sistemas utilizados:</strong> '+esc(error?'Não disponível':(data||[]).map(row=>row.system_code).sort().join(' + ')||'Não informado')});
  if(showCapHistory)window.SPFLY_CAP.renderEmployeeHistory(id);
+ window.SPFLY_EFFICACY?.renderEmployeeHistory(id);
  window.SPFLY_EMPLOYEE?.renderCertificates(id);
  window.SPFLY_EMPLOYEE?.renderAttachments(id);
 }
@@ -803,13 +810,10 @@ function reviewDueDate(training){
 }
 function efficacyState(training){
  if(getTrainingStatus(training)==='Cancelado')return ['Cancelado','badge-black'];
- const reviews=Array.isArray(training.efficacyReviews)?training.efficacyReviews:[];
- if(reviews.length){const result=reviews[reviews.length-1].result;return result==='Eficaz'?['Eficaz','badge-green']:['Não eficaz','badge-red']}
  if(getTrainingStatus(training)!=='Ministrado')return ['Aguardando treinamento','badge-blue'];
- const due=reviewDueDate(training);
- if(!due||!training.reviewMethod)return ['Definir revisão','badge-blue'];
- const today=new Date();today.setHours(0,0,0,0);
- return due<today?['Revisão vencida','badge-red']:['Revisão programada','badge-orange'];
+ const summary=window.SPFLY_EFFICACY?.summary(training);
+ if(!summary?.total)return ['Sem participantes','badge-blue'];
+ return [`${summary.done}/${summary.total} concluídas`,summary.pending?'badge-orange':'badge-green'];
 }
 function efficacyBadge(training){const [label,tone]=efficacyState(training);return `<span class="badge ${tone}">${esc(label)}</span>`}
 function formatReviewDate(value){if(!value)return '—';const [y,m,d]=String(value).slice(0,10).split('-');return y&&m&&d?`${d}/${m}/${y}`:'—'}
@@ -859,19 +863,18 @@ function renderTrainingDayPanel(){
 function openTrainingDetail(id){if(!trainings.some(t=>t.id===id&&!t.deletedAt))return;if(showPage("pageTrainingDetail"))renderTrainingDetail(id)}
 function renderEfficacyCard(training,id,locked,editable,status){
  const due=reviewDueDate(training),reviews=Array.isArray(training.efficacyReviews)?training.efficacyReviews:[];
- const planned=Number.isInteger(Number(training.reviewDays))&&Number(training.reviewDays)>0&&Boolean(training.reviewMethod);
- return `<div class="card" style="margin-top:18px"><div class="table-head"><div><h3>Avaliação de eficácia</h3><p class="muted">Defina quando e como revisar a aplicação do treinamento.</p></div>${efficacyBadge(training)}</div>
+ return `<div class="card" style="margin-top:18px"><div class="table-head"><div><h3>Avaliações de eficácia</h3><p class="muted">Cada participante possui sua própria avaliação, vinculada a um modelo.</p></div>${efficacyBadge(training)}</div>
  <div class="form-grid"><div class="field"><label for="editReviewDays">Período para revisão (dias após o treinamento)</label><input id="editReviewDays" type="number" min="1" max="3650" step="1" value="${esc(training.reviewDays||'')}" ${locked?'disabled':''}></div>
  <div class="field"><label for="editReviewMethod">Método de revisão</label><input id="editReviewMethod" list="reviewMethods" maxlength="120" value="${esc(training.reviewMethod||'')}" placeholder="Selecione ou descreva o método" ${locked?'disabled':''}></div></div>
  <p class="muted">Revisão prevista: <strong>${due?due.toLocaleDateString('pt-BR'):'Não definida'}</strong></p>
- ${!locked?`<div class="actions"><button class="btn btn-secondary" onclick="saveReviewPlan(${id})">Salvar planejamento</button></div>`:''}
- ${status==='Ministrado'&&planned?`<hr><h4>Registrar resultado da revisão</h4><p class="muted">A conclusão do treinamento continua independente desta avaliação. Cada resultado fica no histórico.</p>
- ${editable?`<div class="form-grid"><div class="field"><label for="efficacyReviewedOn">Data da revisão *</label><input id="efficacyReviewedOn" type="date" value="${dateKeyBR(new Date().toLocaleDateString('pt-BR'))}"></div><div class="field"><label for="efficacyResult">Resultado *</label><select id="efficacyResult"><option value="">Selecione</option><option>Eficaz</option><option>Não eficaz</option></select></div><div class="field full"><label for="efficacyNotes">Evidência / justificativa *</label><textarea id="efficacyNotes" maxlength="2000" placeholder="Descreva o que foi observado na revisão"></textarea></div></div><div class="actions"><button class="btn btn-primary" onclick="saveEfficacyReview(${id})">Registrar avaliação</button></div>`:''}`:''}
- ${reviews.length?`<h4>Histórico de avaliações</h4><div class="table-scroll"><table><thead><tr><th>Data</th><th>Resultado</th><th>Método</th><th>Evidência</th></tr></thead><tbody>${reviews.slice().reverse().map(review=>`<tr><td>${esc(formatReviewDate(review.reviewedOn))}</td><td><span class="badge ${review.result==='Eficaz'?'badge-green':'badge-red'}">${esc(review.result)}</span></td><td>${esc(review.method||'—')}</td><td>${esc(review.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`;
+ ${window.SPFLY_EFFICACY?.canView()?`<div id="trainingEfficacy" data-training-id="${Number(id)}" class="efficacy-list">Carregando participantes...</div>`:''}
+ ${reviews.length?`<details class="efficacy-legacy"><summary>Registros anteriores do treinamento (sem vínculo individual)</summary><div class="table-scroll"><table><thead><tr><th>Data</th><th>Resultado</th><th>Método</th><th>Evidência</th></tr></thead><tbody>${reviews.slice().reverse().map(review=>`<tr><td>${esc(formatReviewDate(review.reviewedOn))}</td><td>${esc(review.result)}</td><td>${esc(review.method||'—')}</td><td>${esc(review.notes||'—')}</td></tr>`).join('')}</tbody></table></div></details>`:''}</div>`;
 }
 function renderTrainingDetail(id){
  const t=trainings.find(x=>x.id===id&&!x.deletedAt);if(!t)return;const st=getTrainingStatus(t),editable=SPFLY_AUTH.canEdit('trainings'),locked=!editable||((st==="Ministrado"||st==="Cancelado")&&!t.editMode);
  document.getElementById("detailTitle").textContent=t.name;
+ document.getElementById("detailPrintAttendanceBtn").onclick=()=>SPFLY_PRINT.attendance(id);
+ const extractButton=document.getElementById("detailPrintExtractBtn");extractButton.hidden=!SPFLY_EFFICACY.canView();extractButton.onclick=()=>SPFLY_PRINT.extract(id);
  const b=document.getElementById("detailEditBtn");b.hidden=!editable;b.textContent=locked?"🔓 Alterar registro":"🔒 Bloquear edição";b.onclick=locked?()=>requestTrainingEdit(id):()=>lockTraining(id);
  const deleteButton=document.getElementById("detailDeleteBtn");deleteButton.hidden=!SPFLY_AUTH.isAdmin();deleteButton.onclick=()=>deleteTraining(id);
  document.getElementById("detailContent").innerHTML=`
@@ -889,7 +892,7 @@ function renderTrainingDetail(id){
  <div class="field" id="editOnlineInfoWrap" style="${t.modality==="Online"?"":"display:none"}"><label>Informação do acesso online</label><input id="editOnlineInfo" value="${esc(t.onlineInfo||"")}" ${locked?"disabled":""}></div>
  <div class="field full"><label>Responsável</label><input id="editResp" value="${esc(t.resp||"")}" ${locked?"disabled":""}></div>
  <div class="field full"><label>Descrição</label><textarea id="editDesc" ${locked?"disabled":""}>${esc(t.desc||"")}</textarea></div></div>
- ${!locked?`<div class="actions"><button class="btn btn-primary" onclick="saveTrainingInfo(${id})">Salvar informações</button></div>`:""}</div>
+ </div>
  <div class="card"><h3>Documentação do treinamento</h3>
  <p class="muted">A lista de presença/fotos comprovam a realização. O material abaixo registra o conteúdo utilizado no curso.</p>
  <h4 style="margin:18px 0 8px">📋 Lista de presença / fotos</h4>
@@ -898,13 +901,14 @@ function renderTrainingDetail(id){
  <h4 style="margin:22px 0 8px">📚 Material utilizado no curso</h4>
  ${(t.contentDocs&&t.contentDocs.length)?t.contentDocs.map((d,i)=>`<div class="file-box" style="margin-bottom:8px"><span>📚 <strong>${esc(d)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingContent(${id},${i})">👁 Visualizar</button>${!locked?`<button class="file-remove" type="button" aria-label="Remover anexo" title="Remover anexo" onclick="removeTrainingAttachment(${id},'content',${i})">×</button>`:""}</span></div>`).join(""):(t.contentDoc?`<div class="file-box"><span>📚 <strong>${esc(t.contentDoc)}</strong></span><span class="file-actions"><button class="btn btn-secondary" onclick="previewTrainingContent(${id},0)">👁 Visualizar</button>${!locked?`<button class="file-remove" type="button" aria-label="Remover anexo" title="Remover anexo" onclick="removeTrainingAttachment(${id},'content',0)">×</button>`:""}</span></div>`:`<div class="empty">Nenhum material anexado.</div>`)}
  ${!locked?`<div class="upload" style="margin-top:12px"><strong>📎 Anexar conteúdo do treinamento</strong><span class="muted">PDF, PowerPoint, Word, Excel, imagens ou ZIP.</span><br><input id="contentFile" type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" multiple style="margin-top:15px"></div>`:""}
- <div class="field" style="margin-top:15px"><label>Observações</label><textarea id="detailObs" ${locked?"disabled":""}>${esc(t.obs||"")}</textarea></div>${!locked?`<div class="actions"><button class="btn btn-primary" onclick="saveTrainingDocument(${id})">Salvar documentação</button></div>`:""}</div></div>
+ <div class="field" style="margin-top:15px"><label>Observações</label><textarea id="detailObs" ${locked?"disabled":""}>${esc(t.obs||"")}</textarea></div></div></div>
  <div class="card" style="margin-top:18px"><div class="table-head"><strong>Participantes (${t.participants?.length||0})</strong>${!locked?`<button class="btn btn-primary" onclick="openParticipantEditor(${id})">+ Informar participantes</button>`:""}</div>
  <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th><th>Cargo</th><th>Presença</th><th>Ação</th></tr></thead><tbody>${t.participants?.length?t.participants.map(pid=>{const e=employees.find(x=>x.id===pid);return e?`<tr><td>${esc(e.mat)}</td><td>${esc(e.name)}</td><td>${esc(e.sector)}</td><td>${esc(e.role)}</td><td><span class="badge badge-green">Presente</span></td><td>${locked?"🔒":`<button class="btn btn-danger" onclick="removeParticipant(${Number(id)},${Number(e.id)})">Remover</button>`}</td></tr>`:""}).join(""):`<tr><td colspan="6" class="empty">Nenhum participante informado.</td></tr>`}</tbody></table></div>
  ${st==="Cancelado"?`<div class="cancel-box" style="margin-top:18px"><strong>✕ Motivo do cancelamento</strong><p style="margin:8px 0 0">${esc(t.cancelReason||"Não informado")}</p>${t.cancelledAt?`<div class="help" style="margin-top:6px">Cancelado em ${new Date(t.cancelledAt).toLocaleString("pt-BR")}</div>`:""}</div>`:""}
- <div class="card" style="margin-top:18px"><h3>Status e finalização</h3><p class="muted">Para marcar como concluído, informe participantes e anexe um comprovante. Alterações em registros finalizados exigem liberação da edição.</p>${locked?`<div class="actions"><span class="badge ${statusBadgeClass(st)}" style="padding:10px 14px">${displayTrainingStatus(st)}${editable?' e bloqueado':''}</span></div>`:`<div class="field"><label for="editTrainingStatus">Status do treinamento</label><select id="editTrainingStatus"><option value="Cadastrado" ${st==='Cadastrado'?'selected':''}>Cadastrado</option><option value="Ministrado" ${st==='Ministrado'?'selected':''}>Concluído</option><option value="Cancelado" ${st==='Cancelado'?'selected':''}>Cancelado</option></select></div><div class="actions"><button class="btn btn-primary" onclick="changeTrainingStatus(${id})">Salvar status</button></div>`}</div>
- ${renderEfficacyCard(t,id,locked,editable,st)}`;
+ <div class="card" style="margin-top:18px"><h3>Status e finalização</h3><p class="muted">Para marcar como concluído, informe participantes e anexe um comprovante. Alterações em registros finalizados exigem liberação da edição.</p>${locked?`<div class="actions"><span class="badge ${statusBadgeClass(st)}" style="padding:10px 14px">${displayTrainingStatus(st)}${editable?' e bloqueado':''}</span></div>`:`<div class="field"><label for="editTrainingStatus">Status do treinamento</label><select id="editTrainingStatus"><option value="Cadastrado" ${st==='Cadastrado'?'selected':''}>Cadastrado</option><option value="Ministrado" ${st==='Ministrado'?'selected':''}>Concluído</option><option value="Cancelado" ${st==='Cancelado'?'selected':''}>Cancelado</option></select></div>`}</div>
+ ${renderEfficacyCard(t,id,locked,editable,st)}${!locked?`<div class="actions training-save-actions"><button class="btn btn-primary" onclick="saveTrainingDetails(${id})">Salvar treinamento</button></div>`:""}`;
  toggleEditLocationFields();
+ window.SPFLY_EFFICACY?.renderTraining(t);
 }
 async function saveReviewPlan(id){
  const training=trainings.find(item=>item.id===id&&!item.deletedAt);if(!training||!SPFLY_AUTH.canEdit('trainings'))return;
@@ -915,20 +919,6 @@ async function saveReviewPlan(id){
  const next=trainings.map(item=>item.id===id?{...item,reviewDays:days,reviewMethod:method}:item);
  if(!await SPFLY_AUTH.persist(employees,next))return;
  trainings=next;renderTrainingDetail(id);renderTrainings();alert('Planejamento da revisão salvo.');
-}
-async function saveEfficacyReview(id){
- const training=trainings.find(item=>item.id===id&&!item.deletedAt);
- if(!training||!SPFLY_AUTH.canEdit('trainings')||getTrainingStatus(training)!=='Ministrado')return;
- if(!reviewDueDate(training)||!training.reviewMethod){alert('Defina o período e o método de revisão antes de avaliar.');return}
- const reviewedOn=document.getElementById('efficacyReviewedOn')?.value,result=document.getElementById('efficacyResult')?.value,notes=document.getElementById('efficacyNotes')?.value.trim();
- const trainingDate=dateKeyBR(training.date),today=dateKeyBR(new Date().toLocaleDateString('pt-BR'));
- if(!reviewedOn||reviewedOn<trainingDate||reviewedOn>today){alert('A data da revisão deve estar entre a data do treinamento e hoje.');return}
- if(!['Eficaz','Não eficaz'].includes(result)||!notes||notes.length<3){alert('Selecione o resultado e descreva a evidência da avaliação.');return}
- if(!confirm(`Registrar a avaliação como "${result}"?`))return;
- const review={result,reviewedOn,method:training.reviewMethod,notes,recordedAt:new Date().toISOString()};
- const next=trainings.map(item=>item.id===id?{...item,efficacyReviews:[...(Array.isArray(item.efficacyReviews)?item.efficacyReviews:[]),review]}:item);
- if(!await SPFLY_AUTH.persist(employees,next))return;
- trainings=next;renderTrainingDetail(id);renderTrainings();alert('Avaliação de eficácia registrada.');
 }
 async function deleteTraining(id){
  if(!SPFLY_AUTH.isAdmin())return;
@@ -945,6 +935,78 @@ async function restoreTraining(id){
  const next=trainings.map(t=>{if(t.id!==id)return t;const copy={...t};delete copy.deletedAt;return copy});
  if(!await SPFLY_AUTH.persist(employees,next))return;
  trainings=next;renderTrainings();renderDashboard();
+}
+async function saveTrainingDetails(id){
+ const current=trainings.find(x=>x.id===id&&!x.deletedAt);
+ if(!current||!SPFLY_AUTH.canEdit('trainings'))return;
+ const oldStatus=getTrainingStatus(current);
+ if((oldStatus==='Ministrado'||oldStatus==='Cancelado')&&!current.editMode){alert('Libere a edição antes de alterar este treinamento.');return}
+ const value=name=>document.getElementById(name)?.value||'';
+ const start=value('editStartTime'),end=value('editEndTime');
+ if(!validateTrainingTimes(start,end))return;
+ const name=value('editName').trim(),date=value('editDate'),workloadText=value('editWorkload'),workload=Number(workloadText);
+ const reviewDaysText=value('editReviewDays'),reviewDays=Number(reviewDaysText),reviewMethod=value('editReviewMethod').trim();
+ if(!name||!date||workloadText&&(!Number.isFinite(workload)||workload<=0)){
+  alert('Informe nome, data e carga horária válidos.');return;
+ }
+ const hasReviewPlan=Boolean(reviewDaysText||reviewMethod);
+ if(hasReviewPlan&&(!Number.isInteger(reviewDays)||reviewDays<1||reviewDays>3650||!reviewMethod||reviewMethod==='Outro')){
+  alert('Informe um período de 1 a 3650 dias e descreva o método de revisão.');return;
+ }
+ const files=[...(document.getElementById('detailFile')?.files||[])];
+ const contentFiles=[...(document.getElementById('contentFile')?.files||[])];
+ for(const file of files){if(!['pdf','jpg','jpeg','png'].includes(file.name.split('.').pop().toLowerCase())){
+  alert('Formato de comprovante não permitido: '+file.name);return;
+ }}
+ for(const file of contentFiles){if(!['pdf','ppt','pptx','doc','docx','xls','xlsx','jpg','jpeg','png','zip'].includes(file.name.split('.').pop().toLowerCase())){
+  alert('Formato de conteúdo não permitido: '+file.name);return;
+ }}
+ const next={...current};
+ next.name=name;next.cat=value('editCat');next.date=date.split('-').reverse().join('/');
+ next.startTime=normalizeTime(start);next.endTime=normalizeTime(end);next.time=buildTimeRange(next.startTime,next.endTime);
+ next.workload=value('editWorkload');next.modality=document.querySelector('input[name="editModality"]:checked')?.value||'Local';
+ next.base=next.modality==='Local'?value('editBase'):'';
+ next.onlineInfo=next.modality==='Online'?value('editOnlineInfo').trim():'';
+ next.place=next.modality==='Local'?next.base:'Online';next.resp=value('editResp');next.desc=value('editDesc');
+ if(hasReviewPlan){next.reviewDays=reviewDays;next.reviewMethod=reviewMethod}
+ next.obs=value('detailObs');
+ next.docs=Array.isArray(current.docs)?[...current.docs]:(current.doc?[current.doc]:[]);
+ next.docFiles=Array.isArray(current.docFiles)?[...current.docFiles]:[];
+ next.contentDocs=Array.isArray(current.contentDocs)?[...current.contentDocs]:(current.contentDoc?[current.contentDoc]:[]);
+ next.contentFiles=Array.isArray(current.contentFiles)?[...current.contentFiles]:[];
+ const newStatus=value('editTrainingStatus')||oldStatus;
+ if(!['Cadastrado','Ministrado','Cancelado'].includes(newStatus)){alert('Selecione um status válido.');return}
+ let reason='';
+ if(newStatus!==oldStatus){
+  if(newStatus==='Ministrado'&&(!next.participants?.length||!(next.docs.length||files.length))){
+   alert('Para concluir, informe participantes e anexe ao menos um comprovante.');return;
+  }
+  const answer=prompt('Informe o motivo da alteração de status:');if(answer===null)return;
+  reason=answer.trim();if(!reason){alert('Informe o motivo da alteração.');return}
+  if(!confirm(`Alterar o status de ${displayTrainingStatus(oldStatus)} para ${displayTrainingStatus(newStatus)}?`))return;
+ }
+ const button=document.querySelector('.training-save-actions button');if(button)button.disabled=true;
+ try{
+  for(const file of files){if(!next.docFiles.some(x=>x.name===file.name)){
+   next.docFiles.push(await SPFLY_AUTH.uploadFile(file));next.docs.push(file.name);
+  }}
+  for(const file of contentFiles){if(!next.contentFiles.some(x=>x.name===file.name)){
+   next.contentFiles.push(await SPFLY_AUTH.uploadFile(file));next.contentDocs.push(file.name);
+  }}
+  next.doc=next.docs[0]||'';next.contentDoc=next.contentDocs[0]||'';
+  if(newStatus!==oldStatus){
+   const now=new Date().toISOString();
+   next.statusChanges=[...(current.statusChanges||[]),{from:oldStatus,to:newStatus,reason,at:now}];
+   next.status=newStatus;next.editMode=false;
+   if(newStatus==='Ministrado'){next.deliveredAt=now;next.finalizedAt=now;next.cancelReason='';next.cancelledAt=''}
+   else if(newStatus==='Cancelado'){next.cancelReason=reason;next.cancelledAt=now;next.deliveredAt='';next.finalizedAt=''}
+   else{next.cancelReason='';next.cancelledAt='';next.deliveredAt='';next.finalizedAt=''}
+  }
+  const updated=trainings.map(item=>item.id===id?next:item);
+  if(!await SPFLY_AUTH.persist(employees,updated))return;
+  trainings=updated;renderTrainingDetail(id);renderTrainings();renderDashboard();alert('Treinamento salvo.');
+ }catch(error){alert('Não foi possível salvar o treinamento: '+error.message)}
+ finally{if(button?.isConnected)button.disabled=false}
 }
 async function saveTrainingInfo(id){
  const t=trainings.find(x=>x.id===id);
@@ -1094,7 +1156,7 @@ async function registerTraining(){
  if(!Number.isInteger(reviewDays)||reviewDays<1||reviewDays>3650||!reviewMethod||reviewMethod==='Outro'){alert('Defina o período em dias e descreva o método de revisão.');return}
  const parts=d.split("-").reverse().join("/"), base=modality==="Local"?document.getElementById("tfBase").value:"", onlineInfo=modality==="Online"?(document.getElementById("tfOnlineInfo").value.trim()||""):"";
  const startTime=normalizeTime(start),endTime=normalizeTime(end);
- trainings.push({id:Date.now(),date:parts,name,cat:document.getElementById("tfCat").value,resp:document.getElementById("tfResp").value,startTime,endTime,time:buildTimeRange(startTime,endTime),workload:document.getElementById("tfWorkload").value,modality,base,onlineInfo,place:modality==="Local"?base:"Online",desc:document.getElementById("tfDesc").value,participants:[],docs:[],doc:"",contentDocs:[],contentDoc:"",obs:"",status:"Cadastrado",editMode:false,reviewDays,reviewMethod,efficacyReviews:[]});
+ trainings.push({id:Date.now(),createdAt:new Date().toISOString(),date:parts,name,cat:document.getElementById("tfCat").value,resp:document.getElementById("tfResp").value,startTime,endTime,time:buildTimeRange(startTime,endTime),workload:document.getElementById("tfWorkload").value,modality,base,onlineInfo,place:modality==="Local"?base:"Online",desc:document.getElementById("tfDesc").value,participants:[],docs:[],doc:"",contentDocs:[],contentDoc:"",obs:"",status:"Cadastrado",editMode:false,reviewDays,reviewMethod});
  if(!await persist())return;clearNewTraining();showPage("pageTrainings");renderTrainings();renderDashboard();alert("Treinamento cadastrado. Após ministrá-lo, abra o registro para informar participantes e anexar a comprovação.");
 }
 function clearNewTraining(){["tfName","tfDate","tfWorkload","tfResp","tfDesc","tfOnlineInfo","tfReviewMethod"].forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});document.getElementById('tfReviewDays').value='30';document.getElementById("tfStartTime").value="08:00";document.getElementById("tfEndTime").value="12:00";document.getElementById("tfCat").value="Integração";document.getElementById("tfBase").value="MATRIZ";document.querySelector('input[name="tfModality"][value="Local"]').checked=true;toggleTrainingLocationFields()}
@@ -1119,12 +1181,20 @@ function renderEmployeeReport(){
  const completed=hist.filter(t=>getTrainingStatus(t)==="Ministrado").length;
  dash.innerHTML=`<div class="cards" style="margin-top:16px">${reportKpi("Treinamentos realizados",completed,"✓")}${reportKpi("Participações",hist.length,"♙")}${reportKpi("Setor",esc(e?.sector||"—"),"▣")}${reportKpi("Cargo",esc(e?.role||"—"),"◆")}</div>`;
  box.innerHTML=hist.length?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Responsável</th><th>Presença</th><th>Documento</th></tr></thead><tbody>${hist.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td>${esc(t.resp||"—")}</td><td><span class="badge badge-green">Presente</span></td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewEmployeeAttachment(${t.id})">📎 Ver anexo</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum registro.</div>`;
+ if(window.SPFLY_EFFICACY?.canView()){
+  box.insertAdjacentHTML('beforeend','<div id="employeeEfficacyReport">Carregando avaliações...</div>');
+  window.SPFLY_EFFICACY.renderEmployeeReport(id);
+ }
 }
 function renderTrainingReport(){
  const visible=activeTrainings();
  const total=visible.length, future=visible.filter(t=>{const d=parseDateBR(t.date),now=new Date();now.setHours(0,0,0,0);return d&&d>=now&&getTrainingStatus(t)==="Cadastrado";}).length, done=visible.filter(t=>getTrainingStatus(t)==="Ministrado").length, cancelled=visible.filter(t=>getTrainingStatus(t)==="Cancelado").length, pres=visible.reduce((a,t)=>a+(t.participants?.length||0),0);
  document.getElementById("trainingReportDash").innerHTML=`<div class="cards">${reportKpi("Treinamentos",total,"▣")}${reportKpi("Próximos",future,"📅")}${reportKpi("Ministrados",done,"✓")}${reportKpi("Cancelados",cancelled,"✕")}</div><div class="card" style="margin-bottom:18px"><h3>Participações por treinamento</h3><div class="chart-list">${visible.length?visible.slice().sort((a,b)=>(b.participants?.length||0)-(a.participants?.length||0)).slice(0,8).map(t=>{const n=t.participants?.length||0, max=Math.max(1,...visible.map(x=>x.participants?.length||0));return `<div class="bar-row"><span>${esc(t.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/max*100)}%"></div></div><strong>${n}</strong></div>`}).join(""):`<div class="empty">Nenhum dado.</div>`}</div></div>`;
  document.getElementById("trainingReport").innerHTML=total?`<table><thead><tr><th>Data</th><th>Treinamento</th><th>Modalidade</th><th>Status</th><th>Participantes</th><th>Comprovante</th><th>Conteúdo</th></tr></thead><tbody>${visible.slice().sort((a,b)=>(parseDateBR(b.date)?.getTime()||0)-(parseDateBR(a.date)?.getTime()||0)).map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td>${esc(t.modality==="Local"?"Presencial":t.modality||"Não informada")}</td><td>${badgeStatus(getTrainingStatus(t))}</td><td>${t.participants?.length||0}</td><td>${(t.docs?.length||t.doc)?`<button class="btn btn-secondary" onclick="previewTrainingDocument(${t.id})">📎 Ver</button>`:"—"}</td><td>${(t.contentDocs?.length||t.contentDoc)?`<button class="btn btn-secondary" onclick="previewTrainingContent(${t.id},0)">📚 Ver</button>`:"—"}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Nenhum registro.</div>`;
+ if(window.SPFLY_EFFICACY?.canView()){
+  document.getElementById('trainingReport').insertAdjacentHTML('beforeend','<div id="trainingEfficacyReport">Carregando avaliações...</div>');
+  window.SPFLY_EFFICACY.renderTrainingReport();
+ }
 }
 function renderSectorReport(){
  const visible=activeTrainings();
@@ -1142,8 +1212,10 @@ applyTheme();
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="capacitation.js?v=30"></script>
-<script src="performance.js?v=33"></script>
-<script src="auth.js?v=33"></script>
+<script src="performance.js?v=34"></script>
+<script src="efficacy.js?v=35"></script>
+<script src="training-print.js?v=36"></script>
+<script src="auth.js?v=35"></script>
 <script src="employee-tools.js?v=26"></script>
 <script src="course-hours.js?v=30"></script>
 </body>
