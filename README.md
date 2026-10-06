@@ -1,4 +1,4 @@
-# SPFLY Admin — V33
+# SPFLY Admin — V36
 
 ## Menu Formulários e importação de competências (V33)
 
@@ -145,15 +145,15 @@ Em **Formulários > Modelos**, cada competência recebe um peso próprio por mod
 
 Antes de publicar `index.html`, `performance.js` e `performance.css`, execute `supabase/migration-v34-model-weights.sql` no projeto Supabase correspondente. A migração precisa ocorrer primeiro porque remove o campo global de peso e troca as funções de cadastro/importação. Faça uma cópia do banco antes da migração de produção.
 
-## Ajustes da V35 (ainda não publicados)
+## Ajustes da V35
 
 A **Avaliação de Eficácia** é individual para cada participante de um treinamento concluído. O responsável escolhe um modelo de avaliação existente, informa data, resultado, nota, evidência e avaliador. A tela do treinamento mostra pendências, avaliações concluídas e percentual; o perfil do funcionário e os relatórios exibem o histórico individual. A remoção do participante invalida automaticamente sua avaliação por exclusão lógica. O banco impede duas avaliações ativas para o mesmo par treinamento/funcionário.
 
 Registros antigos de eficácia que pertenciam ao treinamento inteiro permanecem no bloco recolhível **Registros anteriores do treinamento**. Eles não são atribuídos a funcionários nem contam nos novos indicadores.
 
-Para publicar, execute **V34 antes de V35**: `supabase/migration-v34-model-weights.sql` e depois `supabase/migration-v35-individual-efficacy.sql`. Em seguida publique `index.html`, `auth.js`, `performance.js`, `performance.css`, `efficacy.js`, `efficacy.css` e os demais arquivos do portal. A V35 ainda não foi aplicada ao Supabase de produção.
+Para publicar, execute **V34 antes de V35**: `supabase/migration-v34-model-weights.sql` e depois `supabase/migration-v35-individual-efficacy.sql`. Em seguida publique `index.html`, `auth.js`, `performance.js`, `performance.css`, `efficacy.js`, `efficacy.css` e os demais arquivos do portal.
 
-## Ajustes da V36 (ainda não publicados)
+## Ajustes da V36
 
 Na tela de detalhes de um treinamento há dois documentos separados: **Imprimir Lista de Presença**, com linhas amplas para assinatura física, e **Imprimir Extrato**, com dados do treinamento, participantes, situação das avaliações individuais e nomes dos anexos. Ambos exibem **REV. 00** no cabeçalho de todas as páginas impressas. A revisão de cada documento está centralizada em `training-print.js`.
 
@@ -164,3 +164,6 @@ Para publicar esta versão, execute primeiro as migrações V34 e V35, na ordem 
 ### Implantação em um único SQL
 
 Se V34 e V35 ainda não foram aplicadas, execute apenas `supabase/migration-v36-combined-v34-v35.sql` no SQL Editor do projeto correto. Esse arquivo reúne as duas migrações na ordem necessária em uma única transação: se alguma instrução falhar, nenhuma alteração é confirmada. Depois publique os arquivos V36. Não execute o combinado em um banco que já tenha recebido V34 ou V35 separadamente.
+
+Implantação da V36: migração combinada V34/V35 aplicada no projeto spfly-treinamentos e arquivos publicados no GitHub Pages em 06/10/2026.
+
