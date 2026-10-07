@@ -1,4 +1,4 @@
-# SPFLY Admin — V36
+# SPFLY Admin — V37
 
 ## Menu Formulários e importação de competências (V33)
 
@@ -166,4 +166,10 @@ Para publicar esta versão, execute primeiro as migrações V34 e V35, na ordem 
 Se V34 e V35 ainda não foram aplicadas, execute apenas `supabase/migration-v36-combined-v34-v35.sql` no SQL Editor do projeto correto. Esse arquivo reúne as duas migrações na ordem necessária em uma única transação: se alguma instrução falhar, nenhuma alteração é confirmada. Depois publique os arquivos V36. Não execute o combinado em um banco que já tenha recebido V34 ou V35 separadamente.
 
 Implantação da V36: migração combinada V34/V35 aplicada no projeto spfly-treinamentos e arquivos publicados no GitHub Pages em 06/10/2026.
+
+## Ajustes da V37 — Relatório de Treinamento
+
+O documento impresso antes chamado **Extrato do Treinamento** agora se chama **Relatório de Treinamento**. O logo da SPFLY permanece no canto superior esquerdo e o código **F - 5.0 - 000** aparece no canto superior direito; o código fica definido em `training-print.js` para futuras revisões.
+
+O documento deixa de imprimir Setor / público-alvo, Cadastro, Evidências registradas e Anexos. Os participantes aparecem em ordem alfabética, sem coluna de numeração, em uma tabela de quatro colunas dimensionadas para a página A4. A coluna Participação permanece inteiramente dentro das margens. A Lista de Presença e os dados de gestão na tela não foram alterados. Esta versão não exige migração do banco; publique `index.html`, `training-print.js` e `training-print.css` juntos.
 

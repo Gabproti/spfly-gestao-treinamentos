@@ -19,6 +19,8 @@
   .training-print-field b{font-size:8pt;color:#52606c}
   .training-print-field span{font-size:9.5pt;color:#111;white-space:pre-wrap}
   .training-print-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:2mm 0 4mm;font-size:8.5pt;color:#111;background:#fff}
+  .training-print-report .training-print-table{max-width:100%;box-sizing:border-box;margin-left:auto;margin-right:auto}
+  .training-print-participants th:last-child,.training-print-participants td:last-child{text-align:center;white-space:normal}
   .training-print-table thead{display:table-header-group}
   .training-print-table tr{break-inside:avoid;page-break-inside:avoid}
   .training-print-table th,.training-print-table td{border:1px solid #777;text-align:left;vertical-align:middle;padding:2.5mm 2mm;overflow-wrap:anywhere;background:#fff!important;color:#111!important}
