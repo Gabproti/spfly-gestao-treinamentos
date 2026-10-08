@@ -66,8 +66,12 @@
       const node=document.getElementById('trainingPrintDocument');
       node.innerHTML=type==='attendance'?attendanceMarkup(training,employees):extractMarkup(training,employees,reviews);
       document.body.classList.add('print-training-document','print-training-'+type);
-      window.addEventListener('afterprint',clearPrint,{once:true});
+      await Promise.all(Array.from(node.querySelectorAll?.('img')||[]).map(async image=>{
+        try{if(image.decode)await image.decode()}catch{throw new Error('o logo da SPFLY não carregou. Tente imprimir novamente.')}
+        if(!image.complete||!image.naturalWidth)throw new Error('o logo da SPFLY não carregou. Tente imprimir novamente.');
+      }));
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      window.addEventListener('afterprint',clearPrint,{once:true});
       window.print();
     }catch(error){clearPrint();alert('Não foi possível preparar a impressão: '+error.message)}
   }

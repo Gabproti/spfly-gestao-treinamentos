@@ -1,4 +1,8 @@
-# SPFLY Admin — V43
+# SPFLY Admin — V44
+
+## Logo pronto antes de imprimir (V44)
+
+O portal carrega e decodifica o logo da SPFLY antes de abrir a impressão. Se a imagem falhar, mostra um aviso em vez de gerar um documento sem logo.
 
 ## Cabeçalho dentro da página impressa (V43)
 
