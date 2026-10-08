@@ -1,4 +1,8 @@
-# SPFLY Admin — V37
+# SPFLY Admin — V38
+
+## Cabeçalhos de impressão (V38)
+
+A Lista de Presença, o Relatório de Treinamento e a Avaliação de Desempenho usam o arquivo `spfly_print_logo.png` no canto superior esquerdo. No mesmo bloco, acima do logo, aparece o identificador do documento. O Relatório de Treinamento mantém `F - 5.0 - 000`; os demais conservam `REV. 00` até receberem códigos próprios. O logo anterior continua nas telas do portal. Publique `spfly_print_logo.png`, `index.html`, `training-print.js`, `training-print.css`, `performance.js` e `performance.css` juntos.
 
 ## Menu Formulários e importação de competências (V33)
 

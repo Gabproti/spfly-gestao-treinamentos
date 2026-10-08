@@ -1,15 +1,16 @@
 #trainingPrintDocument{display:none}
 @media print{
-  @page{size:A4 portrait;margin:30mm 14mm 17mm}
+  @page{size:A4 portrait;margin:36mm 14mm 17mm}
   body.print-training-document{background:#fff!important;color:#111!important;font:10pt Arial,sans-serif!important}
   body.print-training-document > :not(#trainingPrintDocument){display:none!important}
   body.print-training-document #trainingPrintDocument{display:block!important;position:static!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important}
-  .training-print-header{position:fixed;top:-23mm;left:0;right:0;height:17mm;display:flex;align-items:center;gap:9mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;background:#fff;color:#111}
-  .training-print-header img{width:35mm;max-height:14mm;object-fit:contain;background:#1b1f22;border-radius:2mm;padding:2mm}
-  .training-print-header div{display:flex;flex-direction:column;gap:1mm;flex:1}
+  .training-print-header{position:fixed;top:-29mm;left:0;right:0;height:23mm;display:flex;align-items:center;gap:9mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;background:#fff;color:#111}
+  .training-print-brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1mm;flex:0 0 45mm}
+  .training-print-header img{width:45mm;max-height:16mm;object-fit:contain;object-position:left center}
+  .training-print-title{display:flex;flex-direction:column;gap:1mm;flex:1}
   .training-print-header strong{font-size:13pt;color:#16202a}
   .training-print-header small{font-size:8pt;color:#52606c}
-  .training-print-header b{font-size:9pt;white-space:nowrap;border:1px solid #777;padding:2mm 3mm;align-self:flex-start}
+  .training-print-brand b{font-size:8pt;white-space:nowrap;color:#111;align-self:flex-start}
   .training-print-main h1{font-size:16pt;margin:0 0 5mm;color:#16202a}
   .training-print-main h2{font-size:11pt;margin:7mm 0 3mm;border-bottom:1px solid #bbb;padding-bottom:1.5mm;color:#16202a}
   .training-print-main h3{font-size:9.5pt;margin:4mm 0 1mm;color:#16202a}
