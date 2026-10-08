@@ -57,7 +57,7 @@
     if(!t)throw new Error('Treinamento não encontrado. Atualize a página.');
     return {training:t,employees:Array.isArray(state.employees)?state.employees:[]};
   }
-  function clearPrint(){document.body.classList.remove('print-training-document');const node=document.getElementById('trainingPrintDocument');if(node)node.innerHTML=''}
+  function clearPrint(){document.body.classList.remove('print-training-document','print-training-attendance','print-training-extract');const node=document.getElementById('trainingPrintDocument');if(node)node.innerHTML=''}
   async function print(type,trainingId){
     if(!window.SPFLY_AUTH?.canPage('pageTrainingDetail'))return;
     if(type==='extract'&&!window.SPFLY_EFFICACY?.canView()){alert('O extrato requer acesso às avaliações de eficácia.');return}
@@ -66,7 +66,7 @@
       const reviews=type==='extract'?await window.SPFLY_EFFICACY.recordsForTraining(trainingId):[];
       const node=document.getElementById('trainingPrintDocument');
       node.innerHTML=type==='attendance'?attendanceMarkup(training,employees):extractMarkup(training,employees,reviews);
-      document.body.classList.add('print-training-document');
+      document.body.classList.add('print-training-document','print-training-'+type);
       window.addEventListener('afterprint',clearPrint,{once:true});
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       window.print();

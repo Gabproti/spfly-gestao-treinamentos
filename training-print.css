@@ -1,10 +1,14 @@
 #trainingPrintDocument{display:none}
 @media print{
-  @page{size:A4 portrait;margin:14mm 14mm 17mm}
+  @page{size:A4 portrait;margin:30mm 14mm 17mm;@top-left{content:url("spfly_print_logo_small.svg")}}
+  @page training-report{size:A4 portrait;margin:30mm 14mm 17mm;@top-center{content:"Relatório de Treinamento";font:bold 12pt Arial;color:#16202a}@top-right{content:"F - 5.0 - 000";font:8pt Arial;color:#111}}
+  @page training-attendance{size:A4 portrait;margin:30mm 14mm 17mm;@top-center{content:"Lista de Presença";font:bold 12pt Arial;color:#16202a}@top-right{content:"REV. 00";font:8pt Arial;color:#111}}
   body.print-training-document{background:#fff!important;color:#111!important;font:10pt Arial,sans-serif!important}
+  body.print-training-extract{page:training-report}
+  body.print-training-attendance{page:training-attendance}
   body.print-training-document > :not(#trainingPrintDocument){display:none!important}
   body.print-training-document #trainingPrintDocument{display:block!important;position:static!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important}
-  .training-print-header{position:static;min-height:23mm;display:grid;grid-template-columns:45mm minmax(0,1fr) max-content;align-items:center;column-gap:6mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;margin-bottom:6mm;background:#fff;color:#111;break-after:avoid}
+  .training-print-header{display:none}
   .training-print-document-code{grid-column:3;justify-self:end;align-self:start;display:block;text-align:right;font-size:8pt;white-space:nowrap;color:#111}
   .training-print-brand{grid-column:1;display:flex;align-items:center;justify-content:flex-start}
   .training-print-header img{width:45mm;max-height:16mm;object-fit:contain;object-position:left center}
@@ -12,7 +16,7 @@
   .training-print-header strong{font-size:13pt;color:#16202a}
   .training-print-header small{font-size:8pt;color:#52606c}
   .training-print-main h1{font-size:16pt;margin:0 0 5mm;color:#16202a}
-  .training-print-main h2{font-size:11pt;margin:7mm 0 3mm;border-bottom:1px solid #bbb;padding-bottom:1.5mm;color:#16202a}
+  .training-print-main h2{font-size:11pt;margin:7mm 0 3mm;border-bottom:1px solid #bbb;padding-bottom:1.5mm;color:#16202a;break-after:avoid-page;page-break-after:avoid}
   .training-print-main h3{font-size:9.5pt;margin:4mm 0 1mm;color:#16202a}
   .training-print-main section{break-inside:auto}
   .training-print-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.5mm 7mm;margin-bottom:6mm}

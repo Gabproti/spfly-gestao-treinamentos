@@ -1,4 +1,8 @@
-# SPFLY Admin — V41
+# SPFLY Admin — V42
+
+## Cabeçalhos em todas as páginas e título junto à tabela (V42)
+
+O relatório de treinamento e a lista de presença repetem o logo à esquerda, o nome do documento e seu código à direita em cada página impressa. A avaliação de desempenho também repete o logo e a revisão. O título da seção “Avaliações de eficácia individuais” acompanha o início da tabela quando há quebra de página.
 
 ## Posição do logo e do código (V41)
 
