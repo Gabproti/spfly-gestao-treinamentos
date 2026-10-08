@@ -1,28 +1,30 @@
 (function(){
   'use strict';
   const DOCUMENT_REVISIONS=Object.freeze({attendance:'00',extract:'00'});
-  const DOCUMENT_CODES=Object.freeze({extract:'F - 5.0 - 000'});
+  const DOCUMENT_CODES=Object.freeze({attendance:'F - 5.0 - 001',extract:'F - 5.0 - 000'});
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const filled=value=>value===null||value===undefined||String(value).trim()===''?'Não informado':esc(value);
   const dateTime=value=>{if(!value)return 'Não informado';const d=new Date(value);return Number.isNaN(d.getTime())?'Não informado':d.toLocaleString('pt-BR')};
   const participantIds=t=>Array.isArray(t.participants)?t.participants.map(Number):[];
   const employeeDocument=e=>[e?.cpf,e?.mat].filter(Boolean).join(' / ')||'—';
   const trainingTime=(t,position)=>t[position+'Time']||((String(t.time||'').match(/\b\d{1,2}:\d{2}\b/g)||[])[position==='start'?0:1])||null;
-  function header(title,revision,code){return `<header class="training-print-header"><div class="training-print-brand"><img src="spfly_print_logo.png" alt="SPFLY Logística"></div><div class="training-print-title"><strong>${esc(title)}</strong><small>SPFLY · Gestão de Treinamentos</small></div><b class="training-print-document-code">${code?esc(code):`REV. ${esc(revision)}`}</b></header>`}
+  function header(title,revision,code){return `<header class="training-print-header"><div class="training-print-brand"><img src="spfly_print_logo.png" alt="SPFLY Logística"></div>${title==='Lista de Presença'?'':`<div class="training-print-title"><strong>${esc(title)}</strong><small>SPFLY · Gestão de Treinamentos</small></div>`}<b class="training-print-document-code">${code?esc(code):`REV. ${esc(revision)}`}</b></header>`}
   function info(label,value){return `<div class="training-print-field"><b>${esc(label)}</b><span>${filled(value)}</span></div>`}
   const groups=(items,size)=>items.length?Array.from({length:Math.ceil(items.length/size)},(_,i)=>items.slice(i*size,(i+1)*size)):[[]];
   function documentPages(title,revision,code,rows,report=false){return `<table class="training-print-pages"><thead><tr><td>${header(title,revision,code)}</td></tr></thead><tbody>${rows.map(content=>`<tr class="training-print-page-row"><td><div class="training-print-main${report?' training-print-report':''}">${content}</div></td></tr>`).join('')}</tbody></table>`}
   function attendanceMarkup(t,employees){
-    const people=participantIds(t).map(id=>employees.find(e=>Number(e.id)===id));
-    const tables=groups(people,6).map((chunk,groupIndex)=>`<table class="training-print-table attendance-table"><thead><tr><th>Nº</th><th>Nome do funcionário</th><th>CPF / Matrícula</th><th>Setor</th><th>Assinatura</th></tr></thead><tbody>${chunk.length?chunk.map((e,i)=>`<tr><td>${String(groupIndex*6+i+1).padStart(2,'0')}</td><td>${esc(e?.name||'Funcionário não encontrado')}</td><td>${esc(employeeDocument(e))}</td><td>${esc(e?.sector||'—')}</td><td class="signature-cell"><span></span></td></tr>`).join(''):'<tr><td colspan="5" class="training-print-empty">Nenhum participante cadastrado.</td></tr>'}</tbody></table>`);
-    const rows=[`<h1>Lista de Presença</h1><div class="training-print-grid">
-      ${info('Treinamento',t.name)}${info('Data',t.date)}${info('Horário de início',trainingTime(t,'start'))}
-      ${info('Horário de término',trainingTime(t,'end'))}${info('Carga horária',t.workload?`${t.workload} h`:null)}
-      ${info('Instrutor / responsável',t.resp)}${info('Local / acesso',t.modality==='Online'?t.onlineInfo:t.base||t.place)}
-      ${info('Setor / público-alvo',t.targetSector||t.audience||t.sector)}${info('Modalidade',t.modality==='Local'?'Presencial':t.modality)}
-      </div>${tables[0]}`,...tables.slice(1)];
-    rows[rows.length-1]+='<p class="training-print-footnote">Assinatura do participante confirma sua presença neste treinamento.</p>';
-    return documentPages('Lista de Presença',DOCUMENT_REVISIONS.attendance,null,rows);
+    const blankRows=Array.from({length:10},()=>'<tr><td></td><td></td><td></td><td></td></tr>').join('');
+    const rows=[`<h1>LISTA DE PRESENÇA</h1><div class="training-print-grid attendance-details">
+      ${info('Treinamento',t.name)}${info('Data',t.date)}
+      ${info('Horário',t.time||[trainingTime(t,'start'),trainingTime(t,'end')].filter(Boolean).join(' – '))}
+      ${info('Instrutor / responsável',t.resp)}
+      </div><p class="attendance-instruction">Ao participar do treinamento/reunião, preencha seu nome, CPF, setor e assinatura.</p>
+      <table class="training-print-table attendance-table"><colgroup><col style="width:34%"><col style="width:20%"><col style="width:18%"><col style="width:28%"></colgroup>
+      <thead><tr><th>NOME DO FUNCIONÁRIO</th><th>CPF</th><th>SETOR</th><th>ASSINATURA</th></tr></thead><tbody>${blankRows}</tbody></table>
+      <div class="attendance-responsible"><div class="attendance-signature-line"></div><b>ASSINATURA DO INSTRUTOR/RESPONSÁVEL</b>
+      <p>NOME DO INSTRUTOR/RESPONSÁVEL: <span class="attendance-fill-line"></span></p>
+      <p>DATA: ____/____/________</p></div>`];
+    return documentPages('Lista de Presença',DOCUMENT_REVISIONS.attendance,DOCUMENT_CODES.attendance,rows);
   }
   function extractMarkup(t,employees,reviews){
     const people=participantIds(t).map(id=>({id,e:employees.find(e=>Number(e.id)===id)}))

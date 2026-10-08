@@ -1,4 +1,8 @@
-# SPFLY Admin — V44
+# SPFLY Admin — V45
+
+## Lista de presença para preenchimento manual (V45)
+
+O botão na ficha do treinamento gera uma lista A4 com o logo à esquerda, código F - 5.0 - 001 à direita, dados do treinamento, dez linhas em branco para nome, CPF, setor e assinatura, além do campo de assinatura do instrutor. Os dados dos participantes cadastrados não são impressos nessa lista.
 
 ## Logo pronto antes de imprimir (V44)
 

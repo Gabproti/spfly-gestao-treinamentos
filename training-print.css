@@ -31,13 +31,16 @@
   .training-print-table tr{break-inside:avoid;page-break-inside:avoid}
   .training-print-table th,.training-print-table td{border:1px solid #777;text-align:left;vertical-align:middle;padding:2.5mm 2mm;overflow-wrap:anywhere;background:#fff!important;color:#111!important}
   .training-print-table th{background:#e9ecef!important;font-weight:700}
-  .attendance-table th:nth-child(1),.attendance-table td:nth-child(1){width:8mm;text-align:center}
-  .attendance-table th:nth-child(2),.attendance-table td:nth-child(2){width:46mm}
-  .attendance-table th:nth-child(3),.attendance-table td:nth-child(3){width:30mm}
-  .attendance-table th:nth-child(4),.attendance-table td:nth-child(4){width:26mm}
-  .attendance-table th:nth-child(5),.attendance-table td:nth-child(5){width:auto}
-  .attendance-table tbody tr{height:19mm}
-  .signature-cell span{display:block;min-height:14mm}
+  .attendance-details{margin-bottom:4mm}
+  .attendance-instruction{font-size:8pt;color:#52606c;margin:0 0 3mm}
+  .attendance-table{margin:0 0 7mm}
+  .attendance-table th{font-size:8pt}
+  .attendance-table td{height:14mm;padding:0 2mm}
+  .attendance-responsible{break-inside:avoid;page-break-inside:avoid;font-size:8.5pt;margin-top:2mm}
+  .attendance-signature-line{width:90mm;height:9mm;border-bottom:1px solid #555}
+  .attendance-responsible>b{display:block;font-size:8pt;margin-top:2mm}
+  .attendance-responsible p{margin:4mm 0 0}
+  .attendance-fill-line{display:inline-block;width:85mm;border-bottom:1px solid #555}
   .training-print-empty{text-align:center!important;font-style:italic}
   .training-print-footnote{font-size:8pt;color:#555;margin-top:4mm}
   .training-print-main p,.training-print-main li{overflow-wrap:anywhere;break-inside:avoid}
