@@ -8,7 +8,7 @@
   const participantIds=t=>Array.isArray(t.participants)?t.participants.map(Number):[];
   const employeeDocument=e=>[e?.cpf,e?.mat].filter(Boolean).join(' / ')||'—';
   const trainingTime=(t,position)=>t[position+'Time']||((String(t.time||'').match(/\b\d{1,2}:\d{2}\b/g)||[])[position==='start'?0:1])||null;
-  function header(title,revision,code){return `<header class="training-print-header"><div class="training-print-brand"><b>${code?esc(code):`REV. ${esc(revision)}`}</b><img src="spfly_print_logo.png" alt="SPFLY Logística"></div><div class="training-print-title"><strong>${esc(title)}</strong><small>SPFLY · Gestão de Treinamentos</small></div></header>`}
+  function header(title,revision,code){return `<header class="training-print-header"><b class="training-print-document-code">${code?esc(code):`REV. ${esc(revision)}`}</b><div class="training-print-brand"><img src="spfly_print_logo.png" alt="SPFLY Logística"></div><div class="training-print-title"><strong>${esc(title)}</strong><small>SPFLY · Gestão de Treinamentos</small></div></header>`}
   function info(label,value){return `<div class="training-print-field"><b>${esc(label)}</b><span>${filled(value)}</span></div>`}
   function attendanceMarkup(t,employees){
     const people=participantIds(t).map(id=>employees.find(e=>Number(e.id)===id));

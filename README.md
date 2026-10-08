@@ -1,4 +1,8 @@
-# SPFLY Admin — V39
+# SPFLY Admin — V40
+
+## Código do documento à esquerda (V40)
+
+O código de identificação agora ocupa uma linha própria no início do cabeçalho impresso, alinhada à margem esquerda da página. O logo e o título permanecem no cabeçalho.
 
 ## Correção de cabeçalho impresso (V39)
 

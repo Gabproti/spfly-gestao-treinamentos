@@ -4,13 +4,13 @@
   body.print-training-document{background:#fff!important;color:#111!important;font:10pt Arial,sans-serif!important}
   body.print-training-document > :not(#trainingPrintDocument){display:none!important}
   body.print-training-document #trainingPrintDocument{display:block!important;position:static!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important}
-  .training-print-header{position:static;min-height:23mm;display:flex;align-items:center;gap:9mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;margin-bottom:6mm;background:#fff;color:#111;break-after:avoid}
-  .training-print-brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1mm;flex:0 0 45mm}
+  .training-print-header{position:static;min-height:23mm;display:grid;grid-template-columns:45mm minmax(0,1fr);align-items:center;column-gap:9mm;row-gap:1mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;margin-bottom:6mm;background:#fff;color:#111;break-after:avoid}
+  .training-print-document-code{grid-column:1/-1;display:block;text-align:left;font-size:8pt;white-space:nowrap;color:#111}
+  .training-print-brand{grid-column:1;display:flex;align-items:center;justify-content:flex-start}
   .training-print-header img{width:45mm;max-height:16mm;object-fit:contain;object-position:left center}
-  .training-print-title{display:flex;flex-direction:column;gap:1mm;flex:1}
+  .training-print-title{grid-column:2;display:flex;flex-direction:column;gap:1mm}
   .training-print-header strong{font-size:13pt;color:#16202a}
   .training-print-header small{font-size:8pt;color:#52606c}
-  .training-print-brand b{font-size:8pt;white-space:nowrap;color:#111;align-self:flex-start}
   .training-print-main h1{font-size:16pt;margin:0 0 5mm;color:#16202a}
   .training-print-main h2{font-size:11pt;margin:7mm 0 3mm;border-bottom:1px solid #bbb;padding-bottom:1.5mm;color:#16202a}
   .training-print-main h3{font-size:9.5pt;margin:4mm 0 1mm;color:#16202a}
