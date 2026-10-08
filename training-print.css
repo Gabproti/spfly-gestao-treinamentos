@@ -4,8 +4,8 @@
   body.print-training-document{background:#fff!important;color:#111!important;font:10pt Arial,sans-serif!important}
   body.print-training-document > :not(#trainingPrintDocument){display:none!important}
   body.print-training-document #trainingPrintDocument{display:block!important;position:static!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important}
-  .training-print-header{position:static;min-height:23mm;display:grid;grid-template-columns:45mm minmax(0,1fr);align-items:center;column-gap:9mm;row-gap:1mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;margin-bottom:6mm;background:#fff;color:#111;break-after:avoid}
-  .training-print-document-code{grid-column:1/-1;display:block;text-align:left;font-size:8pt;white-space:nowrap;color:#111}
+  .training-print-header{position:static;min-height:23mm;display:grid;grid-template-columns:45mm minmax(0,1fr) max-content;align-items:center;column-gap:6mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;margin-bottom:6mm;background:#fff;color:#111;break-after:avoid}
+  .training-print-document-code{grid-column:3;justify-self:end;align-self:start;display:block;text-align:right;font-size:8pt;white-space:nowrap;color:#111}
   .training-print-brand{grid-column:1;display:flex;align-items:center;justify-content:flex-start}
   .training-print-header img{width:45mm;max-height:16mm;object-fit:contain;object-position:left center}
   .training-print-title{grid-column:2;display:flex;flex-direction:column;gap:1mm}

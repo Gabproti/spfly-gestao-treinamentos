@@ -1,4 +1,8 @@
-# SPFLY Admin — V40
+# SPFLY Admin — V41
+
+## Posição do logo e do código (V41)
+
+Nos documentos de treinamento impressos, o logo fica à esquerda e o código de identificação à direita do cabeçalho.
 
 ## Código do documento à esquerda (V40)
 
