@@ -1,4 +1,8 @@
-# SPFLY Admin — V38
+# SPFLY Admin — V39
+
+## Correção de cabeçalho impresso (V39)
+
+O cabeçalho da Lista de Presença e do Relatório de Treinamento agora participa do fluxo normal da página impressa, dentro das margens A4. Isso mantém visíveis o logo, o identificador e o nome do documento na prévia e no PDF. A correção altera somente `training-print.css` e a referência de versão em `index.html`.
 
 ## Cabeçalhos de impressão (V38)
 

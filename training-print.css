@@ -1,10 +1,10 @@
 #trainingPrintDocument{display:none}
 @media print{
-  @page{size:A4 portrait;margin:36mm 14mm 17mm}
+  @page{size:A4 portrait;margin:14mm 14mm 17mm}
   body.print-training-document{background:#fff!important;color:#111!important;font:10pt Arial,sans-serif!important}
   body.print-training-document > :not(#trainingPrintDocument){display:none!important}
   body.print-training-document #trainingPrintDocument{display:block!important;position:static!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important}
-  .training-print-header{position:fixed;top:-29mm;left:0;right:0;height:23mm;display:flex;align-items:center;gap:9mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;background:#fff;color:#111}
+  .training-print-header{position:static;min-height:23mm;display:flex;align-items:center;gap:9mm;border-bottom:1.5pt solid #eb5528;padding-bottom:2mm;margin-bottom:6mm;background:#fff;color:#111;break-after:avoid}
   .training-print-brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1mm;flex:0 0 45mm}
   .training-print-header img{width:45mm;max-height:16mm;object-fit:contain;object-position:left center}
   .training-print-title{display:flex;flex-direction:column;gap:1mm;flex:1}
