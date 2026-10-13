@@ -263,7 +263,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 <link rel="stylesheet" href="performance.css?v=38">
 <link rel="stylesheet" href="efficacy.css?v=35">
 <link rel="stylesheet" href="training-print.css?v=45">
-<link rel="stylesheet" href="manager.css?v=46">
+<link rel="stylesheet" href="manager.css?v=47">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -361,8 +361,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div id="managerMessage" role="status"></div>
   <div id="managerKpis" class="manager-kpis"></div>
   <div id="managerAdmin" hidden></div>
-  <div class="manager-grid"><div class="card"><h2>Minha equipe</h2><div id="managerTeam"></div></div><div class="card"><h2>Nova requisição de vagas</h2><form id="managerHireForm" class="form-grid"><div class="field"><label>Setor *</label><select name="sector" required></select></div><div class="field"><label>Cargo / função *</label><input name="position" required minlength="2" maxlength="160"></div><div class="field"><label>Quantidade de vagas *</label><input name="quantity" type="number" min="1" max="1000" value="1" required></div><div class="field full"><label>Justificativa *</label><textarea name="reason" required minlength="8" maxlength="4000"></textarea></div><div class="actions"><button class="btn btn-primary" type="submit">Solicitar vagas</button></div></form></div></div>
-  <div class="card"><h2>Nova transferência</h2><form id="managerTransferForm" class="form-grid"><div class="field"><label>Funcionário *</label><select name="employee" required></select></div><div class="field"><label>Setor de destino *</label><select name="sector" required></select></div><div class="field full"><label>Motivo *</label><textarea name="reason" required minlength="8" maxlength="4000"></textarea></div><div class="actions"><button class="btn btn-primary" type="submit">Solicitar transferência</button></div></form></div>
+  <div class="manager-grid"><section class="card manager-team-card" aria-labelledby="managerTeamHeading"><div class="manager-team-head"><div><h2 id="managerTeamHeading">Minha equipe</h2><span id="managerTeamCount" class="muted"></span></div><button id="managerTeamToggle" class="btn btn-secondary manager-team-toggle" type="button" aria-controls="managerTeamPanel" aria-expanded="false" onclick="SPFLY_MANAGER.toggleTeam()"><span id="managerTeamToggleLabel">Expandir</span><span class="manager-team-chevron" aria-hidden="true">⌄</span></button></div><div id="managerTeamPanel" hidden><div id="managerTeam"></div></div></section><div class="manager-form-stack"><div class="card"><h2>Nova requisição de vagas</h2><form id="managerHireForm" class="form-grid"><div class="field"><label>Setor *</label><select name="sector" required></select></div><div class="field"><label>Cargo / função *</label><input name="position" required minlength="2" maxlength="160"></div><div class="field"><label>Quantidade de vagas *</label><input name="quantity" type="number" min="1" max="1000" value="1" required></div><div class="field full"><label>Justificativa *</label><textarea name="reason" required minlength="8" maxlength="4000"></textarea></div><div class="actions"><button class="btn btn-primary" type="submit">Solicitar vagas</button></div></form></div><div class="card"><h2>Nova transferência</h2><form id="managerTransferForm" class="form-grid"><div class="field"><label>Funcionário *</label><select name="employee" required></select></div><div class="field"><label>Setor de destino *</label><select name="sector" required></select></div><div class="field full"><label>Motivo *</label><textarea name="reason" required minlength="8" maxlength="4000"></textarea></div><div class="actions"><button class="btn btn-primary" type="submit">Solicitar transferência</button></div></form></div></div></div>
   <div class="card"><div class="header-row"><div><h2>Requisições e transferências</h2><div class="muted">Cada etapa e decisão fica registrada no histórico.</div></div><select id="managerRequestFilter" onchange="SPFLY_MANAGER.render()"><option value="">Todos os processos</option><option value="hire">Vagas</option><option value="transfer">Transferências</option><option value="pending">Pendentes</option><option value="completed">Concluídos</option></select></div><div id="managerRequests"></div></div>
   <div class="card"><div class="header-row"><div><h2>Inscrições em cursos</h2><div class="muted">Acompanhamento de cursos e certificados autorizados.</div></div></div><div class="manager-filters"><input id="managerCourseSearch" type="search" placeholder="Buscar curso ou funcionário" oninput="SPFLY_MANAGER.renderCourses()"><select id="managerSectorFilter" onchange="SPFLY_MANAGER.renderCourses()"><option value="">Todos os setores</option></select><select id="managerCourseStatus" onchange="SPFLY_MANAGER.renderCourses()"><option value="">Todos os status</option><option value="pending">Pendente</option><option value="started">Em andamento</option><option value="finished">Concluído</option></select></div><div id="managerCourses"></div></div>
 </div>
@@ -1230,7 +1229,7 @@ applyTheme();
 <script src="efficacy.js?v=35"></script>
 <script src="training-print.js?v=45"></script>
 <script src="auth.js?v=46"></script>
-<script src="manager.js?v=46"></script>
+<script src="manager.js?v=47"></script>
 <script src="employee-tools.js?v=26"></script>
 <script src="course-hours.js?v=30"></script>
 </body>

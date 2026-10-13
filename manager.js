@@ -2,6 +2,9 @@
   'use strict';
   let client, access, data = {employees:[], managers:[], approvers:[], requests:[], courses:[], sectors:[]};
   let loading = false;
+  let directoryFilters = {search:'', sector:''};
+  let teamExpanded = false;
+  try { teamExpanded = sessionStorage.getItem('spfly.manager.teamExpanded') === 'true'; } catch (_) {}
   const $ = id => document.getElementById(id);
   const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const date = value => value ? new Date(value).toLocaleString('pt-BR') : '—';
@@ -10,7 +13,7 @@
   const isAdmin = () => access?.access_role === 'admin';
   const nameOf = id => data.employees.find(e => Number(e.id) === Number(id))?.name || `Funcionário #${id}`;
   const sectorOf = id => data.employees.find(e => Number(e.id) === Number(id))?.sector || '—';
-  const actionNames = {approve:'Aprovar',start_selection:'Iniciar seleção',record_hires:'Registrar contratação',approve_immediate:'Aprovar gestão imediata',accept_manager:'Aceitar transferência',approve_final:'Aprovar e efetivar',reject:'Reprovar',cancel:'Cancelar',requested:'Solicitação registrada',manager_step_skipped:'Aceite repetido dispensado'};
+  const actionNames = {approve:'Aprovar',start_selection:'Iniciar seleção',record_hires:'Registrar contratação',approve_immediate:'Aprovar gestão imediata',accept_manager:'Aceitar transferência',approve_final:'Aprovado',reject:'Reprovar',cancel:'Cancelar',requested:'Solicitação registrada',manager_step_skipped:'Aceite repetido dispensado'};
 
   function configure(nextClient,nextAccess) { client=nextClient; access=nextAccess; }
   function message(text, error=false) { const el=$('managerMessage'); el.textContent=text; el.className=error?'manager-error':'muted'; }
@@ -20,6 +23,10 @@
     try {
       const {data:result,error}=await client.rpc('hr_dashboard');
       if (error) throw error;
+      if (isAdmin() && result) {
+        const directory=await client.from('admin_users').select('id,full_name,employee_id,active').eq('access_role','gestor');
+        if (!directory.error) result.managerDirectory=directory.data||[];
+      }
       data=result || data;
       message(''); render();
     } catch(error) { message('Não foi possível carregar a visão do gestor: '+error.message,true); }
@@ -29,6 +36,16 @@
     const previous=select.value;
     select.innerHTML=`<option value="">${safe(placeholder)}</option>`+items.join('');
     if ([...select.options].some(option=>option.value===previous)) select.value=previous;
+  }
+  function syncTeamVisibility() {
+    $('managerTeamPanel').hidden = !teamExpanded;
+    $('managerTeamToggle').setAttribute('aria-expanded', String(teamExpanded));
+    $('managerTeamToggleLabel').textContent = teamExpanded ? 'Recolher' : 'Expandir';
+  }
+  function toggleTeam(expanded) {
+    teamExpanded = typeof expanded === 'boolean' ? expanded : !teamExpanded;
+    syncTeamVisibility();
+    try { sessionStorage.setItem('spfly.manager.teamExpanded', String(teamExpanded)); } catch (_) {}
   }
   function render() {
     if (!active()) return;
@@ -43,6 +60,7 @@
       ['Cursos concluídos',courses.filter(c=>c.completed_at).length,'finished']
     ];
     $('managerKpis').innerHTML=counts.map(([label,value,filter])=>`<button type="button" class="manager-kpi" data-kpi="${filter}"><strong>${value}</strong><span>${safe(label)}</span></button>`).join('');
+    $('managerTeamCount').textContent=`${(data.employees||[]).length} funcionário(s)`;
     $('managerTeam').innerHTML=data.employees?.length?`<div class="manager-table-wrap"><table><thead><tr><th>Nome</th><th>Setor</th><th>Cargo</th></tr></thead><tbody>${data.employees.map(e=>`<tr><td>${safe(e.name)}</td><td>${safe(e.sector)}</td><td>${safe(e.role)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">Nenhum funcionário vinculado.</p>';
     const sectorItems=(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`);
     setOptions($('managerHireForm').elements.sector,sectorItems,'Selecione o setor');
@@ -54,10 +72,63 @@
   function renderAdmin() {
     const box=$('managerAdmin'); box.hidden=!isAdmin(); if (!isAdmin()) return;
     const people=(data.employees||[]),managers=(data.managers||[]);
-    box.innerHTML=`<div class="card"><h2>Vínculo de equipe</h2><p class="muted">Cada funcionário possui um gestor responsável. Selecione uma pessoa para vincular ou trocar o gestor.</p><div class="manager-filters"><input id="managerTeamSearch" type="search" placeholder="Buscar funcionário" oninput="SPFLY_MANAGER.filterTeam()"><select id="managerTeamEmployee"><option value="">Selecione o funcionário</option>${people.map(e=>`<option value="${Number(e.id)}">${safe(e.name)} · ${safe(e.sector)}</option>`).join('')}</select><select id="managerTeamManager"><option value="">Sem gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveTeam()">Salvar vínculo</button></div><p class="muted" id="managerCurrentLink"></p></div>
-      <div class="card"><h2>Gestão imediata</h2><p class="muted">Defina quem aprova a primeira etapa das transferências solicitadas por cada gestor. Sem responsável definido, a etapa cabe ao administrador.</p><div class="manager-filters"><select id="managerSupervisorOwner"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><select id="managerSupervisor"><option value="">Administrador aprova</option>${(data.approvers||[]).map(a=>`<option value="${safe(a.id)}">${safe(a.name)} · ${a.role==='admin'?'Admin':'Gestor'}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveSupervisor()">Salvar responsável</button></div></div>`;
+    const sectorNames=[...new Set([...(data.sectors||[]),...people.map(e=>e.sector)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    box.innerHTML=`<div class="card manager-directory-card"><div class="manager-directory-title"><div><h2>Gestores e funcionários vinculados</h2><p class="muted">Consulte as equipes e altere vínculos quando necessário.</p></div><span id="managerDirectoryCount" class="muted"></span></div><div class="manager-filters"><input id="managerDirectorySearch" type="search" placeholder="Buscar gestor ou funcionário" aria-label="Buscar gestor ou funcionário" oninput="SPFLY_MANAGER.filterDirectory()"><select id="managerDirectorySector" aria-label="Filtrar por setor" onchange="SPFLY_MANAGER.filterDirectory()"><option value="">Todos os setores</option>${sectorNames.map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select></div><div id="managerDirectory" class="manager-directory-list"></div></div>
+      <div class="manager-admin-settings"><div class="card" id="managerTeamEditor"><h2>Vínculo de equipe</h2><p class="muted">Cada funcionário possui um gestor responsável. Selecione uma pessoa para vincular, trocar ou remover o gestor.</p><div class="manager-filters"><input id="managerTeamSearch" type="search" placeholder="Buscar funcionário" oninput="SPFLY_MANAGER.filterTeam()"><select id="managerTeamEmployee"><option value="">Selecione o funcionário</option>${people.map(e=>`<option value="${Number(e.id)}">${safe(e.name)} · ${safe(e.sector)}</option>`).join('')}</select><select id="managerTeamManager"><option value="">Sem gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveTeam()">Salvar vínculo</button></div><p class="muted" id="managerCurrentLink"></p></div>
+      <div class="card"><h2>Gestão imediata</h2><p class="muted">Defina quem aprova a primeira etapa das transferências solicitadas por cada gestor. Sem responsável definido, a etapa cabe ao administrador.</p><div class="manager-filters"><select id="managerSupervisorOwner"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><select id="managerSupervisor"><option value="">Administrador aprova</option>${(data.approvers||[]).map(a=>`<option value="${safe(a.id)}">${safe(a.name)} · ${a.role==='admin'?'Admin':'Gestor'}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveSupervisor()">Salvar responsável</button></div></div></div>`;
     $('managerTeamEmployee').onchange=syncTeam;
     $('managerSupervisorOwner').onchange=syncSupervisor;
+    $('managerDirectorySearch').value=directoryFilters.search;
+    $('managerDirectorySector').value=directoryFilters.sector;
+    renderDirectory();
+  }
+  function filterDirectory() {
+    directoryFilters={search:$('managerDirectorySearch').value.trim().toLocaleLowerCase('pt-BR'),sector:$('managerDirectorySector').value};
+    renderDirectory();
+  }
+  function renderDirectory() {
+    const box=$('managerDirectory');
+    if (!box) return;
+    const employees=data.employees||[];
+    const profiles=data.managerDirectory||data.managers||[];
+    const managers=profiles.map(m=>({id:m.id,name:m.full_name||m.name||'Gestor sem nome',active:m.active!==false,
+      sector:employees.find(e=>Number(e.id)===Number(m.employee_id))?.sector||'Não informado'}))
+      .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    const search=directoryFilters.search,sector=directoryFilters.sector;
+    const matches=e=>(!search||`${e.name} ${e.sector} ${e.role}`.toLocaleLowerCase('pt-BR').includes(search))&&(!sector||e.sector===sector);
+    const open=new Set([...box.querySelectorAll('details[open][data-manager-id]')].map(item=>item.dataset.managerId));
+    const rows=managers.map(m=>{
+      const team=employees.filter(e=>e.manager_id===m.id);
+      const matching=team.filter(matches);
+      const managerMatch=(!search||m.name.toLocaleLowerCase('pt-BR').includes(search))&&(!sector||m.sector===sector);
+      if (!managerMatch&&!matching.length) return '';
+      const shown=managerMatch?team:matching;
+      const expanded=open.has(String(m.id))||(!managerMatch&&Boolean(matching.length));
+      return `<details class="manager-directory-row" data-manager-id="${safe(m.id)}" ${expanded?'open':''}><summary><strong>${safe(m.name)}</strong><span>${safe(m.sector)}</span><span>${team.length} funcionário(s)</span><span class="badge ${m.active?'badge-green':'badge-red'}">${m.active?'Ativo':'Inativo'}</span></summary><div class="manager-directory-people">${shown.length?shown.map(e=>`<div class="manager-directory-person"><span><strong>${safe(e.name)}</strong><small>${safe(e.sector)} · ${safe(e.role||'Cargo não informado')}</small></span><span class="manager-directory-actions"><button class="btn btn-secondary" type="button" data-manage-employee="${Number(e.id)}">Alterar vínculo</button><button class="btn btn-secondary" type="button" data-unlink-employee="${Number(e.id)}">Remover vínculo</button></span></div>`).join(''):'<p class="muted">Nenhum funcionário vinculado.</p>'}</div></details>`;
+    }).join('');
+    const unlinked=employees.filter(e=>!e.manager_id&&matches(e));
+    const unlinkedTotal=employees.filter(e=>!e.manager_id).length;
+    const unlinkedRow=unlinked.length?`<details class="manager-directory-row manager-directory-unlinked" data-manager-id="unlinked" ${open.has('unlinked')?'open':''}><summary><strong>Sem gestor vinculado</strong><span>—</span><span>${unlinkedTotal} funcionário(s)</span><span class="badge">Pendente</span></summary><div class="manager-directory-people">${unlinked.map(e=>`<div class="manager-directory-person"><span><strong>${safe(e.name)}</strong><small>${safe(e.sector)} · ${safe(e.role||'Cargo não informado')}</small></span><button class="btn btn-secondary" type="button" data-manage-employee="${Number(e.id)}">Vincular</button></div>`).join('')}</div></details>`:'';
+    box.innerHTML=rows+unlinkedRow||'<p class="muted">Nenhum gestor ou funcionário encontrado para este filtro.</p>';
+    $('managerDirectoryCount').textContent=`${managers.length} gestor(es) · ${unlinkedTotal} sem gestor`;
+  }
+  function manageTeam(employeeId) {
+    const selector=$('managerTeamEmployee');
+    if (!selector) return;
+    $('managerTeamSearch').value=''; filterTeam();
+    selector.value=String(employeeId); syncTeam();
+    $('managerTeamEditor').scrollIntoView({behavior:'smooth',block:'start'});
+    selector.focus();
+  }
+  async function unlinkTeam(employeeId) {
+    const employee=(data.employees||[]).find(e=>Number(e.id)===Number(employeeId));
+    if (!isAdmin()||!employee?.manager_id) return;
+    if (!confirm(`Remover o vínculo de ${employee.name} com seu gestor?`)) return;
+    try {
+      const {error}=await client.rpc('hr_set_team',{target_manager:employee.manager_id,target_employee:Number(employee.id),enabled:false});
+      if (error) throw error;
+      await refresh(); message('Vínculo removido.');
+    } catch(error) { message('Não foi possível remover o vínculo: '+error.message,true); }
   }
   function filterTeam() {
     const term=$('managerTeamSearch').value.toLocaleLowerCase('pt-BR');
@@ -171,9 +242,14 @@
     } catch(error) { message('Não foi possível abrir o certificado: '+error.message,true); }
   }
   document.addEventListener('DOMContentLoaded',()=>{
+    syncTeamVisibility();
     $('managerHireForm').addEventListener('submit',event=>{event.preventDefault();submit('hire',event.currentTarget);});
     $('managerTransferForm').addEventListener('submit',event=>{event.preventDefault();submit('transfer',event.currentTarget);});
     $('pageManager').addEventListener('click',event=>{
+      const unlink=event.target.closest('[data-unlink-employee]');
+      if(unlink) return unlinkTeam(unlink.dataset.unlinkEmployee);
+      const employee=event.target.closest('[data-manage-employee]');
+      if(employee) return manageTeam(employee.dataset.manageEmployee);
       const action=event.target.closest('[data-request]');
       if(action) return advance(action.dataset.request,action.dataset.action);
       const cert=event.target.closest('[data-cert]');
@@ -181,11 +257,11 @@
       const kpi=event.target.closest('[data-kpi]');
       if(kpi) {
         const filter=kpi.dataset.kpi;
-        if(filter==='team') $('managerTeam').scrollIntoView({behavior:'smooth'});
+        if(filter==='team') { toggleTeam(true); $('managerTeamHeading').scrollIntoView({behavior:'smooth'}); }
         else if(filter==='started'||filter==='finished') { $('managerCourseStatus').value=filter;renderCourses();$('managerCourses').scrollIntoView({behavior:'smooth'}); }
         else { $('managerRequestFilter').value=filter;renderRequests();$('managerRequests').scrollIntoView({behavior:'smooth'}); }
       }
     });
   });
-  window.SPFLY_MANAGER={configure,refresh,render,renderCourses,filterTeam,saveTeam,saveSupervisor};
+  window.SPFLY_MANAGER={configure,refresh,render,renderCourses,filterTeam,filterDirectory,saveTeam,saveSupervisor,toggleTeam};
 })();
