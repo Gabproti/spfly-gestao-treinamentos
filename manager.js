@@ -199,12 +199,31 @@
     }
     return actions;
   }
+  function requestTimeline(r) {
+    const hire=r.kind==='hire';
+    const stages=hire
+      ? ['Requisição de Vagas','Aprovação','Seleção','Preenchimento de Vagas','Requisição Concluída']
+      : ['Requisição de Transferência','Aprovação da Gestão Imediata','Aceite do Gestor Atual','Aprovação do RH','Transferência Concluída'];
+    const positions=hire
+      ? {requested:2,approved:3,selecting:4,completed:5}
+      : {requested:2,immediate_approved:3,manager_accepted:4,completed:5};
+    const stopped=['rejected','cancelled'].includes(r.status);
+    const stopEvent=stopped?(r.events||[]).findLast(event=>event.action===(r.status==='rejected'?'reject':'cancel')):null;
+    const reached=positions[stopped?(stopEvent?.previous_status||'requested'):r.status]??2;
+    const skipped=!hire&&Boolean(r.current_manager_skipped)&&reached>=4;
+    return `<div class="manager-transfer-timeline-wrap"><ol class="manager-transfer-timeline" aria-label="Andamento da ${hire?'requisição de vagas':'transferência'}">${stages.map((label,index)=>{
+      const step=index+1;
+      const state=skipped&&step===3?'skipped':step<reached||reached===5?'done':step===reached?'current':'pending';
+      const text=state==='skipped'?'Dispensada':stopped&&step===reached?(r.status==='rejected'?'Reprovada':'Cancelada'):state==='done'?'Concluída':state==='current'?'Atual':'Pendente';
+      return `<li class="manager-transfer-step manager-transfer-${state}${stopped&&step===reached?' manager-transfer-stopped':''}"><span class="manager-transfer-dot" aria-hidden="true">${state==='done'?'✓':state==='skipped'?'–':step}</span><span class="manager-transfer-label">${label}</span><span class="manager-transfer-state">${text}</span></li>`;
+    }).join('')}</ol></div>`;
+  }
   function renderRequests() {
     const selected=$('managerRequestFilter').value;
     const rows=(data.requests||[]).filter(r=>!selected||selected===r.kind||
       selected==='pending'&&!['completed','rejected','cancelled'].includes(r.status)||
       selected==='completed'&&r.status==='completed');
-    $('managerRequests').innerHTML=rows.length?rows.map(r=>`<article class="manager-request"><div class="manager-request-head"><div><strong>#${r.id} · ${r.kind==='hire'?'Requisição de vagas':'Transferência'}</strong><div class="muted">${safe(r.kind==='transfer'?nameOf(r.employee_id):r.position_name)} · ${safe(r.target_sector)} · ${date(r.created_at)}</div></div><span class="badge ${r.status==='completed'?'badge-green':r.status==='rejected'||r.status==='cancelled'?'badge-red':''}">${safe(statusNames[r.status]||r.status)}</span></div><p>${safe(r.reason)}</p>${r.kind==='hire'?`<p><strong>Vagas:</strong> ${r.filled_quantity} preenchida(s) de ${r.quantity} · ${r.quantity-r.filled_quantity} restante(s)</p>`:`<p><strong>Setor:</strong> ${safe(r.current_sector)} → ${safe(r.target_sector)}</p>`}<details><summary>Histórico e etapas (${r.events?.length||0})</summary><ol class="manager-timeline">${(r.events||[]).map(e=>`<li><strong>${safe(actionNames[e.action]||e.action)}</strong><span>${date(e.created_at)} · ${safe(e.actor_name)} · ${safe(statusNames[e.next_status]||e.next_status)}</span>${e.note?`<p>${safe(e.note)}</p>`:''}</li>`).join('')}</ol></details><div class="actions">${possibleActions(r).map(action=>`<button type="button" class="btn ${action==='reject'||action==='cancel'?'btn-secondary':'btn-primary'}" data-request="${r.id}" data-action="${action}">${safe(actionNames[action])}</button>`).join('')}</div></article>`).join(''):'<p class="muted">Nenhuma solicitação para este filtro.</p>';
+    $('managerRequests').innerHTML=rows.length?rows.map(r=>`<article class="manager-request"><div class="manager-request-head"><div><strong>#${r.id} · ${r.kind==='hire'?'Requisição de vagas':'Transferência'}</strong><div class="muted">${safe(r.kind==='transfer'?nameOf(r.employee_id):r.position_name)} · ${safe(r.target_sector)} · ${date(r.created_at)}</div></div><span class="badge ${r.status==='completed'?'badge-green':r.status==='rejected'||r.status==='cancelled'?'badge-red':''}">${safe(statusNames[r.status]||r.status)}</span></div><p>${safe(r.reason)}</p>${r.kind==='hire'?`<p><strong>Vagas:</strong> ${r.filled_quantity} preenchida(s) de ${r.quantity} · ${r.quantity-r.filled_quantity} restante(s)</p>`:`<p><strong>Setor:</strong> ${safe(r.current_sector)} → ${safe(r.target_sector)}</p>`}${requestTimeline(r)}<div class="actions">${possibleActions(r).map(action=>`<button type="button" class="btn ${action==='reject'||action==='cancel'?'btn-secondary':'btn-primary'}" data-request="${r.id}" data-action="${action}">${safe(actionNames[action])}</button>`).join('')}</div></article>`).join(''):'<p class="muted">Nenhuma solicitação para este filtro.</p>';
   }
   async function advance(id,action) {
     let note=null,filled=null;
@@ -225,7 +244,13 @@
     try {
       const {error}=await client.rpc('hr_advance_request',{target_request:Number(id),next_action:action,action_note:note,next_filled:filled});
       if (error) throw error;
-      await refresh(); message('Etapa registrada no histórico.');
+      let syncFailed=false;
+      if (action==='approve_final') {
+        try { await window.SPFLY_AUTH?.refreshSharedState?.(); }
+        catch (_) { syncFailed=true; }
+      }
+      await refresh();
+      message(syncFailed?'Transferência concluída. Atualize a página para ver o novo setor em todas as telas.':'Etapa registrada no histórico.',syncFailed);
     } catch(error) { message('Não foi possível atualizar a solicitação: '+error.message,true); }
   }
   function courseState(c) { return c.completed_at?'finished':c.started_at?'started':'pending'; }

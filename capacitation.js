@@ -3,7 +3,7 @@
 
   let client, access, currentUser, employees = [], sectors = [];
   let tracks = [], courses = [], enrollments = [], progress = [], courseGrants = [], employeeSystems = [];
-  let selectedTrack = null, selectedTab = 'courses', focusedEnrollment = null;
+  let selectedTrack = null, selectedTab = 'courses', focusedEnrollment = null, courseLinkFilter = 'all';
   let editingTrack = null, editingCourse = null, busy = false, loadRevision = 0, previewRevision = 0, previewPath = null, previewName = '';
   const $ = id => document.getElementById(id);
   const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -50,6 +50,17 @@
   const courseMatchesEmployee = (trackId,employeeId) => !systemCodes(trackId).length || employeeSystems.some(row => String(row.employee_id) === String(employeeId) && systemCodes(trackId).includes(row.system_code));
   const enrollmentCourses = enrollment => activeCourses(enrollment.track_id).filter(course => courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(enrollment.track_id,enrollment.employee_id)));
   const trackEnrollments = id => enrollments.filter(enrollment => enrollment.track_id === id && !enrollment.removed_at);
+  function linkedEmployeesByCourse(track) {
+    const linked = new Map();
+    const list = trackCourses(track.id);
+    trackEnrollments(track.id).forEach(person => list.forEach(course => {
+      if (courseGranted(course.id,person.employee_id) || (!person.individual_only && courseMatchesEmployee(track.id,person.employee_id))) {
+        if (!linked.has(course.id)) linked.set(course.id,new Set());
+        linked.get(course.id).add(String(person.employee_id));
+      }
+    }));
+    return linked;
+  }
   const courseProgress = (enrollmentId, courseId) => progress.find(item => item.enrollment_id === enrollmentId && item.course_id === courseId);
   const remaining = due => Math.round((date(due) - date(today())) / 86400000);
   const timeUsed = enrollment => {
@@ -146,10 +157,13 @@
   function refresh() { render(); }
   function renderList() {
     const mine = employeeRole();
+    const courseMode = manager() ? $('capCourseOverviewFilter').value : '';
     $('capPageTitle').textContent = mine ? 'Minhas Capacitações' : 'Capacitação';
-    $('capListTitle').textContent = mine ? 'Minhas Trilhas' : 'Trilhas de Capacitação';
-    $('capListHint').textContent = mine ? 'Consulte seus cursos e envie certificados para conferência.' : 'Acompanhe cursos, prazos e certificados em um só lugar.';
+    $('capListTitle').textContent = mine ? 'Minhas Trilhas' : courseMode ? 'Cursos de Capacitação' : 'Trilhas de Capacitação';
+    $('capListHint').textContent = mine ? 'Consulte seus cursos e envie certificados para conferência.' : courseMode ? 'Consulte os cursos e quantos funcionários estão vinculados a cada um.' : 'Acompanhe cursos, prazos e certificados em um só lugar.';
     $('capNewTrackButton').hidden = !manager();
+    $('capCourseOverviewFilterGroup').hidden = !manager();
+    $('capTrackSearch').placeholder = courseMode ? 'Buscar curso ou trilha...' : 'Buscar trilha ou sequência...';
     const sectorFilter = $('capSectorFilter');
     fillSectorSelect('capSectorFilter',sectorFilter.value);
     sectorFilter.hidden = mine;
@@ -157,7 +171,7 @@
     const selectedSector = mine ? '' : sectorFilter.value;
     const selectedSystem = $('capSystemFilter').value;
     const term = fold($('capTrackSearch').value.trim());
-    const visible = tracks.filter(track => (!mine || trackEnrollments(track.id).length) && (!selectedSector || !trackSectors(track).length || trackSectors(track).includes(selectedSector)) && (!selectedSystem || (selectedSystem === 'Não classificado' ? !systemCodes(track.id).length : systemCodes(track.id).includes(selectedSystem))) && (!term || [track.name,track.description,track.sequence_name].some(value => fold(value).includes(term)))).sort((a,b) => (a.sequence_name || '').localeCompare(b.sequence_name || '','pt-BR') || (a.sequence_order || 1)-(b.sequence_order || 1) || a.name.localeCompare(b.name,'pt-BR'));
+    const visible = tracks.filter(track => (!mine || trackEnrollments(track.id).length) && (!selectedSector || !trackSectors(track).length || trackSectors(track).includes(selectedSector)) && (!selectedSystem || (selectedSystem === 'Não classificado' ? !systemCodes(track.id).length : systemCodes(track.id).includes(selectedSystem))) && (!term || [track.name,track.description,track.sequence_name].some(value => fold(value).includes(term)) || (courseMode && trackCourses(track.id).some(course => [course.name,course.description].some(value => fold(value).includes(term)))))).sort((a,b) => (a.sequence_name || '').localeCompare(b.sequence_name || '','pt-BR') || (a.sequence_order || 1)-(b.sequence_order || 1) || a.name.localeCompare(b.name,'pt-BR'));
     const visibleIds = new Set(visible.map(track => track.id));
     const filteredEnrollments = enrollments.filter(item => visibleIds.has(item.track_id));
     const eStats = filteredEnrollments.map(enrollmentStats);
@@ -166,6 +180,18 @@
     const labels = [mine?'Minhas trilhas':'Trilhas cadastradas',mine?'Inscrições':'Funcionários inscritos','Cursos concluídos','Em andamento','Em atraso'];
     const icons = ['🎓','♙','✓','◷','!'];
     $('capKpis').innerHTML = values.map((value,i) => `<div class="cap-kpi"><div class="cap-kpi-icon">${icons[i]}</div><div><div class="cap-kpi-value">${value}</div><div class="cap-kpi-label">${labels[i]}</div></div></div>`).join('');
+    if (courseMode) {
+      const rows=visible.flatMap(track => {
+        const linked=linkedEmployeesByCourse(track);
+        const trackMatch=!term || [track.name,track.description,track.sequence_name].some(value => fold(value).includes(term));
+        return trackCourses(track.id).filter(course =>
+          (trackMatch || [course.name,course.description].some(value => fold(value).includes(term))) &&
+          (courseMode==='all' || (courseMode==='linked' ? linked.has(course.id) : !linked.has(course.id)))
+        ).map(course => ({track,course,count:linked.get(course.id)?.size||0}));
+      });
+      $('capTrackGrid').innerHTML=rows.length?rows.map(({track,course,count})=>`<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}" data-cap-course-filter="${safe(courseMode)}"><div class="cap-card-head"><h3>${safe(course.name)}</h3>${badge(course.active?'Ativo':'Inativo',course.active?'green':'gray')}</div><p>${safe(course.description||'Sem descrição.')}</p><div class="cap-meta"><span>Trilha: ${safe(track.name)}</span><span>Modalidade: ${safe(modalityLabel(course))}</span><span>${course.duration_minutes} min</span><span>${count} funcionário(s) vinculado(s)</span></div></button>`).join(''):empty('Nenhum curso corresponde aos filtros selecionados.');
+      return;
+    }
     $('capTrackGrid').innerHTML = visible.length ? visible.map(track => {
       const participants = trackEnrollments(track.id), enrolledStats = participants.map(enrollmentStats);
       const completion = participants.length ? Math.round(enrolledStats.reduce((sum,s) => sum+s.pct,0)/participants.length) : 0;
@@ -252,7 +278,7 @@
     } catch (error) { notice('capTrackFormMessage','Não foi possível salvar: '+error.message,true); }
     finally { busy = false; }
   }
-  function openTrack(id) { selectedTrack = id; selectedTab = 'courses'; focusedEnrollment = null; closeCourseEditor(); closeEnrollEditor(); showPage('pageCapTrackDetail'); }
+  function openTrack(id, filter = 'all') { selectedTrack = id; selectedTab = 'courses'; focusedEnrollment = null; courseLinkFilter = filter; closeCourseEditor(); closeEnrollEditor(); showPage('pageCapTrackDetail'); }
   function selectTab(tab) { if (!manager() && tab === 'employees') return; selectedTab = tab; renderDetail(); }
   function renderDetail() {
     const track = tracks.find(item => item.id === selectedTrack);
@@ -274,17 +300,19 @@
     else renderEmployees(track);
   }
   function renderCourses(track, enrollment, reviewEnrollment = null) {
+    const linked = manager() ? linkedEmployeesByCourse(track) : new Map();
     const list = trackCourses(track.id).filter(course => (manager() || course.active || courseProgress(enrollment?.id,course.id)?.completed_at)
-      && (!enrollment || courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(track.id,enrollment.employee_id))));
+      && (!enrollment || courseGranted(course.id,enrollment.employee_id) || (!enrollment.individual_only && courseMatchesEmployee(track.id,enrollment.employee_id)))
+      && (!manager() || courseLinkFilter === 'all' || (courseLinkFilter === 'linked' ? linked.has(course.id) : !linked.has(course.id))));
     const viewed = reviewEnrollment || enrollment;
-    $('capDetailCourses').innerHTML = `<div class="cap-section-head"><div><h2>Cursos da Trilha</h2><p class="muted">${manager()?'Links externos, ordem, conclusão e certificados.':'Acesse o curso e envie o certificado para validação.'}</p></div>${manager()?'<button type="button" class="btn btn-primary" data-cap-action="new-course">+ Adicionar Curso</button>':''}</div>
+    $('capDetailCourses').innerHTML = `<div class="cap-section-head"><div><h2>Cursos da Trilha</h2><p class="muted">${manager()?'Links externos, ordem, conclusão e certificados.':'Acesse o curso e envie o certificado para validação.'}</p></div>${manager()?`<div class="cap-course-tools"><select id="capCourseLinkFilter" aria-label="Filtrar cursos por funcionários vinculados"><option value="all" ${courseLinkFilter==='all'?'selected':''}>Todos os cursos</option><option value="linked" ${courseLinkFilter==='linked'?'selected':''}>Com funcionários vinculados</option><option value="unlinked" ${courseLinkFilter==='unlinked'?'selected':''}>Sem funcionários vinculados</option></select><button type="button" class="btn btn-primary" data-cap-action="new-course">+ Adicionar Curso</button></div>`:''}</div>
       <div class="cap-course-list">${list.length ? list.map(course => {
         const item = viewed ? courseProgress(viewed.id,course.id) : null;
         const state = viewed ? courseState(viewed,course) : null;
         const certificate = certificateMode(track)==='per_course' && course.certificate_required ? certificateState(item) : null;
         const url = validUrl(course.external_url);
         return `<article class="cap-course"><div class="cap-course-head"><div><h3><span class="cap-course-order">${course.sort_order}.</span>${safe(course.name)}</h3><p>${safe(course.description || 'Sem descrição.')}</p></div>${state?badge(state[0],state[1]):badge(course.active?'Ativo':'Inativo',course.active?'green':'gray')}</div>
-          <div class="cap-course-meta"><span>◷ ${course.duration_minutes} min</span><span>Modalidade: ${safe(modalityLabel(course))}</span><span>Sistema da trilha: ${safe(systemLabel(track.id))}</span><span>${certificateMode(track)==='after_all'?'Certificado único ao final':`Certificado ${course.certificate_required?'obrigatório':'opcional'}`}</span>${!course.active?'<span>Curso inativo</span>':''}${item?.completed_at?`<span>Concluído em ${fmtTime(item.completed_at)}</span>`:''}</div>
+          <div class="cap-course-meta"><span>◷ ${course.duration_minutes} min</span><span>Modalidade: ${safe(modalityLabel(course))}</span><span>Sistema da trilha: ${safe(systemLabel(track.id))}</span><span>${certificateMode(track)==='after_all'?'Certificado único ao final':`Certificado ${course.certificate_required?'obrigatório':'opcional'}`}</span>${manager()?`<span>${linked.get(course.id)?.size||0} funcionário(s) vinculado(s)</span>`:''}${!course.active?'<span>Curso inativo</span>':''}${item?.completed_at?`<span>Concluído em ${fmtTime(item.completed_at)}</span>`:''}</div>
           ${certificate?`<div class="cap-status-line">Certificado: ${badge(certificate[0],certificate[1])}${item?.certificate_name?`<span class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</span>`:''}${item?.validation_status==='rejected'?`<span class="cap-due-alert">Motivo: ${safe(item.rejection_reason||'Não informado')}</span>`:''}</div>`:''}
           <div class="cap-course-actions">${canUpload() && enrollment && track.status==='Ativa' && course.active && !item?.started_at?`<button type="button" class="btn btn-primary" data-cap-action="start-course" data-id="${safe(course.id)}">Iniciar</button>`:''}
             ${url && !reviewEnrollment && (manager() || item?.started_at)?`<a class="btn btn-secondary" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${manager()?'Abrir link ↗':'Acessar curso ↗'}</a>`:''}
@@ -292,7 +320,7 @@
             ${canUpload() && enrollment && track.status==='Ativa' && course.active && certificateMode(track)==='per_course' && course.certificate_required && item?.course_finished_at && (!item?.certificate_path || item.validation_status==='rejected')?`<label class="btn btn-secondary">${item?.certificate_path?'Enviar novo certificado':'Anexar certificado'} <input class="cap-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-cap-upload="${safe(course.id)}"></label>`:''}
             ${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">${fileViewLabel(item.certificate_path)}</button>`:''}
             ${manager()?`<button type="button" class="btn btn-secondary" data-cap-action="edit-course" data-id="${safe(course.id)}">Editar Curso</button>`:''}</div></article>`;
-      }).join('') : empty('Esta trilha ainda não tem cursos.')} </div>${certificateMode(track)==='after_all' && enrollment ? renderTrackCertificate(enrollment) : ''}`;
+      }).join('') : empty(courseLinkFilter==='all'?'Esta trilha ainda não tem cursos.':'Nenhum curso corresponde ao filtro selecionado.')} </div>${certificateMode(track)==='after_all' && enrollment ? renderTrackCertificate(enrollment) : ''}`;
   }
   function renderTrackCertificate(enrollment, adminView = false) {
     const stats = enrollmentStats(enrollment), state = trackCertificateState(enrollment);
@@ -673,7 +701,7 @@
   function delegate(event) {
     const button = event.target.closest('[data-cap-action]'); if (!button) return;
     const {capAction:action,id} = button.dataset;
-    if (action==='track') openTrack(id);
+    if (action==='track') openTrack(id,button.dataset.capCourseFilter||'all');
     if (action==='edit-track') editTrack(id);
     if (action==='delete-track') deleteTrack(id);
     if (action==='new-course') showCourseEditor();
@@ -700,6 +728,7 @@
   $('pageCapacitation').addEventListener('click',delegate);
   $('pageCapTrackDetail').addEventListener('click',delegate);
   $('pageCapTrackDetail').addEventListener('change',event => {
+    if (event.target.id === 'capCourseLinkFilter') { courseLinkFilter = event.target.value; renderDetail(); return; }
     const input = event.target.closest('[data-cap-upload]');
     if (input) uploadCertificate(input.dataset.capUpload,input.files?.[0]);
     const trackInput = event.target.closest('[data-cap-track-upload]');

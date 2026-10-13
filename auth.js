@@ -101,6 +101,13 @@
     await loadSectors();
   }
 
+  async function refreshSharedState() {
+    await loadSharedState();
+    window.SPFLY_CAP?.updateEmployees(employees);
+    if (document.getElementById('pageEmployees')?.classList.contains('active')) renderEmployees();
+    if (document.getElementById('dashboard')?.classList.contains('active')) renderDashboard();
+  }
+
   async function loadSectors() {
     const { data, error } = await client.from('portal_sectors').select('name').order('name');
     if (error) throw error;
@@ -498,7 +505,7 @@
     showLogin();
   }
 
-  window.SPFLY_AUTH = { persist, createSector, renameSector, renderAdmins, uploadFile, deleteFile, previewFile, logout, canPage, canEdit,
+  window.SPFLY_AUTH = { persist, createSector, renameSector, refreshSharedState, renderAdmins, uploadFile, deleteFile, previewFile, logout, canPage, canEdit,
     getClient: () => client,
     isAdmin: () => currentAccess?.active && currentAccess.access_role === 'admin',
     updateCreateRole, renderCreateEmployeeOptions, updateCreateEmployeeName };

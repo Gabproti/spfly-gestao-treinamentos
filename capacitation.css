@@ -12,8 +12,13 @@
 .cap-section-head h2,.cap-section-head h3{margin:0 0 4px;font-size:21px;color:#172233}
 .cap-section-head h3{font-size:17px}
 .cap-section-head p{margin:0}
+.cap-course-tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.cap-course-tools select{min-height:42px;max-width:270px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:inherit}
 .cap-section-head input{max-width:275px;width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
 .cap-list-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.cap-overview-filter{display:flex;flex-direction:column;gap:3px;color:var(--muted);font-size:11px;font-weight:700}
+.cap-overview-filter[hidden]{display:none}
+.cap-overview-filter select{font-size:13px;font-weight:400}
 .cap-list-actions select{min-height:42px;min-width:180px;max-width:260px;border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:var(--surface);color:inherit}
 .cap-list-actions select[hidden]{display:none}
 .cap-track-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -104,7 +109,7 @@ body.dark .cap-progress-line{background:#343b42}
 body.dark .cap-hero-stats>div{background:#20252a;border-color:#343b42}
 body.dark .cap-tabs{border-color:#343b42}
 body.dark .cap-audience{border-color:#343b42}
-body.dark .cap-section-head input,body.dark .cap-list-actions select,body.dark #capEnrollSearch,body.dark .cap-file-input{background:#12161a;color:#e8edf2;border-color:#394149}
+body.dark .cap-section-head input,body.dark .cap-list-actions select,body.dark .cap-course-tools select,body.dark #capEnrollSearch,body.dark .cap-file-input{background:#12161a;color:#e8edf2;border-color:#394149}
 body.dark .cap-toast{background:#33241e;color:#ffc29f;border-color:#6c3b26}
 body.dark .cap-toast.error{background:#341d1f;color:#ffc4c4;border-color:#713437}
 body.dark .cap-rejection-reason{background:#341d1f;color:#ffc4c4;border-color:#713437}
@@ -120,3 +125,4 @@ body.dark .employee-cap-track{background:#181c20;border-color:#343b42}body.dark 
 @media(max-width:600px){.employee-cap-head,.employee-cap-course{flex-direction:column}.employee-cap-course-state{justify-content:flex-start;text-align:left}}
 @media(max-width:600px){.cap-course-dialog{padding:18px}.cap-course-dialog .actions{flex-wrap:wrap}.cap-course-dialog .actions .btn{flex:1}}
 @media(max-width:600px){.cap-list-actions{width:100%;flex-wrap:wrap}.cap-list-actions input{min-width:0;width:100%}.cap-list-actions select{flex:1;max-width:none;min-width:0}}
+@media(max-width:600px){.cap-course-tools{width:100%}.cap-course-tools select{flex:1;min-width:0;max-width:none}}

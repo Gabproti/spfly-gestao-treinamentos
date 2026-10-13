@@ -4,6 +4,27 @@
 .manager-kpi strong{font-size:24px}
 .manager-grid,.manager-grid.manager-grid-admin{grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
 .manager-grid .card{margin-bottom:0}
+.manager-transfer-timeline-wrap{overflow-x:auto;margin:16px 0;padding:3px 0 8px}
+.manager-transfer-timeline{display:grid;grid-template-columns:repeat(5,minmax(118px,1fr));min-width:610px;list-style:none;margin:0;padding:0}
+.manager-transfer-step{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 8px;text-align:center;font-size:11px;color:var(--muted)}
+.manager-transfer-step:not(:first-child)::before{content:"";position:absolute;top:15px;right:50%;width:100%;height:2px;background:var(--border);z-index:0}
+.manager-transfer-dot{position:relative;z-index:1;display:grid;place-items:center;width:32px;height:32px;border:2px solid var(--border);border-radius:50%;background:var(--surface);font-size:13px;font-weight:800}
+.manager-transfer-label{max-width:140px;line-height:1.25;font-weight:700;color:inherit}
+.manager-transfer-state{line-height:1.2}
+.manager-transfer-done,.manager-transfer-skipped{color:var(--orange)}
+.manager-transfer-done .manager-transfer-dot{border-color:var(--orange);background:var(--orange);color:#fff}
+.manager-transfer-step.manager-transfer-done:not(:first-child)::before,.manager-transfer-step.manager-transfer-skipped:not(:first-child)::before{background:var(--orange)}
+.manager-transfer-skipped .manager-transfer-dot{border-color:var(--orange);color:var(--orange)}
+.manager-transfer-current{color:var(--orange)}
+.manager-transfer-current .manager-transfer-dot{border-color:var(--orange);background:var(--surface);color:var(--orange);box-shadow:0 0 0 3px #f05a2833}
+.manager-transfer-stopped{color:#bd3434}
+.manager-transfer-stopped .manager-transfer-dot{border-color:#bd3434;background:#bd3434;color:#fff;box-shadow:none}
+body.dark .manager-transfer-step{color:#aeb9c2}
+body.dark .manager-transfer-done,body.dark .manager-transfer-skipped{color:#ff985f}
+body.dark .manager-transfer-current{color:#ff985f}
+body.dark .manager-transfer-stopped{color:#ff9b9b}
+body.dark .manager-transfer-skipped .manager-transfer-dot{color:#ff985f}
+@media(max-width:700px){.manager-transfer-timeline{grid-template-columns:repeat(5,124px);min-width:620px}.manager-transfer-step{font-size:10px}}
 .manager-column{display:contents}
 #managerDirectoryHost{order:1}
 #managerAdmin{order:2}

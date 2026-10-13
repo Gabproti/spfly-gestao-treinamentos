@@ -1,4 +1,10 @@
-# SPFLY Admin — V47
+# SPFLY Admin — V48
+
+## Transferências e filtro de cursos (V48)
+
+As solicitações de transferência e de vagas exibem as etapas em uma linha horizontal, nas cores da SPFLY, com indicação de concluída, atual, pendente ou dispensada. O controle visual redundante “Histórico e etapas” foi removido dos cartões; os eventos continuam registrados no banco. Após a aprovação final de transferência, o portal recarrega os funcionários e a versão do cadastro compartilhado para mostrar o novo setor sem precisar atualizar a página. A alteração do setor, o bloqueio de aprovações repetidas e o registro de auditoria já são realizados pela função `hr_advance_request` da V46 em uma transação; não há nova migração. O vínculo com gestor continua individual, pois não existe associação automática entre setor e gestor no banco.
+
+Na tela principal de **Capacitação**, o administrador pode alternar entre trilhas e cursos, filtrando os cursos com ou sem funcionários vinculados. O mesmo filtro aparece dentro de **Cursos da Trilha**. A quantidade por curso considera inscrições ativas e liberações individuais, sem repetir cursos com vários participantes. Foram alterados `index.html`, `auth.js`, `capacitation.js`, `capacitation.css`, `manager.js`, `manager.css` e adicionado `tests/manager-cap-filters.test.cjs`.
 
 ## Ajuste da disposição dos quadros (V47.3)
 
