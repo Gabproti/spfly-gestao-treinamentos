@@ -2,8 +2,13 @@
 .manager-kpis{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:16px 0}
 .manager-kpi{padding:13px 14px}
 .manager-kpi strong{font-size:24px}
-.manager-grid{grid-template-columns:minmax(260px,.85fr) minmax(0,1.15fr);gap:16px;align-items:start}
+.manager-grid,.manager-grid.manager-grid-admin{grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
 .manager-grid .card{margin-bottom:0}
+.manager-column{display:contents}
+#managerDirectoryHost{order:1}
+#managerAdmin{order:2}
+.manager-team-card{order:3}
+.manager-form-stack{order:4}
 .manager-form-stack{display:grid;gap:16px;min-width:0}
 .manager-team-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .manager-team-head h2{margin:0 0 3px}
@@ -15,9 +20,9 @@
 .manager-team-card #managerTeamPanel[hidden]{display:none}
 .manager-team-card .manager-table-wrap{max-height:380px;overflow:auto}
 .manager-team-card .manager-table-wrap th{position:sticky;top:0;background:var(--surface);z-index:1}
-.manager-page #managerAdmin{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:16px;align-items:start;margin-bottom:18px}
+.manager-page #managerAdmin{display:block;min-width:0}
 .manager-page #managerAdmin[hidden]{display:none}
-.manager-admin-settings{display:grid;gap:16px;min-width:0}
+.manager-admin-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
 .manager-page #managerAdmin .card{margin-bottom:0;min-width:0}
 .manager-page .manager-filters input,.manager-page .manager-filters select{box-sizing:border-box;min-height:42px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:inherit;padding:10px 12px}
 .manager-directory-title{display:flex;align-items:start;justify-content:space-between;gap:12px}
@@ -37,6 +42,6 @@
 .manager-directory-person small{display:block;color:var(--muted);margin-top:3px}
 .manager-directory-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .manager-directory-person .btn{padding:7px 10px;font-size:12px;white-space:nowrap}
-@media(max-width:1300px){.manager-page #managerAdmin{grid-template-columns:1fr}}
-@media(max-width:1100px){.manager-grid{grid-template-columns:1fr}.manager-team-card .manager-table-wrap{max-height:320px}}
+@media(max-width:1300px){.manager-admin-settings{grid-template-columns:1fr}}
+@media(max-width:1100px){.manager-team-card .manager-table-wrap{max-height:320px}}
 @media(max-width:650px){.manager-directory-row summary{grid-template-columns:minmax(0,1fr) auto 16px;gap:5px 10px}.manager-directory-row summary>strong{grid-column:1}.manager-directory-row summary span:not(.badge){grid-column:1}.manager-directory-row summary .badge{grid-column:2;grid-row:1}.manager-directory-row summary::before{grid-column:3;grid-row:1}.manager-directory-person{align-items:start;flex-direction:column}.manager-directory-title{flex-wrap:wrap}}

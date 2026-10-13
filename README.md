@@ -1,5 +1,9 @@
 # SPFLY Admin — V47
 
+## Ajuste da disposição dos quadros (V47.3)
+
+Na Visão do Gestor, os quadros seguem em largura inteira: diretório de gestores, configurações administrativas, Minha equipe, requisição de vagas e transferência. Isso evita a faixa vazia ao lado dos formulários. As duas configurações administrativas ficam lado a lado em telas largas e empilhadas em telas menores.
+
 ## Organização da Visão do Gestor (V47)
 
 Minha equipe pode ser recolhida, e sua lista possui rolagem interna quando expandida. Nova transferência fica logo abaixo de Nova requisição de vagas. A etapa de aprovação final aparece como “Aprovado”, mantendo a ação existente. Administradores consultam gestores ativos e inativos, setores disponíveis, quantidade e lista de funcionários por gestor, além dos funcionários sem gestor. Os filtros procuram gestor ou funcionário e setor; os vínculos podem ser criados, trocados ou removidos usando a função administrativa existente. Esta versão altera apenas `index.html`, `manager.js` e `manager.css`; não requer migração do banco.
