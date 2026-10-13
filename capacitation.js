@@ -709,6 +709,6 @@
     const button = event.target.closest('[data-cap-history-cert]');
     if (button) viewHistoryCertificate(button.dataset.capHistoryCert);
   });
-  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,filterCourseAudience,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeCertificatePreview,downloadCertificatePreview,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];},updateSectors(next){sectors=next||[];}};
+  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,filterCourseAudience,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,openCertificatePreview,closeCertificatePreview,downloadCertificatePreview,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];},updateSectors(next){sectors=next||[];}};
   window.SPFLY_CAP_TEST = {addDays,remaining,percent,validUrl};
 })();

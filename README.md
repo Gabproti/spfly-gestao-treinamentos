@@ -1,4 +1,10 @@
-# SPFLY Admin — V45
+# SPFLY Admin — V46
+
+## Visão do Gestor (V46)
+
+O perfil Gestor consulta apenas funcionários vinculados, acompanha inscrições e certificados de sua equipe e solicita vagas e transferências. O administrador configura vínculos e a gestão imediata, aprova pelo RH e acompanha todas as solicitações. Pedidos têm número, quantidade de vagas, etapas sequenciais e histórico. A transferência altera o setor somente na aprovação final; quando o solicitante já é o gestor atual, o aceite repetido é dispensado e registrado. Sem gestor superior cadastrado, o administrador responde pela primeira aprovação.
+
+Execute `supabase/migration-v46-manager.sql` depois da V45, publique a versão atual de `supabase/functions/invite-admin/index.ts` e então publique `index.html`, `auth.js`, `capacitation.js`, `manager.js`, `manager.css` e este README. Crie as contas Gestor em Acessos e vincule a equipe na Visão do Gestor. A migração cria tabelas de pessoal com RLS ativa, sem acesso direto da API; operações passam por funções que conferem perfil e vínculo. Contas Gestor não recebem o estado global de funcionários e treinamentos.
 
 ## Lista de presença para preenchimento manual (V45)
 

@@ -263,6 +263,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 <link rel="stylesheet" href="performance.css?v=38">
 <link rel="stylesheet" href="efficacy.css?v=35">
 <link rel="stylesheet" href="training-print.css?v=45">
+<link rel="stylesheet" href="manager.css?v=46">
 </head>
 <body>
 <div class="auth-screen" id="authScreen">
@@ -317,6 +318,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <button class="nav-btn" data-page="pageTrainings"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg><span class="nav-label">Treinamentos</span></button>
     <button class="nav-btn" data-page="pagePerfAssessments"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-database"/></svg><span class="nav-label">Formulários</span></button>
     <button class="nav-btn" data-page="pageCapacitation"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-cap"/></svg><span class="nav-label">Capacitação</span></button>
+    <button class="nav-btn" data-page="pageManager"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Visão do Gestor</span></button>
     <button class="nav-btn" data-page="pageEmployees"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-users"/></svg><span class="nav-label">Funcionários</span></button>
     <button class="nav-btn" data-menu="reports"><svg class="ui-icon nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg><span class="nav-label">Relatórios</span><span class="nav-chevron">⌄</span></button>
     <div class="subnav" id="reports">
@@ -347,12 +349,22 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   <div class="header-row"><div><h1>Gestão de acessos</h1><div class="muted">Cadastre administradores e usuários. Escolha visualização e edição por tela.</div></div></div>
   <div class="card form-card">
     <h2>Criar usuário</h2>
-    <form id="createUserForm" class="access-form"><div class="admin-form"><div class="field"><label for="createUserName">Nome completo</label><input id="createUserName" autocomplete="name" required placeholder="Nome da pessoa"></div><div class="field"><label for="createUserEmail">E-mail</label><input id="createUserEmail" type="email" autocomplete="off" required placeholder="nome@empresa.com"></div><div class="field"><label for="createRole">Perfil</label><select id="createRole" onchange="SPFLY_AUTH.updateCreateRole()"><option value="admin">Administrador</option><option value="usuario">Usuário</option></select></div><button class="btn btn-primary" type="submit">Criar usuário</button></div><div id="createPages" class="access-pages" hidden><strong>Permissões por tela</strong><div id="createPermissionChecks" class="access-permissions"></div><p class="help">Na Capacitação, a edição do usuário permite somente anexar o próprio certificado. O administrador fará a conferência.</p></div><div id="createEmployeeLink" class="access-pages" hidden><div class="field"><label for="createEmployeeId">Vincular ao cadastro do funcionário</label><select id="createEmployeeId" onchange="SPFLY_AUTH.updateCreateEmployeeName()"><option value="">Selecione um funcionário</option></select></div><p class="help">Necessário para mostrar apenas as capacitações desta pessoa.</p></div></form>
+    <form id="createUserForm" class="access-form"><div class="admin-form"><div class="field"><label for="createUserName">Nome completo</label><input id="createUserName" autocomplete="name" required placeholder="Nome da pessoa"></div><div class="field"><label for="createUserEmail">E-mail</label><input id="createUserEmail" type="email" autocomplete="off" required placeholder="nome@empresa.com"></div><div class="field"><label for="createRole">Perfil</label><select id="createRole" onchange="SPFLY_AUTH.updateCreateRole()"><option value="admin">Administrador</option><option value="usuario">Usuário</option><option value="gestor">Gestor</option></select></div><button class="btn btn-primary" type="submit">Criar usuário</button></div><div id="createPages" class="access-pages" hidden><strong>Permissões por tela</strong><div id="createPermissionChecks" class="access-permissions"></div><p class="help">Na Capacitação, a edição do usuário permite somente anexar o próprio certificado. O administrador fará a conferência.</p></div><div id="createEmployeeLink" class="access-pages" hidden><div class="field"><label for="createEmployeeId">Vincular ao cadastro do funcionário</label><select id="createEmployeeId" onchange="SPFLY_AUTH.updateCreateEmployeeName()"><option value="">Selecione um funcionário</option></select></div><p class="help">Necessário para mostrar apenas as capacitações desta pessoa.</p></div></form>
     <p class="muted">Administrador acessa tudo. Usuário acessa apenas as telas e ações selecionadas.</p>
     <p class="muted">A conta recebe uma senha inicial padrão. O portal exige uma nova senha antes de liberar o acesso aos dados.</p>
     <div id="createUserMessage" role="status"></div><div id="createdUserResult" class="created-user-result" hidden></div>
   </div>
-  <div class="card access-directory"><div class="access-directory-head"><div><h2>Pessoas com acesso</h2><div class="muted">Encontre uma pessoa e abra somente o acesso que deseja alterar.</div></div><div class="access-directory-tools"><label class="sr-only" for="accessSearch">Buscar usuário</label><input id="accessSearch" type="search" placeholder="Buscar nome, e-mail ou tela..."><label class="sr-only" for="accessRoleFilter">Filtrar perfil</label><select id="accessRoleFilter"><option value="">Todos os perfis</option><option value="admin">Administradores</option><option value="usuario">Usuários</option></select><small id="accessCount"></small></div></div><div class="access-list-head"><span>Nome / e-mail</span><span>Perfil</span><span>Telas de acesso</span><span>Status</span><span>Ação</span></div><div id="adminList">Carregando...</div></div>
+  <div class="card access-directory"><div class="access-directory-head"><div><h2>Pessoas com acesso</h2><div class="muted">Encontre uma pessoa e abra somente o acesso que deseja alterar.</div></div><div class="access-directory-tools"><label class="sr-only" for="accessSearch">Buscar usuário</label><input id="accessSearch" type="search" placeholder="Buscar nome, e-mail ou tela..."><label class="sr-only" for="accessRoleFilter">Filtrar perfil</label><select id="accessRoleFilter"><option value="">Todos os perfis</option><option value="admin">Administradores</option><option value="usuario">Usuários</option><option value="gestor">Gestores</option></select><small id="accessCount"></small></div></div><div class="access-list-head"><span>Nome / e-mail</span><span>Perfil</span><span>Telas de acesso</span><span>Status</span><span>Ação</span></div><div id="adminList">Carregando...</div></div>
+</div>
+<div id="pageManager" class="page manager-page">
+  <div class="header-row"><div><h1>Visão do Gestor</h1><div class="muted">Equipe, requisições, vagas, transferências e capacitação.</div></div><button class="btn btn-secondary" type="button" onclick="SPFLY_MANAGER.refresh()">Atualizar</button></div>
+  <div id="managerMessage" role="status"></div>
+  <div id="managerKpis" class="manager-kpis"></div>
+  <div id="managerAdmin" hidden></div>
+  <div class="manager-grid"><div class="card"><h2>Minha equipe</h2><div id="managerTeam"></div></div><div class="card"><h2>Nova requisição de vagas</h2><form id="managerHireForm" class="form-grid"><div class="field"><label>Setor *</label><select name="sector" required></select></div><div class="field"><label>Cargo / função *</label><input name="position" required minlength="2" maxlength="160"></div><div class="field"><label>Quantidade de vagas *</label><input name="quantity" type="number" min="1" max="1000" value="1" required></div><div class="field full"><label>Justificativa *</label><textarea name="reason" required minlength="8" maxlength="4000"></textarea></div><div class="actions"><button class="btn btn-primary" type="submit">Solicitar vagas</button></div></form></div></div>
+  <div class="card"><h2>Nova transferência</h2><form id="managerTransferForm" class="form-grid"><div class="field"><label>Funcionário *</label><select name="employee" required></select></div><div class="field"><label>Setor de destino *</label><select name="sector" required></select></div><div class="field full"><label>Motivo *</label><textarea name="reason" required minlength="8" maxlength="4000"></textarea></div><div class="actions"><button class="btn btn-primary" type="submit">Solicitar transferência</button></div></form></div>
+  <div class="card"><div class="header-row"><div><h2>Requisições e transferências</h2><div class="muted">Cada etapa e decisão fica registrada no histórico.</div></div><select id="managerRequestFilter" onchange="SPFLY_MANAGER.render()"><option value="">Todos os processos</option><option value="hire">Vagas</option><option value="transfer">Transferências</option><option value="pending">Pendentes</option><option value="completed">Concluídos</option></select></div><div id="managerRequests"></div></div>
+  <div class="card"><div class="header-row"><div><h2>Inscrições em cursos</h2><div class="muted">Acompanhamento de cursos e certificados autorizados.</div></div></div><div class="manager-filters"><input id="managerCourseSearch" type="search" placeholder="Buscar curso ou funcionário" oninput="SPFLY_MANAGER.renderCourses()"><select id="managerSectorFilter" onchange="SPFLY_MANAGER.renderCourses()"><option value="">Todos os setores</option></select><select id="managerCourseStatus" onchange="SPFLY_MANAGER.renderCourses()"><option value="">Todos os status</option><option value="pending">Pendente</option><option value="started">Em andamento</option><option value="finished">Concluído</option></select></div><div id="managerCourses"></div></div>
 </div>
 <div id="dashboard" class="page active">
   <div class="dashboard-page-head">
@@ -553,6 +565,7 @@ function showPage(id){
  if(id==="pageAdmins")window.SPFLY_AUTH.renderAdmins();
  if(id==="pageAdmins")window.SPFLY_AUTH.renderCreateEmployeeOptions();
  if(id==="pageCapacitation"||id==="pageCapTrackDetail")window.SPFLY_CAP?.render();
+ if(id==="pageManager")window.SPFLY_MANAGER?.refresh();
  if(id.startsWith('pagePerf'))window.SPFLY_PERF?.render(id);
  if(id==="dashboard")renderDashboard();
  applyTheme();
@@ -1212,11 +1225,12 @@ applyTheme();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="capacitation.js?v=30"></script>
+<script src="capacitation.js?v=46"></script>
 <script src="performance.js?v=38"></script>
 <script src="efficacy.js?v=35"></script>
 <script src="training-print.js?v=45"></script>
-<script src="auth.js?v=36"></script>
+<script src="auth.js?v=46"></script>
+<script src="manager.js?v=46"></script>
 <script src="employee-tools.js?v=26"></script>
 <script src="course-hours.js?v=30"></script>
 </body>

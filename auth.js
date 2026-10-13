@@ -16,17 +16,18 @@
   let currentUser = null;
   let currentAccess = null;
 
-  const pageNames = { dashboard: 'dashboard', pageEmployees: 'employees', pageNewEmployee: 'employees',
+  const pageNames = { dashboard: 'dashboard', pageManager: 'manager', pageEmployees: 'employees', pageNewEmployee: 'employees',
     pageTrainings: 'trainings', pageNewTraining: 'trainings', pageTrainingDetail: 'trainings',
     pageReportEmployee: 'reports', pageReportTraining: 'reports', pageReportSector: 'reports', pageReportHours: 'reports',
     pageCapacitation: 'capacitation', pageCapTrackForm: 'capacitation', pageCapTrackDetail: 'capacitation',
     pagePerfAssessments: 'trainings', pagePerfCompetencies: 'trainings', pagePerfModels: 'trainings',
     pagePerfHistory: 'trainings', pagePerfEditor: 'trainings' };
-  const roleNames = { admin: 'Administrador', usuario: 'Usuário' };
+  const roleNames = { admin: 'Administrador', usuario: 'Usuário', gestor: 'Gestor' };
   const permissionPages = { dashboard:'Início', employees:'Funcionários', trainings:'Treinamentos', reports:'Relatórios', capacitation:'Capacitação' };
   function canPage(pageId) {
     if (!currentAccess?.active || currentAccess.must_change_password) return false;
     if (currentAccess.access_role === 'admin') return true;
+    if (currentAccess.access_role === 'gestor') return pageId === 'pageManager';
     if (pageId?.startsWith('pagePerf')) {
       const canView = canPage('pageEmployees') && canPage('pageTrainings');
       return ['pagePerfCompetencies','pagePerfModels'].includes(pageId)
@@ -163,6 +164,7 @@
       return;
     }
     window.SPFLY_CAP?.configure(client, admin, user, employees);
+    window.SPFLY_MANAGER?.configure(client, admin);
     window.SPFLY_PERF?.configure(client, admin, () => employees);
     window.SPFLY_EFFICACY?.configure(client, admin, () => employees, () => trainings);
     renderCreateEmployeeOptions();
@@ -178,8 +180,8 @@
     applyAccess();
     screen.hidden = true;
     app.classList.add('authenticated');
-    const firstPage = admin.access_role === 'usuario' ? ['dashboard','pageEmployees','pageTrainings','pageCapacitation','pageReportEmployee'].find(canPage)
-      : 'dashboard';
+    const firstPage = admin.access_role === 'gestor' ? 'pageManager' : admin.access_role === 'usuario'
+      ? ['dashboard','pageEmployees','pageTrainings','pageCapacitation','pageReportEmployee'].find(canPage) : 'dashboard';
     const currentPage = document.querySelector('.page.active')?.id;
     showPage(currentPage && canPage(currentPage) ? currentPage : firstPage);
   }
@@ -259,6 +261,9 @@
         all.className = 'access-screen-chip';
         all.textContent = 'Todas as telas';
         screenSummary.append(all);
+      } else if (admin.access_role === 'gestor') {
+        const chip = document.createElement('span'); chip.className = 'access-screen-chip';
+        chip.textContent = 'Visão do Gestor'; screenSummary.append(chip);
       } else {
         for (const page of admin.allowed_pages || []) {
           const chip = document.createElement('span');
