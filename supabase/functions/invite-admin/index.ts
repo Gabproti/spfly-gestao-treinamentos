@@ -2,7 +2,7 @@ import { withSupabase } from 'npm:@supabase/server@^1'
 
 const allowedPages = new Set(['dashboard', 'employees', 'trainings', 'reports', 'capacitation'])
 const editablePages = new Set(['employees', 'trainings', 'capacitation'])
-const allowedRoles = new Set(['admin', 'usuario'])
+const allowedRoles = new Set(['admin', 'usuario', 'gestor'])
 
 function errorResponse(message: string, status: number) {
   return Response.json({ error: message }, { status })
