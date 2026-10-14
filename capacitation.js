@@ -161,13 +161,13 @@
   function refresh() { render(); }
   function renderList() {
     const mine = employeeRole();
-    const courseMode = manager() ? $('capCourseOverviewFilter').value : '';
+    const trackLinkFilter = manager() ? $('capCourseOverviewFilter').value : '';
     $('capPageTitle').textContent = mine ? 'Minhas Capacitações' : 'Capacitação';
-    $('capListTitle').textContent = mine ? 'Minhas Trilhas' : courseMode ? 'Cursos de Capacitação' : 'Trilhas de Capacitação';
-    $('capListHint').textContent = mine ? 'Consulte seus cursos e envie certificados para conferência.' : courseMode ? 'Consulte os cursos e quantos funcionários estão vinculados a cada um.' : 'Acompanhe cursos, prazos e certificados em um só lugar.';
+    $('capListTitle').textContent = mine ? 'Minhas Trilhas' : 'Trilhas de Capacitação';
+    $('capListHint').textContent = mine ? 'Consulte seus cursos e envie certificados para conferência.' : 'Acompanhe cursos, prazos e certificados em um só lugar.';
     $('capNewTrackButton').hidden = !manager();
     $('capCourseOverviewFilterGroup').hidden = !manager();
-    $('capTrackSearch').placeholder = courseMode ? 'Buscar curso ou trilha...' : 'Buscar trilha ou sequência...';
+    $('capTrackSearch').placeholder = 'Buscar trilha ou sequência...';
     const sectorFilter = $('capSectorFilter');
     fillSectorSelect('capSectorFilter',sectorFilter.value);
     sectorFilter.hidden = mine;
@@ -175,27 +175,15 @@
     const selectedSector = mine ? '' : sectorFilter.value;
     const selectedSystem = $('capSystemFilter').value;
     const term = fold($('capTrackSearch').value.trim());
-    const visible = tracks.filter(track => (!mine || trackEnrollments(track.id).length) && (!selectedSector || !trackSectors(track).length || trackSectors(track).includes(selectedSector)) && (!selectedSystem || (selectedSystem === 'Não classificado' ? !systemCodes(track.id).length : systemCodes(track.id).includes(selectedSystem))) && (!term || [track.name,track.description,track.sequence_name].some(value => fold(value).includes(term)) || (courseMode && trackCourses(track.id).some(course => [course.name,course.description].some(value => fold(value).includes(term)))))).sort((a,b) => (a.sequence_name || '').localeCompare(b.sequence_name || '','pt-BR') || (a.sequence_order || 1)-(b.sequence_order || 1) || a.name.localeCompare(b.name,'pt-BR'));
+    const visible = tracks.filter(track => (!mine || trackEnrollments(track.id).length) && (trackLinkFilter !== 'linked' || trackEnrollments(track.id).length > 0) && (trackLinkFilter !== 'unlinked' || trackEnrollments(track.id).length === 0) && (!selectedSector || !trackSectors(track).length || trackSectors(track).includes(selectedSector)) && (!selectedSystem || (selectedSystem === 'Não classificado' ? !systemCodes(track.id).length : systemCodes(track.id).includes(selectedSystem))) && (!term || [track.name,track.description,track.sequence_name].some(value => fold(value).includes(term)))).sort((a,b) => (a.sequence_name || '').localeCompare(b.sequence_name || '','pt-BR') || (a.sequence_order || 1)-(b.sequence_order || 1) || a.name.localeCompare(b.name,'pt-BR'));
     const visibleIds = new Set(visible.map(track => track.id));
-    const filteredEnrollments = enrollments.filter(item => visibleIds.has(item.track_id));
+    const filteredEnrollments = enrollments.filter(item => visibleIds.has(item.track_id) && !item.removed_at);
     const eStats = filteredEnrollments.map(enrollmentStats);
     const uniquePeople = new Set(filteredEnrollments.map(item => item.employee_id));
     const values = [visible.length, uniquePeople.size, eStats.reduce((sum,s) => sum+s.done,0), eStats.reduce((sum,s) => sum+s.started,0), eStats.reduce((sum,s) => sum+s.overdue,0)];
     const labels = [mine?'Minhas trilhas':'Trilhas cadastradas',mine?'Inscrições':'Funcionários inscritos','Cursos concluídos','Em andamento','Em atraso'];
     const icons = ['🎓','♙','✓','◷','!'];
     $('capKpis').innerHTML = values.map((value,i) => `<div class="cap-kpi"><div class="cap-kpi-icon">${icons[i]}</div><div><div class="cap-kpi-value">${value}</div><div class="cap-kpi-label">${labels[i]}</div></div></div>`).join('');
-    if (courseMode) {
-      const rows=visible.flatMap(track => {
-        const linked=linkedEmployeesByCourse(track);
-        const trackMatch=!term || [track.name,track.description,track.sequence_name].some(value => fold(value).includes(term));
-        return trackCourses(track.id).filter(course =>
-          (trackMatch || [course.name,course.description].some(value => fold(value).includes(term))) &&
-          (courseMode==='all' || (courseMode==='linked' ? linked.has(course.id) : !linked.has(course.id)))
-        ).map(course => ({track,course,count:linked.get(course.id)?.size||0}));
-      });
-      $('capTrackGrid').innerHTML=rows.length?rows.map(({track,course,count})=>`<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}" data-cap-course-filter="${safe(courseMode)}"><div class="cap-card-head"><h3>${safe(course.name)}</h3>${badge(course.active?'Ativo':'Inativo',course.active?'green':'gray')}</div><p>${safe(course.description||'Sem descrição.')}</p><div class="cap-meta"><span>Trilha: ${safe(track.name)}</span><span>Modalidade: ${safe(modalityLabel(course))}</span><span>${course.duration_minutes} min</span><span>${count} funcionário(s) vinculado(s)</span></div></button>`).join(''):empty('Nenhum curso corresponde aos filtros selecionados.');
-      return;
-    }
     $('capTrackGrid').innerHTML = visible.length ? visible.map(track => {
       const participants = trackEnrollments(track.id), enrolledStats = participants.map(enrollmentStats);
       const completion = participants.length ? Math.round(enrolledStats.reduce((sum,s) => sum+s.pct,0)/participants.length) : 0;
@@ -204,7 +192,7 @@
       const days = mineEnrollment ? `<span>Prazo: ${fmtDate(mineEnrollment.due_date)}</span><span>${deadline(mineEnrollment)}</span>` : `<span>Prazo: ${track.duration_days} dias</span><span>${participants.length} funcionário(s)</span>`;
       const status = mineEnrollment && enrollmentStats(mineEnrollment).overdue ? badge('Em atraso','red') : badge(track.status,track.status==='Ativa'?'green':'gray');
       return `<button type="button" class="cap-track-card" data-cap-action="track" data-id="${safe(track.id)}"><div class="cap-card-head"><h3>${safe(track.name)}</h3>${status}</div><p>${safe(track.description || 'Sem descrição.')}</p><div class="cap-meta"><span>${safe(track.track_type)}</span><span>Modalidade: ${safe(modalityLabel(track))}</span><span>Sistema: ${safe(systemLabel(track.id))}</span>${track.sequence_name?`<span>Sequência: ${safe(sequenceLabel(track))}</span>`:''}<span>Setores: ${safe(sectorLabel(track))}</span>${mineEnrollment?.individual_only?'<span>Liberação individual</span>':''}<span>${mineEnrollment?enrollmentCourses(mineEnrollment).length:activeCourses(track.id).length} curso(s)</span>${days}</div>${bar(shownPct)}<div class="cap-card-foot"><span>Progresso ${mine?'individual':'médio'}</span><strong>${shownPct}%</strong></div></button>`;
-    }).join('') : empty(term ? 'Nenhuma trilha encontrada para esta busca.' : mine ? 'Você ainda não foi inscrito em uma trilha.' : selectedSector ? 'Nenhuma trilha destinada a este setor.' : 'Nenhuma trilha cadastrada. Crie a primeira trilha para começar.');
+    }).join('') : empty(term ? 'Nenhuma trilha encontrada para esta busca.' : trackLinkFilter ? 'Nenhuma trilha corresponde ao filtro de funcionários.' : mine ? 'Você ainda não foi inscrito em uma trilha.' : selectedSector ? 'Nenhuma trilha destinada a este setor.' : 'Nenhuma trilha cadastrada. Crie a primeira trilha para começar.');
   }
   function filterTracks() { renderList(); }
   function choices(target, excludeEnrolled = false) {
