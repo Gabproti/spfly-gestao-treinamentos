@@ -221,3 +221,13 @@ O documento impresso antes chamado **Extrato do Treinamento** agora se chama **R
 
 O documento deixa de imprimir Setor / público-alvo, Cadastro, Evidências registradas e Anexos. Os participantes aparecem em ordem alfabética, sem coluna de numeração, em uma tabela de quatro colunas dimensionadas para a página A4. A coluna Participação permanece inteiramente dentro das margens. A Lista de Presença e os dados de gestão na tela não foram alterados. Esta versão não exige migração do banco; publique `index.html`, `training-print.js` e `training-print.css` juntos.
 
+
+## V49 — certificado oficial de trilha
+
+A opção **Emitir certificado oficial** pode ser ativada por trilha. Ao editar um curso, o sistema calcula automaticamente o tempo mínimo de estudo em 90% da carga horária de cada curso, arredondando para cima em minutos. O administrador pode exigir um tempo maior, até 100%, e define se o curso é obrigatório para o certificado oficial. Trilhas antigas permanecem no fluxo atual até ativação. Os certificados externos anexados pelos funcionários seguem independentes.
+
+O funcionário inicia uma sessão de estudo na Capacitação, recebe progresso acumulado do servidor e só consegue concluir cursos de trilhas habilitadas após cumprir o tempo mínimo. O banco bloqueia conclusões antecipadas também quando chamadas antigas são usadas. O administrador pode emitir excepcionalmente sem o tempo mínimo, desde que os cursos obrigatórios estejam concluídos; essa dispensa fica registrada no certificado e no histórico. A emissão normal dos funcionários conserva a exigência de 90%. O código de autenticidade é validado no banco; o PDF é gerado no navegador após a emissão. O código permanece interno e não aparece no PDF. O administrador acompanha os tempos, pode invalidar o certificado com justificativa e a consulta pública por código mostra apenas dados mínimos. O PDF usa o logo oficial e a identidade visual SPFLY em A4 paisagem, com lista dinâmica dos cursos e continuação em páginas adicionais quando necessário.
+
+Prévia com dados fictícios: `tmp/preview-v49.html`. Ela apresenta o painel e gera um PDF de exemplo. Esta prévia não acessa o Supabase.
+
+A migração `supabase/migration-v49-official-track-certificates.sql` foi aplicada ao projeto spfly-treinamentos antes da publicação da interface. Testar no portal os fluxos de estudo, conclusão, emissão, invalidação e consulta pública com contas de teste. A visualização do conteúdo externo em iframe depende de o provedor permitir incorporação; o tempo validado indica uma sessão visível no portal, não confirma que o conteúdo externo foi assistido.

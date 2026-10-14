@@ -2,7 +2,8 @@
   'use strict';
 
   let client, access, currentUser, employees = [], sectors = [];
-  let tracks = [], courses = [], enrollments = [], progress = [], courseGrants = [], employeeSystems = [];
+  let tracks = [], courses = [], enrollments = [], progress = [], courseGrants = [], employeeSystems = [], officialCertificates = [];
+  let studySession = null, studyTimer = null, studyCourseId = null, studyEnrollmentId = null, studyHeartbeatBusy = false;
   let selectedTrack = null, selectedTab = 'courses', focusedEnrollment = null, courseLinkFilter = 'all';
   let editingTrack = null, editingCourse = null, busy = false, loadRevision = 0, previewRevision = 0, previewPath = null, previewName = '';
   const $ = id => document.getElementById(id);
@@ -17,6 +18,7 @@
   const fmtDate = key => key ? new Intl.DateTimeFormat('pt-BR').format(date(key)) : '—';
   const fmtTime = value => value ? new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(value)) : '—';
   const percent = (done, total) => total ? Math.round(done / total * 100) : 0;
+  const studyMinimum = minutes => Math.ceil(Number(minutes)*9/10);
   const employeeName = id => employees.find(person => String(person.id) === String(id))?.name || `Funcionário #${id}`;
   const employeeMat = id => employees.find(person => String(person.id) === String(id))?.mat || '';
   const trackSectors = track => Array.isArray(track?.sectors) ? track.sectors : (track?.sector ? [track.sector] : []);
@@ -62,6 +64,8 @@
     return linked;
   }
   const courseProgress = (enrollmentId, courseId) => progress.find(item => item.enrollment_id === enrollmentId && item.course_id === courseId);
+  const officialCertificate = enrollmentId => officialCertificates.filter(item => item.enrollment_id === enrollmentId).sort((a,b) => String(b.issued_at).localeCompare(String(a.issued_at)))[0];
+  const studyLabel = seconds => `${Math.floor((Number(seconds)||0)/60)} min ${Math.floor((Number(seconds)||0)%60)} s`;
   const remaining = due => Math.round((date(due) - date(today())) / 86400000);
   const timeUsed = enrollment => {
     const total = Math.max(1, Math.round((date(enrollment.due_date)-date(enrollment.start_date))/86400000));
@@ -135,9 +139,9 @@
         if (!data || data.length < 1000) return rows;
       }
     }
-    const rows = await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress','cap_course_grants','cap_employee_systems'].map(allRows));
+    const rows = await Promise.all(['cap_tracks','cap_courses','cap_enrollments','cap_progress','cap_course_grants','cap_employee_systems','cap_official_certificates'].map(allRows));
     if (revision !== loadRevision) return false;
-    [tracks,courses,enrollments,progress,courseGrants,employeeSystems] = rows;
+    [tracks,courses,enrollments,progress,courseGrants,employeeSystems,officialCertificates] = rows;
     return true;
   }
   function configure(nextClient, nextAccess, nextUser, nextEmployees) {
@@ -226,6 +230,7 @@
     editingTrack = null; $('capTrackForm').reset(); $('capTrackFormTitle').textContent = 'Nova Trilha';
     $('capTrackSequenceNames').innerHTML = [...new Set(tracks.map(item => item.sequence_name).filter(Boolean))].map(name => `<option value="${safe(name)}"></option>`).join('');
     $('capTrackStart').value = today(); $('capTrackDays').value = 30; $('capTrackModality').value = ''; $('capTrackAudience').hidden = false;
+    $('capTrackOfficialCertificate').checked = false;
     fillTrackSectorChoices();
     $('capTrackSystems').querySelectorAll('input').forEach(input => { input.checked = false; });
     $('capEmployeeSearch').value = ''; choices('capEmployeeChoices'); notice('capTrackFormMessage',''); showPage('pageCapTrackForm');
@@ -238,6 +243,7 @@
     $('capTrackName').value = item.name; $('capTrackDescription').value = item.description;
     $('capTrackSequence').value = item.sequence_name || ''; $('capTrackSequenceOrder').value = item.sequence_order || 1;
     $('capTrackCertificateMode').value = certificateMode(item);
+    $('capTrackOfficialCertificate').checked = !!item.official_certificate_enabled;
     $('capTrackType').value = item.track_type; $('capTrackModality').value = item.modality || ''; $('capTrackDays').value = item.duration_days;
     fillTrackSectorChoices(trackSectors(item));
     $('capTrackSystems').querySelectorAll('input').forEach(input => { input.checked = systemCodes(item.id).includes(input.value); });
@@ -258,6 +264,7 @@
     const fields = { name:$('capTrackName').value.trim(), description:$('capTrackDescription').value.trim(),
       track_type:$('capTrackType').value, modality:$('capTrackModality').value, sectors:chosenTrackSectors(), system_codes:systems, duration_days:days, start_date:$('capTrackStart').value,
       sequence_name:$('capTrackSequence').value.trim(),sequence_order:sequenceOrder,certificate_mode:$('capTrackCertificateMode').value,
+      official_certificate_enabled:$('capTrackOfficialCertificate').checked,
       status:$('capTrackStatus').value, updated_at:new Date().toISOString() };
     if (editingTrack && fields.sectors.length && trackEnrollments(editingTrack).some(item => !fields.sectors.includes(employees.find(person => String(person.id) === String(item.employee_id))?.sector))) {
       notice('capTrackFormMessage','Remova da trilha os funcionários de outros setores antes de alterar o setor destinatário.',true); return;
@@ -312,15 +319,15 @@
         const certificate = certificateMode(track)==='per_course' && course.certificate_required ? certificateState(item) : null;
         const url = validUrl(course.external_url);
         return `<article class="cap-course"><div class="cap-course-head"><div><h3><span class="cap-course-order">${course.sort_order}.</span>${safe(course.name)}</h3><p>${safe(course.description || 'Sem descrição.')}</p></div>${state?badge(state[0],state[1]):badge(course.active?'Ativo':'Inativo',course.active?'green':'gray')}</div>
-          <div class="cap-course-meta"><span>◷ ${course.duration_minutes} min</span><span>Modalidade: ${safe(modalityLabel(course))}</span><span>Sistema da trilha: ${safe(systemLabel(track.id))}</span><span>${certificateMode(track)==='after_all'?'Certificado único ao final':`Certificado ${course.certificate_required?'obrigatório':'opcional'}`}</span>${manager()?`<span>${linked.get(course.id)?.size||0} funcionário(s) vinculado(s)</span>`:''}${!course.active?'<span>Curso inativo</span>':''}${item?.completed_at?`<span>Concluído em ${fmtTime(item.completed_at)}</span>`:''}</div>
+          <div class="cap-course-meta"><span>◷ ${course.duration_minutes} min</span>${track.official_certificate_enabled?`<span>Estudo mínimo: ${course.min_study_minutes?`${course.min_study_minutes} min`:'aguardando configuração'}</span><span>Tempo registrado: ${studyLabel(item?.study_seconds)}</span><span>${course.required_for_official_certificate?'Obrigatório':'Opcional'} no certificado oficial</span>`:''}<span>Modalidade: ${safe(modalityLabel(course))}</span><span>Sistema da trilha: ${safe(systemLabel(track.id))}</span><span>${certificateMode(track)==='after_all'?'Certificado único ao final':`Certificado ${course.certificate_required?'obrigatório':'opcional'}`}</span>${manager()?`<span>${linked.get(course.id)?.size||0} funcionário(s) vinculado(s)</span>`:''}${!course.active?'<span>Curso inativo</span>':''}${item?.completed_at?`<span>Concluído em ${fmtTime(item.completed_at)}</span>`:''}</div>
           ${certificate?`<div class="cap-status-line">Certificado: ${badge(certificate[0],certificate[1])}${item?.certificate_name?`<span class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</span>`:''}${item?.validation_status==='rejected'?`<span class="cap-due-alert">Motivo: ${safe(item.rejection_reason||'Não informado')}</span>`:''}</div>`:''}
-          <div class="cap-course-actions">${canUpload() && enrollment && track.status==='Ativa' && course.active && !item?.started_at?`<button type="button" class="btn btn-primary" data-cap-action="start-course" data-id="${safe(course.id)}">Iniciar</button>`:''}
-            ${url && !reviewEnrollment && (manager() || item?.started_at)?`<a class="btn btn-secondary" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${manager()?'Abrir link ↗':'Acessar curso ↗'}</a>`:''}
+          <div class="cap-course-actions">${canUpload() && enrollment && track.status==='Ativa' && course.active && (track.official_certificate_enabled ? !item?.completed_at : !item?.started_at)?`<button type="button" class="btn btn-primary" data-cap-action="start-course" data-id="${safe(course.id)}">${track.official_certificate_enabled?(item?.started_at?'Continuar estudo':'Iniciar estudo'):'Iniciar'}</button>`:''}
+            ${url && !reviewEnrollment && (manager() || (!track.official_certificate_enabled && item?.started_at))?`<a class="btn btn-secondary" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${manager()?'Abrir link ↗':'Acessar curso ↗'}</a>`:''}
             ${canUpload() && enrollment && track.status==='Ativa' && course.active && item?.started_at && !item?.course_finished_at && !item?.completed_at?`<button type="button" class="btn btn-primary" data-cap-action="finish-course" data-id="${safe(course.id)}">Concluir</button>`:''}
             ${canUpload() && enrollment && track.status==='Ativa' && course.active && certificateMode(track)==='per_course' && course.certificate_required && item?.course_finished_at && (!item?.certificate_path || item.validation_status==='rejected')?`<label class="btn btn-secondary">${item?.certificate_path?'Enviar novo certificado':'Anexar certificado'} <input class="cap-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-cap-upload="${safe(course.id)}"></label>`:''}
             ${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">${fileViewLabel(item.certificate_path)}</button>`:''}
             ${manager()?`<button type="button" class="btn btn-secondary" data-cap-action="edit-course" data-id="${safe(course.id)}">Editar Curso</button>`:''}</div></article>`;
-      }).join('') : empty(courseLinkFilter==='all'?'Esta trilha ainda não tem cursos.':'Nenhum curso corresponde ao filtro selecionado.')} </div>${certificateMode(track)==='after_all' && enrollment ? renderTrackCertificate(enrollment) : ''}`;
+      }).join('') : empty(courseLinkFilter==='all'?'Esta trilha ainda não tem cursos.':'Nenhum curso corresponde ao filtro selecionado.')} </div>${certificateMode(track)==='after_all' && enrollment ? renderTrackCertificate(enrollment) : ''}${track.official_certificate_enabled && enrollment ? renderOfficialCertificate(enrollment) : ''}`;
   }
   function renderTrackCertificate(enrollment, adminView = false) {
     const stats = enrollmentStats(enrollment), state = trackCertificateState(enrollment);
@@ -328,7 +335,113 @@
     const rejected = enrollment.track_validation_status === 'rejected';
     return `<div class="card cap-final-certificate"><h3>Certificado final da trilha</h3><p class="muted">${ready?'Todos os cursos ativos foram concluídos.':'Conclua todos os cursos ativos para liberar o envio.'}</p><div class="cap-status-line">Status: ${badge(state[0],state[1])}${enrollment.track_certificate_name?`<span class="cap-certificate-name">${safe(enrollment.track_certificate_name)} · ${fmtTime(enrollment.track_certificate_uploaded_at)}</span>`:''}</div>${rejected?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(enrollment.track_rejection_reason || 'Não informado')}</div>`:''}<div class="cap-course-actions">${canUpload() && !adminView && ready && (!enrollment.track_certificate_path || rejected)?`<label class="btn btn-secondary">${rejected?'Enviar novo certificado':'Anexar certificado'} <input class="cap-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-cap-track-upload="${safe(enrollment.id)}"></label>`:''}${enrollment.track_certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="track-certificate" data-id="${safe(enrollment.id)}">${fileViewLabel(enrollment.track_certificate_path)}</button>`:''}${adminView && rejected?`<button type="button" class="btn btn-secondary" data-cap-action="edit-track-rejection" data-id="${safe(enrollment.id)}">Editar motivo</button>`:''}${adminView && enrollment.track_certificate_path && enrollment.track_validation_status==='pending'?`<button type="button" class="btn btn-primary" data-cap-action="approve-track-certificate" data-id="${safe(enrollment.id)}" ${enrollment.track_certificate_viewed_at?'':'disabled title="Abra o certificado antes de aprovar"'}>Aprovar certificado</button><button type="button" class="btn btn-danger" data-cap-action="reject-track-certificate" data-id="${safe(enrollment.id)}">Rejeitar</button>`:''}</div></div>`;
   }
+  function renderOfficialCertificate(enrollment, adminView = false) {
+    const list = enrollmentCourses(enrollment).filter(course => course.required_for_official_certificate && course.active);
+    const missingCompletion = list.filter(course => !courseProgress(enrollment.id,course.id)?.completed_at);
+    const missing = list.filter(course => !course.min_study_minutes || !courseProgress(enrollment.id,course.id)?.completed_at || Number(courseProgress(enrollment.id,course.id)?.study_seconds||0) < course.min_study_minutes*60);
+    const cert = officialCertificate(enrollment.id);
+    const canIssueNew = !cert || (manager() && cert.status==='invalidated');
+    const canIssue = list.length > 0 && missing.length === 0 && canIssueNew;
+    const canIssueAdmin = manager() && list.length > 0 && missingCompletion.length === 0 && missing.length > 0 && canIssueNew;
+    return `<div class="card cap-official-panel"><div class="cap-section-head"><div><h3>Certificado oficial da trilha</h3><p class="muted">Emissão após conclusão dos cursos obrigatórios e validação do tempo de estudo pelo servidor.</p></div>${cert?badge(cert.status==='valid'?'Certificado disponível':'Invalidado',cert.status==='valid'?'green':'red'):badge(canIssue?'Pronto para emitir':canIssueAdmin?'Emissão administrativa disponível':'Aguardando requisitos',canIssue?'green':'orange')}</div>
+      <p>${list.length-missing.length} de ${list.length} curso(s) obrigatório(s) apto(s). ${missing.length?`Pendências: ${safe(missing.map(course=>course.name).join(', '))}.`:''}</p>
+      ${cert?`<p class="muted">Código: <strong>${safe(cert.code)}</strong> · Emissão: ${fmtTime(cert.issued_at)}</p>`:''}
+      ${cert?.status==='invalidated'?`<div class="cap-rejection-reason"><strong>Motivo da invalidação:</strong> ${safe(cert.invalidation_reason||'Não informado')}</div>`:''}
+      <div class="cap-course-actions">${canIssue?`<button type="button" class="btn btn-primary" data-cap-action="issue-official" data-id="${safe(enrollment.id)}">Emitir certificado oficial</button>`:''}${canIssueAdmin?`<button type="button" class="btn btn-primary" data-cap-action="issue-official-admin" data-id="${safe(enrollment.id)}">Emitir sem tempo mínimo</button>`:''}${cert?.status==='valid'?`<button type="button" class="btn btn-secondary" data-cap-action="download-official" data-id="${safe(cert.id)}">Baixar certificado PDF</button>`:''}${manager() && cert?.status==='valid'?`<button type="button" class="btn btn-danger" data-cap-action="invalidate-official" data-id="${safe(cert.id)}">Invalidar</button>`:''}</div></div>`;
+  }
+  async function issueOfficial(enrollmentId,adminOverride = false) {
+    if (busy) return;
+    if (adminOverride && (!manager() || !confirm('Emitir o certificado sem exigir o tempo mínimo de estudo? Todos os cursos obrigatórios precisam estar concluídos. Esta exceção ficará registrada.'))) return;
+    busy=true;
+    try {
+      const {error}=await client.rpc('cap_issue_official_certificate_v49',{target_enrollment:enrollmentId,admin_override:adminOverride});
+      if (error) throw error;
+      await load(); renderDetail();
+    } catch(error) { alert('Não foi possível emitir o certificado: '+error.message); }
+    finally { busy=false; }
+  }
+  async function downloadOfficial(certId) {
+    const cert=officialCertificates.find(item=>item.id===certId);
+    if (!cert || cert.status!=='valid') return;
+    try { await window.SPFLY_OFFICIAL_PDF.download(cert); }
+    catch(error) { alert('Não foi possível gerar o PDF: '+error.message); }
+  }
+  async function invalidateOfficial(certId) {
+    if (!manager() || busy) return;
+    const reason=prompt('Informe a justificativa para invalidar este certificado (mínimo 10 caracteres):');
+    if (reason===null) return;
+    if (reason.trim().length<10) { alert('A justificativa precisa ter ao menos 10 caracteres.'); return; }
+    if (!confirm('Invalidar este certificado? O código continuará no histórico como inválido.')) return;
+    busy=true;
+    try {
+      const {error}=await client.rpc('cap_invalidate_official_certificate_v49',{target_certificate:certId,reason:reason.trim()});
+      if(error) throw error;
+      await load(); renderDetail();
+    } catch(error) { alert('Não foi possível invalidar: '+error.message); }
+    finally { busy=false; }
+  }
+  function studyUrl(url) {
+    try { const parsed=new URL(url); if(parsed.hostname==='drive.google.com' && /^\/file\/d\/[^/]+/.test(parsed.pathname)) parsed.pathname=parsed.pathname.replace(/\/view.*$/,'/preview'); return parsed.href; }
+    catch { return ''; }
+  }
+  async function heartbeatStudy(finish=false) {
+    if (!studySession || studyHeartbeatBusy) return;
+    studyHeartbeatBusy=true;
+    const session=studySession;
+    try {
+      const {data,error}=await client.rpc('cap_study_heartbeat_v49',{target_session:session,finish});
+      if(error) throw error;
+      if(Number(data)<0) throw new Error('A sessão expirou. Abra o curso novamente para continuar.');
+      if(studySession===session && studyEnrollmentId && studyCourseId) {
+        const item=courseProgress(studyEnrollmentId,studyCourseId); if(item) item.study_seconds=Number(data);
+        $('capStudyTime').textContent=`${studyLabel(data)} registrados`;
+      }
+    } catch(error) { if(!finish) { await closeStudy(false); alert('Tempo não registrado: '+error.message); } }
+    finally { studyHeartbeatBusy=false; }
+  }
+  async function beginStudy(courseId) {
+    if (!canUpload() || busy) return;
+    const enrollment=trackEnrollments(selectedTrack)[0], course=courses.find(item=>item.id===courseId && item.track_id===selectedTrack);
+    if(!enrollment || !course) return;
+    if(!course.min_study_minutes) { alert('O administrador precisa configurar o tempo mínimo deste curso.'); return; }
+    busy=true;
+    try {
+      if(studySession) await closeStudy();
+      const {data,error}=await client.rpc('cap_begin_study_v49',{target_enrollment:enrollment.id,target_course:courseId});
+      if(error) throw error;
+      studySession=data; studyCourseId=courseId; studyEnrollmentId=enrollment.id;
+      await refreshCourseProgress(enrollment.id,courseId);
+      $('capStudyTitle').textContent=course.name;
+      $('capStudyTime').textContent=`${studyLabel(courseProgress(enrollment.id,courseId)?.study_seconds)} registrados`;
+      $('capStudyRequired').textContent=`Mínimo: ${course.min_study_minutes} min`;
+      $('capStudyExternal').href=validUrl(course.external_url);
+      $('capStudyFrame').src=studyUrl(course.external_url);
+      $('capStudyDialog').showModal();
+      studyTimer=setInterval(()=>heartbeatStudy(),20000);
+      renderDetail();
+    } catch(error) { alert('Não foi possível iniciar o estudo: '+error.message); }
+    finally { busy=false; }
+  }
+  async function closeStudy(sendHeartbeat=true) {
+    if(studyTimer) clearInterval(studyTimer); studyTimer=null;
+    if(sendHeartbeat && studySession) await heartbeatStudy(true);
+    studySession=null; studyCourseId=null; studyEnrollmentId=null;
+    $('capStudyFrame').src='about:blank';
+    if($('capStudyDialog').open) $('capStudyDialog').close();
+    if(selectedTrack && document.querySelector('.page.active')?.id==='pageCapTrackDetail') renderDetail();
+  }
   function validUrl(value) { try { const parsed = new URL(value); return ['http:','https:'].includes(parsed.protocol) ? parsed.href : ''; } catch { return ''; } }
+  function updateStudyMinimum() {
+    const minutes=Number($('capCourseMinutes').value);
+    const input=$('capCourseMinStudy');
+    if (!Number.isInteger(minutes) || minutes<1) return;
+    const floor=studyMinimum(minutes), previous=Number(input.dataset.previousMinimum||0);
+    const current=Number(input.value);
+    input.min=String(floor); input.max=String(minutes);
+    if(!Number.isInteger(current) || current<floor || current>minutes || current===previous) input.value=String(floor);
+    input.dataset.previousMinimum=String(floor);
+    $('capCourseMinStudyHelp').textContent=`Mínimo: 90% da carga horária (${floor} min). É possível exigir mais, até ${minutes} min.`;
+  }
   function showCourseEditor(id = null) {
     if (!manager()) return;
     editingCourse = id; $('capCourseForm').reset();
@@ -336,6 +449,10 @@
     $('capCourseFormTitle').textContent = item ? 'Editar Curso' : 'Adicionar Curso';
     $('capCourseName').value = item?.name || ''; $('capCourseDescription').value = item?.description || '';
     $('capCourseUrl').value = item?.external_url || ''; $('capCourseMinutes').value = item?.duration_minutes || 40;
+    $('capCourseMinStudy').dataset.previousMinimum='';
+    $('capCourseMinStudy').value = item?.min_study_minutes || studyMinimum($('capCourseMinutes').value);
+    updateStudyMinimum();
+    $('capCourseOfficialRequired').value = String(item?.required_for_official_certificate ?? true);
     $('capCourseModality').value = item?.modality || tracks.find(track => track.id === selectedTrack)?.modality || '';
     $('capCourseOrder').value = item?.sort_order || trackCourses(selectedTrack).length+1;
     $('capCourseCertificate').value = String(item?.certificate_required || false);
@@ -358,6 +475,10 @@
     if (!url) { notice('capCourseFormMessage','Use um link http ou https válido.',true); return; }
     if (!['Online','Presencial','Híbrido'].includes($('capCourseModality').value)) { notice('capCourseFormMessage','Selecione a modalidade do curso.',true); return; }
     const audience=[...$('capCourseAudience').querySelectorAll('input:checked')].map(input=>Number(input.value));
+    const minutes=Number($('capCourseMinutes').value), minStudy=Number($('capCourseMinStudy').value);
+    if (!Number.isInteger(minutes) || minutes<1 || !Number.isInteger(minStudy) || minStudy<studyMinimum(minutes) || minStudy>minutes) {
+      notice('capCourseFormMessage',`O estudo mínimo precisa ficar entre ${studyMinimum(minutes)} e ${minutes} minutos (90% a 100% da carga horária).`,true); return;
+    }
     const fields = {name:$('capCourseName').value.trim(),description:$('capCourseDescription').value.trim(),external_url:url,
       duration_minutes:Number($('capCourseMinutes').value),modality:$('capCourseModality').value,sort_order:Number($('capCourseOrder').value),
       certificate_required:certificateMode(tracks.find(track => track.id === selectedTrack))==='per_course' && $('capCourseCertificate').value==='true',active:$('capCourseActive').value==='true',updated_at:new Date().toISOString()};
@@ -366,12 +487,13 @@
     }
     busy = true; notice('capCourseFormMessage','Salvando curso...');
     try {
-      const { error } = await client.rpc('cap_save_course',{
+      const { error } = await client.rpc('cap_save_course_v49',{
         target_course:editingCourse,target_track:selectedTrack,course_name:fields.name,
         course_description:fields.description,course_url:fields.external_url,course_minutes:fields.duration_minutes,
         course_modality:fields.modality,course_order:fields.sort_order,
         course_certificate_required:fields.certificate_required,course_active:fields.active,target_systems:[],
-        target_employee_ids:audience
+        target_employee_ids:audience,course_min_study_minutes:minStudy,
+        course_required_for_official:$('capCourseOfficialRequired').value==='true'
       });
       if (error) throw error; closeCourseEditor(); await load(); renderDetail();
     } catch (error) { notice('capCourseFormMessage','Não foi possível salvar: '+error.message,true); }
@@ -415,8 +537,8 @@
       const item = courseProgress(enrollment.id,course.id), state = courseState(enrollment,course);
       const cert = certificateMode(track)==='per_course' && course.certificate_required ? certificateState(item) : null;
       const rejected = item?.validation_status === 'rejected';
-      return `<div class="cap-course"><div class="cap-course-head"><strong>${safe(course.name)}</strong>${badge(state[0],state[1])}</div><div class="cap-status-line">${course.active?'Ativo':'Inativo'} · ${item?.completed_at?'Concluído em '+fmtTime(item.completed_at):item?.course_finished_at?'Finalizado pelo usuário':'Pendente'}${cert?` · Certificado ${badge(cert[0],cert[1])}`:''}</div>${item?.certificate_name?`<div class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</div>`:''}${rejected?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(item.rejection_reason||'Não informado')}</div>`:''}${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">${fileViewLabel(item.certificate_path)}</button>`:''}${rejected?`<button type="button" class="btn btn-secondary" data-cap-action="edit-rejection" data-id="${safe(item.id)}">Editar motivo</button>`:''}${item?.certificate_path && item.validation_status==='pending'?`<button type="button" class="btn btn-primary" data-cap-action="approve" data-id="${safe(item.id)}" ${item.certificate_viewed_at?'':'disabled title="Abra o certificado antes de aprovar"'}>Aprovar certificado</button><button type="button" class="btn btn-danger" data-cap-action="reject" data-id="${safe(item.id)}">Rejeitar</button>`:''}${(certificateMode(track)==='after_all' || !course.certificate_required) && !item?.completed_at?`<button type="button" class="btn btn-primary" data-cap-action="complete" data-id="${safe(course.id)}">Confirmar conclusão</button>`:''}</div>`;
-    }).join('')}</div>${certificateMode(track)==='after_all'?renderTrackCertificate(enrollment,true):''}</div>`;
+      return `<div class="cap-course"><div class="cap-course-head"><strong>${safe(course.name)}</strong>${badge(state[0],state[1])}</div><div class="cap-status-line">${course.active?'Ativo':'Inativo'} · ${item?.completed_at?'Concluído em '+fmtTime(item.completed_at):item?.course_finished_at?'Finalizado pelo usuário':'Pendente'}${cert?` · Certificado ${badge(cert[0],cert[1])}`:''}${track.official_certificate_enabled?` · Estudo ${studyLabel(item?.study_seconds)} / ${course.min_study_minutes?`${course.min_study_minutes} min`:'não configurado'}`:''}</div>${item?.certificate_name?`<div class="cap-certificate-name">${safe(item.certificate_name)} · ${fmtTime(item.certificate_uploaded_at)}</div>`:''}${rejected?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(item.rejection_reason||'Não informado')}</div>`:''}${item?.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-action="certificate" data-id="${safe(item.id)}">${fileViewLabel(item.certificate_path)}</button>`:''}${rejected?`<button type="button" class="btn btn-secondary" data-cap-action="edit-rejection" data-id="${safe(item.id)}">Editar motivo</button>`:''}${item?.certificate_path && item.validation_status==='pending'?`<button type="button" class="btn btn-primary" data-cap-action="approve" data-id="${safe(item.id)}" ${item.certificate_viewed_at?'':'disabled title="Abra o certificado antes de aprovar"'}>Aprovar certificado</button><button type="button" class="btn btn-danger" data-cap-action="reject" data-id="${safe(item.id)}">Rejeitar</button>`:''}${(certificateMode(track)==='after_all' || !course.certificate_required) && !item?.completed_at?`<button type="button" class="btn btn-primary" data-cap-action="complete" data-id="${safe(course.id)}">Confirmar conclusão</button>`:''}</div>`;
+    }).join('')}</div>${certificateMode(track)==='after_all'?renderTrackCertificate(enrollment,true):''}${track.official_certificate_enabled?renderOfficialCertificate(enrollment,true):''}</div>`;
   }
   async function setState(courseId, nextState) {
     const enrollment = enrollments.find(item => item.id === focusedEnrollment); if (!manager() || !enrollment || busy) return;
@@ -442,6 +564,13 @@
     const course = courses.find(item => item.id === courseId && item.track_id === selectedTrack);
     if (!enrollment || !course || !course.active) return;
     const track = tracks.find(item => item.id === selectedTrack);
+    if (track?.official_certificate_enabled && nextState==='started') { await beginStudy(courseId); return; }
+    if (track?.official_certificate_enabled && nextState==='finished') {
+      const required=Number(course.min_study_minutes||0)*60;
+      const credited=Number(courseProgress(enrollment.id,courseId)?.study_seconds||0);
+      if (!required) { alert('O administrador precisa configurar o tempo mínimo deste curso.'); return; }
+      if (credited<required) { alert(`Faltam ${Math.ceil((required-credited)/60)} minuto(s) de estudo registrado para concluir este curso.`); return; }
+    }
     if (nextState === 'finished' && !confirm(`Concluir o curso "${course.name}"?${certificateMode(track)==='per_course' && course.certificate_required?' Em seguida, anexe o certificado para validação.':''}`)) return;
     busy = true;
     const previousLabel = button?.textContent;
@@ -663,14 +792,19 @@
       if (!visibleRows.length) { node.innerHTML = empty('Nenhuma capacitação registrada para este funcionário.'); return; }
       const enrollmentIds = [...new Set(visibleRows.map(row => row.enrollment_id))];
       const trackIds = [...new Set(visibleRows.map(row => row.track_id))];
-      const [enrollmentResult,trackResult] = await Promise.all([
+      const [enrollmentResult,trackResult,officialResult] = await Promise.all([
         client.from('cap_enrollments').select('id,track_certificate_path,track_certificate_name,track_certificate_uploaded_at,track_validation_status,track_rejection_reason').in('id',enrollmentIds),
-        client.from('cap_tracks').select('id,certificate_mode,system_codes').in('id',trackIds)
+        client.from('cap_tracks').select('id,certificate_mode,system_codes').in('id',trackIds),
+        client.from('cap_official_certificates').select('*').eq('employee_id',Number(employeeId))
       ]);
       if (enrollmentResult.error) throw enrollmentResult.error;
       if (trackResult.error) throw trackResult.error;
+      if (officialResult.error) throw officialResult.error;
+      for (const cert of officialResult.data || []) if(!officialCertificates.some(item=>item.id===cert.id)) officialCertificates.push(cert);
       const historyEnrollments = new Map((enrollmentResult.data || []).map(item => [item.id,item]));
       const historyTracks = new Map((trackResult.data || []).map(item => [item.id,item]));
+      const historyOfficial = new Map();
+      for (const cert of officialResult.data || []) if(!historyOfficial.has(cert.enrollment_id) || String(cert.issued_at)>String(historyOfficial.get(cert.enrollment_id).issued_at)) historyOfficial.set(cert.enrollment_id,cert);
       const groups = new Map();
       for (const row of visibleRows) {
         if (!groups.has(row.enrollment_id)) groups.set(row.enrollment_id,{head:row,courses:[]});
@@ -684,7 +818,9 @@
         const historyEnrollment = historyEnrollments.get(head.enrollment_id);
         const finalMode = certificateMode(historyTracks.get(head.track_id)) === 'after_all';
         const finalCertificate = finalMode ? `<div class="employee-cap-final"><strong>Certificado final:</strong> ${badge(trackCertificateState(historyEnrollment)[0],trackCertificateState(historyEnrollment)[1])}${historyEnrollment?.track_rejection_reason?`<div class="cap-rejection-reason">Motivo da recusa: ${safe(historyEnrollment.track_rejection_reason)}</div>`:''}${historyEnrollment?.track_certificate_path?`<button type="button" class="btn btn-secondary" data-cap-history-cert="${safe(historyEnrollment.track_certificate_path)}">${fileViewLabel(historyEnrollment.track_certificate_path)}</button>`:''}</div>` : '';
-        return `<details class="employee-cap-track"><summary class="employee-cap-trigger"><strong>${safe(head.track_name)}</strong><span class="employee-cap-chevron" aria-hidden="true">⌄</span></summary><div class="employee-cap-expanded"><div class="employee-cap-head"><div class="muted">${safe(head.track_type)} · Início ${fmtDate(head.enrollment_start)} · Prazo ${fmtDate(head.enrollment_due)}</div>${trackStatus}</div><div class="employee-cap-summary"><span>${completed} de ${active.length} curso(s) ativo(s) concluído(s)</span><strong>${progressValue}%</strong></div>${bar(progressValue)}${finalCertificate}<div class="employee-cap-courses">${list.length ? list.map(item => {
+        const official=historyOfficial.get(head.enrollment_id);
+        const officialHistory=official?`<div class="employee-cap-final"><strong>Certificado oficial:</strong> ${badge(official.status==='valid'?'Disponível':'Invalidado',official.status==='valid'?'green':'red')} · ${fmtTime(official.issued_at)}${official.status==='valid'?` <button type="button" class="btn btn-secondary" data-cap-official-history="${safe(official.id)}">Baixar PDF</button>`:''}</div>`:'';
+        return `<details class="employee-cap-track"><summary class="employee-cap-trigger"><strong>${safe(head.track_name)}</strong><span class="employee-cap-chevron" aria-hidden="true">⌄</span></summary><div class="employee-cap-expanded"><div class="employee-cap-head"><div class="muted">${safe(head.track_type)} · Início ${fmtDate(head.enrollment_start)} · Prazo ${fmtDate(head.enrollment_due)}</div>${trackStatus}</div><div class="employee-cap-summary"><span>${completed} de ${active.length} curso(s) ativo(s) concluído(s)</span><strong>${progressValue}%</strong></div>${bar(progressValue)}${finalCertificate}${officialHistory}<div class="employee-cap-courses">${list.length ? list.map(item => {
           const state = item.completed_at ? badge('Concluído','green') : item.validation_status==='rejected' ? badge('Certificado rejeitado','red') : item.certificate_path ? badge('Certificado anexado','orange') : item.course_finished_at && item.certificate_required ? badge('Aguardando certificado','orange') : item.started_at ? badge('Em andamento','orange') : badge('Não iniciado','gray');
           const certificate = item.certificate_required ? certificateState(item) : null;
           return `<div class="employee-cap-course"><div><strong>${safe(item.course_name)}</strong>${!item.course_active?' <span class="muted">(inativo)</span>':''}<div class="muted">Sistema da trilha: ${safe([...(historyTracks.get(item.track_id)?.system_codes||[])].sort().join(' + ')||'Não classificado')} · ${item.completed_at?'Concluído em '+fmtTime(item.completed_at):item.course_finished_at?'Finalizado em '+fmtTime(item.course_finished_at):'Sem conclusão registrada'}</div>${item.validation_status==='rejected'?`<div class="cap-rejection-reason"><strong>Motivo da recusa:</strong> ${safe(item.rejection_reason||'Não informado')}</div>`:''}</div><div class="employee-cap-course-state">${state}${certificate?`<span>Certificado: ${badge(certificate[0],certificate[1])}</span>`:''}${item.certificate_path?`<button type="button" class="btn btn-secondary" data-cap-history-cert="${safe(item.certificate_path)}">${fileViewLabel(item.certificate_path)}</button>`:''}</div></div>`;
@@ -711,6 +847,10 @@
     if (action==='remove-enrollment') removeEnrollment(id);
     if (action==='complete') setState(id,'completed');
     if (action==='start-course') advanceCourse(id,'started',button);
+    if (action==='issue-official') issueOfficial(id);
+    if (action==='issue-official-admin') issueOfficial(id,true);
+    if (action==='download-official') downloadOfficial(id);
+    if (action==='invalidate-official') invalidateOfficial(id);
     if (action==='finish-course') advanceCourse(id,'finished',button);
     if (action==='approve') reviewCertificate(id,'approved');
     if (action==='reject') reviewCertificate(id,'rejected');
@@ -723,7 +863,10 @@
   }
   $('capTrackForm').addEventListener('submit',saveTrack);
   $('capCourseForm').addEventListener('submit',saveCourse);
+  $('capCourseMinutes').addEventListener('input',updateStudyMinimum);
   $('capCourseEditor').addEventListener('close',() => { editingCourse = null; });
+  $('capStudyDialog').addEventListener('cancel',event=>{event.preventDefault();closeStudy();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden && studySession) closeStudy();});
   $('capCertificatePreview').addEventListener('close',closeCertificatePreview);
   $('pageCapacitation').addEventListener('click',delegate);
   $('pageCapTrackDetail').addEventListener('click',delegate);
@@ -737,7 +880,9 @@
   $('modalBody').addEventListener('click',event => {
     const button = event.target.closest('[data-cap-history-cert]');
     if (button) viewHistoryCertificate(button.dataset.capHistoryCert);
+    const officialButton=event.target.closest('[data-cap-official-history]');
+    if(officialButton) downloadOfficial(officialButton.dataset.capOfficialHistory);
   });
-  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,filterCourseAudience,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,openCertificatePreview,closeCertificatePreview,downloadCertificatePreview,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];},updateSectors(next){sectors=next||[];}};
-  window.SPFLY_CAP_TEST = {addDays,remaining,percent,validUrl};
+  window.SPFLY_CAP = {configure,render,refresh,newTrack,filterTracks,filterCourseAudience,changeTrackSector,filterEmployees,cancelTrackForm,selectTab,closeCourseEditor,closeStudy,openCertificatePreview,closeCertificatePreview,downloadCertificatePreview,closeEnrollEditor,saveEnrollments,canViewEmployeeHistory,renderEmployeeHistory,updateEmployees(next){employees=next||[];},updateSectors(next){sectors=next||[];}};
+  window.SPFLY_CAP_TEST = {addDays,remaining,percent,validUrl,studyMinimum};
 })();

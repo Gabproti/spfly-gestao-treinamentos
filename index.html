@@ -258,7 +258,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
   body.dark #pageTrainingDetail .field input,body.dark #pageTrainingDetail .field select,body.dark #pageTrainingDetail .field textarea{background:#fff!important;color:#111!important;border-color:#ccc!important}
 }
 </style>
-<link rel="stylesheet" href="capacitation.css?v=48">
+<link rel="stylesheet" href="capacitation.css?v=49">
 <link rel="preload" as="image" href="spfly_print_logo.png">
 <link rel="stylesheet" href="performance.css?v=38">
 <link rel="stylesheet" href="efficacy.css?v=35">
@@ -478,6 +478,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
       <div class="field"><label for="capTrackType">Tipo da trilha *</label><select id="capTrackType"><option>Obrigatória</option><option>Recomendada</option><option>Opcional</option></select></div>
       <div class="field"><label for="capTrackModality">Modalidade da trilha *</label><select id="capTrackModality" required><option value="">Selecione</option><option>Online</option><option>Presencial</option><option>Híbrido</option></select></div>
       <div class="field"><label for="capTrackCertificateMode">Envio do certificado *</label><select id="capTrackCertificateMode"><option value="per_course">Por curso, conforme cada curso</option><option value="after_all">Um certificado após todos os cursos</option></select><small class="help">Na segunda opção, o certificado é liberado após concluir todos os cursos ativos e será conferido pelo administrador.</small></div>
+      <div class="field full"><label class="choice"><input id="capTrackOfficialCertificate" type="checkbox"> Emitir certificado oficial de conclusão da trilha</label><small class="help">A emissão exige tempo de estudo validado e duração mínima configurada em cada curso obrigatório. Os certificados enviados pelo funcionário continuam independentes.</small></div>
       <div class="field"><label for="capTrackSequence">Sequência de trilhas</label><input id="capTrackSequence" list="capTrackSequenceNames" maxlength="120" placeholder="Ex.: Formação em Finanças"><datalist id="capTrackSequenceNames"></datalist><small class="help">Trilhas da mesma sequência ficam relacionadas. O acesso continua livre.</small></div>
       <div class="field"><label for="capTrackSequenceOrder">Posição na sequência</label><input id="capTrackSequenceOrder" type="number" min="1" max="999" value="1"></div>
       <div class="field"><label>Setores destinatários</label><div id="capTrackSectors" class="cap-sector-options" onchange="SPFLY_CAP.changeTrackSector(event)"></div><small class="help">Selecione um ou mais setores. Sem setor específico, a trilha fica disponível para todos.</small></div>
@@ -508,6 +509,8 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="field full"><label for="capCourseDescription">Descrição</label><textarea id="capCourseDescription" maxlength="2000"></textarea></div>
     <div class="field full"><label for="capCourseUrl">Link externo do curso *</label><input id="capCourseUrl" type="url" placeholder="https://..." maxlength="2000" required></div>
     <div class="field"><label for="capCourseMinutes">Carga horária, em minutos *</label><input id="capCourseMinutes" type="number" min="1" max="100000" value="40" required></div>
+    <div class="field"><label for="capCourseMinStudy">Tempo mínimo de estudo, em minutos *</label><input id="capCourseMinStudy" type="number" min="36" max="40" value="36" required><small class="help" id="capCourseMinStudyHelp">Mínimo: 90% da carga horária (36 min). É possível exigir mais, até 100%.</small></div>
+    <div class="field"><label for="capCourseOfficialRequired">Obrigatório para certificado oficial</label><select id="capCourseOfficialRequired"><option value="true">Sim</option><option value="false">Não, curso opcional</option></select></div>
     <div class="field"><label for="capCourseModality">Modalidade do curso *</label><select id="capCourseModality" required><option value="">Selecione</option><option>Online</option><option>Presencial</option><option>Híbrido</option></select></div>
     <div class="field"><label for="capCourseOrder">Ordem na trilha *</label><input id="capCourseOrder" type="number" min="1" value="1" required></div>
     <div class="field"><label for="capCourseCertificate">Certificado obrigatório</label><select id="capCourseCertificate"><option value="false">Não</option><option value="true">Sim</option></select></div>
@@ -515,6 +518,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
     <div class="field full"><label for="capCourseAudienceSearch">Usuários específicos</label><p class="muted">Opcional. A liberação individual permite este curso mesmo fora do setor ou sistema do funcionário.</p><input id="capCourseAudienceSearch" type="search" placeholder="Buscar funcionário..." oninput="SPFLY_CAP.filterCourseAudience()"><div id="capCourseAudience" class="cap-employee-choices" role="group" aria-label="Funcionários com liberação individual"></div></div>
   </div><div id="capCourseFormMessage" role="status"></div><div class="actions"><button type="button" class="btn btn-secondary" onclick="SPFLY_CAP.closeCourseEditor()">Cancelar</button><button type="submit" class="btn btn-primary">Salvar Curso</button></div></form>
 </dialog>
+<dialog id="capStudyDialog" class="cap-certificate-preview cap-study-dialog" aria-labelledby="capStudyTitle"><div class="cap-course-dialog-head"><div><h2 id="capStudyTitle">Sessão de estudo</h2><p class="muted" id="capStudyHint">O tempo é validado no servidor enquanto esta página está visível.</p></div><button type="button" class="cap-course-dialog-close" aria-label="Encerrar sessão" onclick="SPFLY_CAP.closeStudy()">✕</button></div><div class="cap-study-status"><strong id="capStudyTime">0 min registrados</strong><span id="capStudyRequired"></span></div><p class="muted">Se o curso externo não abrir nesta janela, use o link abaixo. O tempo fora desta página não será contabilizado automaticamente.</p><a id="capStudyExternal" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Abrir em outra aba ↗</a><iframe id="capStudyFrame" title="Conteúdo externo do curso" referrerpolicy="no-referrer" allowfullscreen></iframe><div class="actions"><button type="button" class="btn btn-primary" onclick="SPFLY_CAP.closeStudy()">Encerrar sessão</button></div></dialog>
 <dialog id="capCertificatePreview" class="cap-certificate-preview" aria-labelledby="capCertificatePreviewTitle"><div class="cap-course-dialog-head"><div><h2 id="capCertificatePreviewTitle">Certificado</h2><p class="muted" id="capCertificatePreviewName"></p></div><button type="button" class="cap-course-dialog-close" aria-label="Fechar certificado" onclick="SPFLY_CAP.closeCertificatePreview()">✕</button></div><div id="capCertificateViewer" class="cap-certificate-viewer"></div><div class="actions"><a id="capCertificateOpenTab" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" hidden>Abrir em nova aba</a><button type="button" class="btn btn-secondary" onclick="SPFLY_CAP.downloadCertificatePreview()">Baixar arquivo</button><button type="button" class="btn btn-primary" onclick="SPFLY_CAP.closeCertificatePreview()">Fechar</button></div></dialog>
 <dialog id="employeeFilePreview" class="cap-certificate-preview" aria-labelledby="employeeFilePreviewTitle"><div class="cap-course-dialog-head"><div><h2 id="employeeFilePreviewTitle">Visualizar arquivo</h2><p class="muted" id="employeeFilePreviewName"></p></div><button type="button" class="cap-course-dialog-close" aria-label="Fechar arquivo" onclick="SPFLY_EMPLOYEE.closeFilePreview()">✕</button></div><div id="employeeFileViewer" class="cap-certificate-viewer"></div><div class="actions"><a id="employeeFileOpenTab" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" hidden>Abrir em nova aba</a><button type="button" class="btn btn-secondary" onclick="SPFLY_EMPLOYEE.downloadPreview()">Baixar arquivo</button><button type="button" class="btn btn-primary" onclick="SPFLY_EMPLOYEE.closeFilePreview()">Fechar</button></div></dialog>
 
@@ -1223,7 +1227,8 @@ applyTheme();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="capacitation.js?v=48"></script>
+<script src="capacitation.js?v=49"></script>
+<script src="official-certificate-pdf.js?v=49"></script>
 <script src="performance.js?v=38"></script>
 <script src="efficacy.js?v=35"></script>
 <script src="training-print.js?v=45"></script>

@@ -117,6 +117,14 @@ body.dark .cap-course-dialog{background:#181c20;color:#e8edf2;border-color:#3a42
 body.dark .cap-course-dialog-close{background:#20252a;border-color:#3a424a}
 body.dark .cap-sequence{background:#20252a;border-color:#343b42}
 body.dark .cap-final-certificate{background:#181c20;border-color:#343b42}
+.cap-official-panel{margin-top:16px;border-left:4px solid var(--orange)}
+.cap-official-panel .cap-section-head{align-items:start}
+.cap-official-panel p{line-height:1.5}
+.cap-study-dialog{width:min(1120px,calc(100vw - 24px))}
+.cap-study-status{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:14px 0;padding:14px;border-radius:10px;background:var(--soft);color:var(--orange)}
+.cap-study-dialog iframe{display:block;width:100%;height:min(62vh,700px);min-height:280px;margin-top:14px;border:1px solid var(--border);border-radius:10px;background:#fff}
+body.dark .cap-official-panel{background:#181c20;border-color:#f05a28}
+body.dark .cap-study-status{background:#3a241b;color:#ffaf8d}
 body.dark .employee-cap-track{background:#181c20;border-color:#343b42}body.dark .employee-cap-trigger,body.dark .employee-cap-summary strong{color:#f3f5f7}body.dark .employee-cap-trigger:hover{background:#242a2f}body.dark .employee-cap-course{border-color:#343b42}
 @media(max-width:1200px){.cap-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:800px){.cap-track-grid,.cap-employee-choices{grid-template-columns:1fr}.cap-hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
