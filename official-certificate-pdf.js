@@ -51,7 +51,7 @@
       {text: ' concluiu com êxito a Trilha de Capacitação ', bold: false},
       {text: track, bold: true},
       {text: ', com carga horária total de ', bold: false},
-      {text: durationLabel(minutes), bold: true},
+      {text: durationLabel(minutes), bold: true, keepTogether: true},
       {text: `, realizada no período de ${date}, adquirindo os conhecimentos e habilidades necessários conforme o programa estabelecido.`, bold: false}
     ];
     return {
@@ -80,7 +80,7 @@
     const pushLine = () => { if (runs.length) lines.push({runs, width}); runs = []; width = 0; };
     for (const part of parts) {
       const face = part.bold ? bold : regular;
-      for (const token of part.text.split(/(\s+)/)) {
+      for (const token of part.keepTogether ? [part.text] : part.text.split(/(\s+)/)) {
         if (!token) continue;
         if (/^\s+$/.test(token)) { pendingSpace = true; continue; }
         let spaceWidth = width && pendingSpace ? regular.widthOfTextAtSize(' ', size) : 0;
@@ -106,10 +106,10 @@
       const mainLines = wrapRuns(content.mainParts, regular, bold, size, 590);
       const recognitionLines = wrapText(content.recognition, regular, size, 590);
       const lineHeight = size * 1.43;
-      const mainBottom = 334 - (mainLines.length - 1) * lineHeight;
-      const recognitionTop = Math.min(180, mainBottom - 57);
+      const mainBottom = 348 - (mainLines.length - 1) * lineHeight;
+      const recognitionTop = Math.min(205, mainBottom - 45);
       const recognitionBottom = recognitionTop - (recognitionLines.length - 1) * lineHeight;
-      if (recognitionBottom > 125) return {size, lineHeight, mainLines, recognitionLines, recognitionTop};
+      if (recognitionBottom > 145) return {size, lineHeight, mainLines, recognitionLines, recognitionTop};
     }
     throw new Error('O texto do certificado não cabe com legibilidade em uma página A4. Revise os dados cadastrados.');
   }
@@ -171,7 +171,7 @@
     centered(page, 'Certificado', titleBold, 47, 427);
     centered(page, 'de conclusão', titleRegular, 22, 398, orange);
     page.drawLine({start: {x: 315, y: 382}, end: {x: 527, y: 382}, color: orange, thickness: 1});
-    drawRichLines(page, layout.mainLines, regular, bold, layout.size, 334, layout.lineHeight);
+    drawRichLines(page, layout.mainLines, regular, bold, layout.size, 348, layout.lineHeight);
     drawLines(page, layout.recognitionLines, regular, layout.size, layout.recognitionTop, layout.lineHeight);
     page.drawLine({start: {x: 316, y: 105}, end: {x: 526, y: 105}, color: orange, thickness: 1.2});
     centered(page, 'SPFLY LOGÍSTICA', bold, 15, 82);
