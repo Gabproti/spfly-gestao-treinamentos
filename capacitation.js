@@ -335,7 +335,7 @@
       <p>${list.length-missing.length} de ${list.length} curso(s) obrigatório(s) apto(s). ${missing.length?`Pendências: ${safe(missing.map(course=>course.name).join(', '))}.`:''}</p>
       ${cert?`<p class="muted">Código: <strong>${safe(cert.code)}</strong> · Emissão: ${fmtTime(cert.issued_at)}</p>`:''}
       ${cert?.status==='invalidated'?`<div class="cap-rejection-reason"><strong>Motivo da invalidação:</strong> ${safe(cert.invalidation_reason||'Não informado')}</div>`:''}
-      <div class="cap-course-actions">${canIssue?`<button type="button" class="btn btn-primary" data-cap-action="issue-official" data-id="${safe(enrollment.id)}">Emitir certificado oficial</button>`:''}${canIssueAdmin?`<button type="button" class="btn btn-primary" data-cap-action="issue-official-admin" data-id="${safe(enrollment.id)}">Emitir sem tempo mínimo</button>`:''}${cert?.status==='valid'?`<button type="button" class="btn btn-secondary" data-cap-action="download-official" data-id="${safe(cert.id)}">Baixar certificado PDF</button>`:''}${manager() && cert?.status==='valid'?`<button type="button" class="btn btn-danger" data-cap-action="invalidate-official" data-id="${safe(cert.id)}">Invalidar</button>`:''}</div></div>`;
+      <div class="cap-course-actions">${canIssue?`<button type="button" class="btn btn-primary" data-cap-action="issue-official" data-id="${safe(enrollment.id)}">Emitir certificado oficial</button>`:''}${canIssueAdmin?`<button type="button" class="btn btn-primary" data-cap-action="issue-official-admin" data-id="${safe(enrollment.id)}">Emitir sem tempo mínimo</button>`:''}${cert?.status==='valid'?`<button type="button" class="btn btn-secondary" data-cap-action="preview-official" data-id="${safe(cert.id)}">Visualizar certificado</button><button type="button" class="btn btn-secondary" data-cap-action="download-official" data-id="${safe(cert.id)}">Baixar certificado PDF</button>`:''}${manager() && cert?.status==='valid'?`<button type="button" class="btn btn-danger" data-cap-action="invalidate-official" data-id="${safe(cert.id)}">Invalidar</button>`:''}</div></div>`;
   }
   async function issueOfficial(enrollmentId,adminOverride = false) {
     if (busy) return;
@@ -348,10 +348,10 @@
     } catch(error) { alert('Não foi possível emitir o certificado: '+error.message); }
     finally { busy=false; }
   }
-  async function downloadOfficial(certId) {
+  async function downloadOfficial(certId,preview = false) {
     const cert=officialCertificates.find(item=>item.id===certId);
     if (!cert || cert.status!=='valid') return;
-    try { await window.SPFLY_OFFICIAL_PDF.download(cert); }
+    try { await window.SPFLY_OFFICIAL_PDF[preview?'preview':'download'](cert); }
     catch(error) { alert('Não foi possível gerar o PDF: '+error.message); }
   }
   async function invalidateOfficial(certId) {
@@ -838,6 +838,7 @@
     if (action==='issue-official') issueOfficial(id);
     if (action==='issue-official-admin') issueOfficial(id,true);
     if (action==='download-official') downloadOfficial(id);
+    if (action==='preview-official') downloadOfficial(id,true);
     if (action==='invalidate-official') invalidateOfficial(id);
     if (action==='finish-course') advanceCourse(id,'finished',button);
     if (action==='approve') reviewCertificate(id,'approved');
