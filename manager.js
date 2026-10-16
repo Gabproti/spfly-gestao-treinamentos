@@ -24,7 +24,7 @@
       const {data:result,error}=await client.rpc('hr_dashboard');
       if (error) throw error;
       if (isAdmin() && result) {
-        const directory=await client.from('admin_users').select('id,full_name,employee_id,active').eq('access_role','gestor');
+        const directory=await client.from('admin_users').select('id,full_name,employee_id,manager_sector,active').eq('access_role','gestor');
         if (!directory.error) result.managerDirectory=directory.data||[];
       }
       data=result || data;
@@ -60,14 +60,28 @@
       ['Cursos concluídos',courses.filter(c=>c.completed_at).length,'finished']
     ];
     $('managerKpis').innerHTML=counts.map(([label,value,filter])=>`<button type="button" class="manager-kpi" data-kpi="${filter}"><strong>${value}</strong><span>${safe(label)}</span></button>`).join('');
-    $('managerTeamCount').textContent=`${(data.employees||[]).length} funcionário(s)`;
+    $('managerTeamCount').textContent=`${(data.employees||[]).length} funcionário(s)`+(!isAdmin()&&data.my_sector?` · Setor: ${data.my_sector}`:'');
     $('managerTeam').innerHTML=data.employees?.length?`<div class="manager-table-wrap"><table><thead><tr><th>Nome</th><th>Setor</th><th>Cargo</th></tr></thead><tbody>${data.employees.map(e=>`<tr><td>${safe(e.name)}</td><td>${safe(e.sector)}</td><td>${safe(e.role)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">Nenhum funcionário vinculado.</p>';
     const sectorItems=(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`);
     setOptions($('managerHireForm').elements.sector,sectorItems,'Selecione o setor');
     setOptions($('managerTransferForm').elements.sector,sectorItems,'Selecione o destino');
-    setOptions($('managerTransferForm').elements.employee,(data.employees||[]).map(e=>`<option value="${Number(e.id)}">${safe(e.name)} · ${safe(e.sector)}</option>`),'Selecione um funcionário');
+    const managerOptions=(data.managers||[]).map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`);
+    setOptions($('managerTransferManagerFilter'),managerOptions,'Todos os gestores');
+    if (isAdmin()) $('managerTransferManagerFilter').insertAdjacentHTML('beforeend','<option value="unlinked">Sem gestor vinculado</option>');
+    $('managerTransferManagerFilter').hidden=!isAdmin();
+    filterTransferEmployees();
     setOptions($('managerSectorFilter'),sectorItems,'Todos os setores');
     renderAdmin(); renderRequests(); renderCourses();
+  }
+  function filterTransferEmployees() {
+    const select=$('managerTransferForm').elements.employee;
+    const current=select.value;
+    const term=$('managerTransferEmployeeSearch').value.trim().toLocaleLowerCase('pt-BR');
+    const manager=$('managerTransferManagerFilter').value;
+    const matches=(data.employees||[]).filter(e=>(!term||`${e.name} ${e.mat||''} ${e.sector}`.toLocaleLowerCase('pt-BR').includes(term))&&
+      (!manager||(manager==='unlinked'?!e.manager_id:e.manager_id===manager)));
+    setOptions(select,matches.map(e=>`<option value="${Number(e.id)}">${safe(e.name)} · ${safe(e.mat||'Sem matrícula')} · ${safe(e.sector)}</option>`),'Selecione um funcionário');
+    if (!matches.some(e=>String(e.id)===current)) select.value='';
   }
   function renderAdmin() {
     const box=$('managerAdmin'),directoryHost=$('managerDirectoryHost');
@@ -78,9 +92,11 @@
     const sectorNames=[...new Set([...(data.sectors||[]),...people.map(e=>e.sector)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
     directoryHost.innerHTML=`<div class="card manager-directory-card"><div class="manager-directory-title"><div><h2>Gestores e funcionários vinculados</h2><p class="muted">Consulte as equipes e altere vínculos quando necessário.</p></div><span id="managerDirectoryCount" class="muted"></span></div><div class="manager-filters"><input id="managerDirectorySearch" type="search" placeholder="Buscar gestor ou funcionário" aria-label="Buscar gestor ou funcionário" oninput="SPFLY_MANAGER.filterDirectory()"><select id="managerDirectorySector" aria-label="Filtrar por setor" onchange="SPFLY_MANAGER.filterDirectory()"><option value="">Todos os setores</option>${sectorNames.map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select></div><div id="managerDirectory" class="manager-directory-list"></div></div>`;
     box.innerHTML=`<div class="manager-admin-settings"><div class="card" id="managerTeamEditor"><h2>Vínculo de equipe</h2><p class="muted">Cada funcionário possui um gestor responsável. Selecione uma pessoa para vincular, trocar ou remover o gestor.</p><div class="manager-filters"><input id="managerTeamSearch" type="search" placeholder="Buscar funcionário" oninput="SPFLY_MANAGER.filterTeam()"><select id="managerTeamEmployee"><option value="">Selecione o funcionário</option>${people.map(e=>`<option value="${Number(e.id)}">${safe(e.name)} · ${safe(e.sector)}</option>`).join('')}</select><select id="managerTeamManager"><option value="">Sem gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveTeam()">Salvar vínculo</button></div><p class="muted" id="managerCurrentLink"></p></div>
+      <div class="card"><h2>Setor do gestor</h2><p class="muted">Defina o setor responsável. Funcionários novos ou transferidos são vinculados automaticamente somente quando houver um único gestor ativo nesse setor.</p><div class="manager-filters"><select id="managerSectorOwner"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><select id="managerSectorValue"><option value="">Sem setor definido</option>${(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveManagerSector()">Salvar setor</button></div></div>
       <div class="card"><h2>Gestão imediata</h2><p class="muted">Defina quem aprova a primeira etapa das transferências solicitadas por cada gestor. Sem responsável definido, a etapa cabe ao administrador.</p><div class="manager-filters"><select id="managerSupervisorOwner"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><select id="managerSupervisor"><option value="">Administrador aprova</option>${(data.approvers||[]).map(a=>`<option value="${safe(a.id)}">${safe(a.name)} · ${a.role==='admin'?'Admin':'Gestor'}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveSupervisor()">Salvar responsável</button></div></div></div>`;
     $('managerTeamEmployee').onchange=syncTeam;
     $('managerSupervisorOwner').onchange=syncSupervisor;
+    $('managerSectorOwner').onchange=syncManagerSector;
     $('managerDirectorySearch').value=directoryFilters.search;
     $('managerDirectorySector').value=directoryFilters.sector;
     renderDirectory();
@@ -95,7 +111,7 @@
     const employees=data.employees||[];
     const profiles=data.managerDirectory||data.managers||[];
     const managers=profiles.map(m=>({id:m.id,name:m.full_name||m.name||'Gestor sem nome',active:m.active!==false,
-      sector:employees.find(e=>Number(e.id)===Number(m.employee_id))?.sector||'Não informado'}))
+      sector:m.manager_sector||m.sector||'Não informado'}))
       .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
     const search=directoryFilters.search,sector=directoryFilters.sector;
     const matches=e=>(!search||`${e.name} ${e.sector} ${e.role}`.toLocaleLowerCase('pt-BR').includes(search))&&(!sector||e.sector===sector);
@@ -144,6 +160,18 @@
   }
   function syncSupervisor() {
     $('managerSupervisor').value=data.managers.find(m=>m.id===$('managerSupervisorOwner').value)?.supervisor_id||'';
+  }
+  function syncManagerSector() {
+    $('managerSectorValue').value=data.managers.find(m=>m.id===$('managerSectorOwner').value)?.sector||'';
+  }
+  async function saveManagerSector() {
+    const manager=$('managerSectorOwner').value, sector=$('managerSectorValue').value||null;
+    if (!isAdmin()||!manager) return message('Selecione o gestor.',true);
+    try {
+      const {error}=await client.rpc('hr_set_manager_sector',{target_manager:manager,next_sector:sector});
+      if (error) throw error;
+      await refresh(); message('Setor do gestor atualizado.');
+    } catch(error) { message('Não foi possível salvar o setor: '+error.message,true); }
   }
   async function saveTeam() {
     const id=Number($('managerTeamEmployee').value), manager=$('managerTeamManager').value;
@@ -257,11 +285,18 @@
   function renderCourses() {
     const term=$('managerCourseSearch').value.trim().toLocaleLowerCase('pt-BR'),
       sector=$('managerSectorFilter').value,status=$('managerCourseStatus').value;
-    const rows=(data.courses||[]).filter(c=>(!term||`${c.course_name} ${c.track_name} ${nameOf(c.employee_id)}`.toLocaleLowerCase('pt-BR').includes(term)) &&
-      (!sector||sectorOf(c.employee_id)===sector)&&(!status||courseState(c)===status));
+    const enrollments=new Map();
+    (data.courses||[]).forEach(c=>{
+      const key=String(c.enrollment_id);
+      if (!enrollments.has(key)) enrollments.set(key,{trackId:c.track_id||c.track_name,trackName:c.track_name,employeeId:c.employee_id,enrolledAt:c.enrolled_at,trackCertificate:c.track_certificate_path,courses:[]});
+      enrollments.get(key).courses.push(c);
+    });
+    const trackState=entry=>entry.courses.every(c=>courseState(c)==='finished')?'finished':entry.courses.some(c=>courseState(c)!=='pending')?'started':'pending';
+    const filtered=[...enrollments.values()].filter(entry=>(!term||`${entry.trackName} ${nameOf(entry.employeeId)} ${entry.courses.map(c=>c.course_name).join(' ')}`.toLocaleLowerCase('pt-BR').includes(term))&&
+      (!sector||sectorOf(entry.employeeId)===sector)&&(!status||trackState(entry)===status));
     const grouped=new Map();
-    rows.forEach(c=>{ const key=c.course_id; if(!grouped.has(key)) grouped.set(key,[]); grouped.get(key).push(c); });
-    $('managerCourses').innerHTML=grouped.size?[...grouped.values()].map(items=>`<details class="manager-course"><summary><strong>${safe(items[0].course_name)}</strong><span>${safe(items[0].track_name)} · ${items.length} inscrito(s)</span></summary><div class="manager-table-wrap"><table><thead><tr><th>Funcionário</th><th>Setor</th><th>Inscrição</th><th>Status</th><th>Certificado</th></tr></thead><tbody>${items.map(c=>`<tr><td>${safe(nameOf(c.employee_id))}</td><td>${safe(sectorOf(c.employee_id))}</td><td>${date(c.enrolled_at)}</td><td>${courseState(c)==='finished'?'Concluído':courseState(c)==='started'?'Em andamento':'Pendente'}</td><td>${c.certificate_path?`<button class="btn btn-secondary" type="button" data-cert="${safe(c.certificate_path)}">Visualizar certificado</button>`:c.track_certificate_path?`<button class="btn btn-secondary" type="button" data-cert="${safe(c.track_certificate_path)}">Certificado da trilha</button>`:'—'}</td></tr>`).join('')}</tbody></table></div></details>`).join(''):'<p class="muted">Nenhuma inscrição encontrada.</p>';
+    filtered.forEach(entry=>{const key=String(entry.trackId);if(!grouped.has(key)) grouped.set(key,[]);grouped.get(key).push(entry);});
+    $('managerCourses').innerHTML=grouped.size?[...grouped.values()].map(items=>`<details class="manager-course"><summary><strong>${safe(items[0].trackName)}</strong><span>${items.length} ${items.length===1?'inscrição':'inscrições'}</span></summary><div class="manager-table-wrap"><table><thead><tr><th>Funcionário</th><th>Setor</th><th>Inscrição</th><th>Cursos</th><th>Status</th><th>Certificado da trilha</th></tr></thead><tbody>${items.map(entry=>`<tr><td>${safe(nameOf(entry.employeeId))}</td><td>${safe(sectorOf(entry.employeeId))}</td><td>${date(entry.enrolledAt)}</td><td><details class="manager-course-detail"><summary>${entry.courses.filter(c=>courseState(c)==='finished').length}/${entry.courses.length} concluído(s)</summary><ul>${entry.courses.map(c=>`<li>${safe(c.course_name)} · ${courseState(c)==='finished'?'Concluído':courseState(c)==='started'?'Em andamento':'Pendente'}${c.certificate_path?` · <button class="btn btn-secondary" type="button" data-cert="${safe(c.certificate_path)}">Certificado</button>`:''}</li>`).join('')}</ul></details></td><td>${trackState(entry)==='finished'?'Concluída':trackState(entry)==='started'?'Em andamento':'Pendente'}</td><td>${entry.trackCertificate?`<button class="btn btn-secondary" type="button" data-cert="${safe(entry.trackCertificate)}">Visualizar certificado</button>`:'—'}</td></tr>`).join('')}</tbody></table></div></details>`).join(''):'<p class="muted">Nenhuma inscrição encontrada.</p>';
   }
   async function openCertificate(path) {
     try {
@@ -291,5 +326,5 @@
       }
     });
   });
-  window.SPFLY_MANAGER={configure,refresh,render,renderCourses,filterTeam,filterDirectory,saveTeam,saveSupervisor,toggleTeam};
+  window.SPFLY_MANAGER={configure,refresh,render,renderCourses,filterTeam,filterDirectory,filterTransferEmployees,saveTeam,saveSupervisor,saveManagerSector,toggleTeam};
 })();

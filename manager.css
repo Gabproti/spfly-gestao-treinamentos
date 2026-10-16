@@ -66,3 +66,8 @@ body.dark .manager-transfer-skipped .manager-transfer-dot{color:#ff985f}
 @media(max-width:1300px){.manager-admin-settings{grid-template-columns:1fr}}
 @media(max-width:1100px){.manager-team-card .manager-table-wrap{max-height:320px}}
 @media(max-width:650px){.manager-directory-row summary{grid-template-columns:minmax(0,1fr) auto 16px;gap:5px 10px}.manager-directory-row summary>strong{grid-column:1}.manager-directory-row summary span:not(.badge){grid-column:1}.manager-directory-row summary .badge{grid-column:2;grid-row:1}.manager-directory-row summary::before{grid-column:3;grid-row:1}.manager-directory-person{align-items:start;flex-direction:column}.manager-directory-title{flex-wrap:wrap}}
+.manager-transfer-filters .manager-filters{margin:0}
+.manager-course .manager-course-detail summary{display:list-item;cursor:pointer;color:var(--orange);font-weight:700}
+.manager-course-detail ul{margin:8px 0 0;padding-left:18px;min-width:190px}
+.manager-course-detail li{margin:6px 0;line-height:1.4}
+.manager-course-detail .btn{padding:4px 7px;font-size:11px}
