@@ -1,0 +1,18 @@
+#pageReportHours .hours-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+#pageReportHours .hours-kpis .card{margin:0;border-top:3px solid var(--orange);box-shadow:0 3px 12px #0000000a}
+#pageReportHours .hours-dashboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+#pageReportHours .hours-dashboard-panel{min-width:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:16px}
+#pageReportHours .hours-dashboard-panel h3{margin:0 0 16px;font-size:17px}
+#pageReportHours .hours-bars{display:grid;gap:14px;min-height:90px}
+#pageReportHours .hours-bar-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(60px,1fr) auto;align-items:center;gap:8px;font-size:12px}
+#pageReportHours .hours-bar-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pageReportHours .hours-bar-row strong{white-space:nowrap;font-size:11px}
+#pageReportHours .hours-bar-track{height:9px;border-radius:10px;background:var(--border);overflow:hidden}
+#pageReportHours .hours-bar-track i{display:block;height:100%;border-radius:10px;background:var(--orange)}
+#pageReportHours .hours-total-list{margin-top:18px;border-top:1px solid var(--border);padding-top:10px}
+#pageReportHours .hours-total-list summary{cursor:pointer;color:var(--orange);font-size:12px;font-weight:700}
+#pageReportHours .hours-total-list .table-scroll{max-height:300px;overflow:auto;margin-top:10px}
+#pageReportHours .hours-total-list th,#pageReportHours .hours-total-list td{font-size:11px;padding:7px}
+#pageReportHours .hours-dashboard-detail{margin-top:20px}
+@media(max-width:1200px){#pageReportHours .hours-dashboard-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){#pageReportHours .hours-dashboard-grid{grid-template-columns:1fr}#pageReportHours .hours-kpis{grid-template-columns:1fr 1fr}}

@@ -231,3 +231,19 @@ O funcionário inicia uma sessão de estudo na Capacitação, recebe progresso a
 Prévia com dados fictícios: `tmp/preview-v49.html`. Ela apresenta o painel e gera um PDF de exemplo. Esta prévia não acessa o Supabase.
 
 A migração `supabase/migration-v49-official-track-certificates.sql` foi aplicada ao projeto spfly-treinamentos antes da publicação da interface. Testar no portal os fluxos de estudo, conclusão, emissão, invalidação e consulta pública com contas de teste. A visualização do conteúdo externo em iframe depende de o provedor permitir incorporação; o tempo validado indica uma sessão visível no portal, não confirma que o conteúdo externo foi assistido.
+
+## V54 — setor do gestor e inscrições por trilha
+
+O administrador pode definir o setor de cada gestor na Visão do Gestor. Em uma admissão ou transferência, um funcionário é vinculado automaticamente somente quando há um único gestor ativo no setor de destino. Quando não há gestor ou há mais de um, o vínculo fica para escolha administrativa. A busca de transferência aceita nome ou matrícula e filtro por gestor. As inscrições são agrupadas por trilha, com cursos e certificados em detalhes expansíveis.
+
+A migração `supabase/migration-v54-manager-sectors-tracks.sql` foi aplicada ao projeto `spfly-treinamentos` e a interface V54 publicada no portal.
+
+## V55 — prévia local para revisão
+
+Abra `preview-v55.html` para ver, com dados fictícios, os campos de vagas e transferência/promoção, o gestor responsável por setor, o histórico de aprovações e o relatório de horas. O arquivo não grava dados nem acessa o Supabase.
+
+Na aplicação, `index.html`, `manager.js`, `manager.css`, `employee-tools.js`, `course-hours.js` e `capacitation.js` implementam os novos fluxos. A migração preparada está em `supabase/migration-v55-hr-manager-reports-certificate.sql`. Ela deve ser validada e aplicada no projeto correto **antes** da publicação da interface. A assinatura gráfica do certificado aguarda a imagem autorizada pelo RH; a prévia identifica essa pendência.
+
+Revisão da prévia: requisição de vagas com **dias de trabalho** separados do **horário** (máscara `08:00 às 17:00`); timeline com data e hora logo abaixo de cada círculo; relatório com indicadores, gráficos de barras, totais completos e botão para imprimir um extrato dos registros filtrados. O extrato é gerado no navegador, sem nova tabela no banco.
+
+Menu lateral em revisão local: `sidebar.css` e `sidebar.js` mantêm o menu fixo, compacto com ícones, expansão ao passar o mouse ou receber foco e rolagem sem barra aparente. A área principal acompanha a largura no desktop; em telas de toque, o botão ☰ abre o menu. O submenu de Relatórios e as permissões de navegação existentes permanecem. A prévia independente está em `preview-sidebar-v55.html` e usa dados fictícios.

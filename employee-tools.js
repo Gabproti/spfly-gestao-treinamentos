@@ -9,8 +9,9 @@
   const headers = ['Nome','Tipo de documento','CPF/CNPJ','Matrícula','Data de nascimento','Data de admissão','Setor','Cargo','E-mail','Telefone','Status'];
   const keys = ['name','documentType','cpf','mat','birth','hire','sector','role','email','phone','status'];
   const aliases = {nome:'name',tipodedocumento:'documentType',cpfcnpj:'cpf',cpf:'cpf',cnpj:'cpf',documento:'cpf',matricula:'mat',
-    datadenascimento:'birth',datadeadmissao:'hire',setor:'sector',cargo:'role',email:'email',telefone:'phone',status:'status'};
+    datadenascimento:'birth',datadeadmissao:'hire',setor:'sector',departamento:'sector',cargo:'role',email:'email',telefone:'phone',status:'status'};
   let imported = [], importedFile = '', editingLine = null, currentEmployeeId = null;
+  let importManagerCatalog = [];
   let externalCertificates = [], platformCertificates = [], editingCertificateId = null, savingCertificate = false, certificateLoad = 0;
   let currentPreview = null, previewRevision = 0;
   let attachments = [], editingAttachmentId = null, savingAttachment = false, attachmentLoad = 0;
@@ -78,6 +79,8 @@
       const sector=sectorNames.find(s=>s.toLocaleLowerCase('pt-BR')===clean(r.sector).toLocaleLowerCase('pt-BR'));
       if(!clean(r.sector))issues.push('Setor não informado');
       else if(!sector)issues.push('Setor inexistente');
+      const manager=importManagerCatalog.find(item=>item.sector===sector);
+      if(sector&&!manager?.manager_id)issues.push('Defina um gestor responsável por este setor antes de importar');
       const birth=validDate(r.birth), hire=validDate(r.hire);
       if(birth===null)issues.push('Data de nascimento inválida');
       if(hire===null)issues.push('Data de admissão inválida');
@@ -85,6 +88,7 @@
       const status=clean(r.status)||'Ativo';if(!['Ativo','Inativo'].includes(status))issues.push('Status inválido');
       if(entry.columnError)issues.push(entry.columnError);
       entry.errors=issues;
+      entry.managerName=manager?.manager_name||'';
       entry.employee={name,mat,cpf:formatBrazilianDocument(doc,type),documentType:type,
         birth:birth||'',hire:hire||'',sector:sector||'',role:clean(r.role)||'Não informado',
         email:clean(r.email),phone:clean(r.phone),status};
@@ -96,10 +100,18 @@
     validateImport();
     const good=imported.filter(x=>!x.errors.length), bad=imported.filter(x=>x.errors.length);
     const preview=[...bad,...good];
-    node.innerHTML=`<div class="employee-import-summary"><span>Registros encontrados: <strong>${imported.length}</strong></span><span>Válidos: <strong>${good.length}</strong></span><span>Com erro: <strong>${bad.length}</strong></span></div><div class="help">${safe(importedFile)} · Corrija as linhas com erro abaixo ou selecione um CSV atualizado. Somente os registros válidos serão salvos.</div><div class="employee-import-table"><table><thead><tr><th>Linha</th><th>Nome</th><th>Documento</th><th>Matrícula</th><th>Setor</th><th>Validação</th><th>Ação</th></tr></thead><tbody>${preview.map(e=>`<tr><td>${e.line}</td><td>${safe(e.raw.name)}</td><td>${safe(e.raw.cpf)}</td><td>${safe(e.raw.mat)}</td><td>${safe(e.raw.sector)}</td><td>${e.errors.length?`<span class="employee-import-error">${safe(e.errors.join('; '))}</span>`:'<span class="badge badge-green">Válido</span>'}</td><td><button type="button" class="btn btn-secondary btn-sm" data-import-line="${e.line}">Corrigir</button></td></tr>`).join('')}</tbody></table></div>`;
+    node.innerHTML=`<div class="employee-import-summary"><span>Registros encontrados: <strong>${imported.length}</strong></span><span>Válidos: <strong>${good.length}</strong></span><span>Com erro: <strong>${bad.length}</strong></span></div><div class="help">${safe(importedFile)} · Corrija as linhas com erro abaixo ou selecione um CSV atualizado. Somente os registros válidos serão salvos.</div><div class="employee-import-table"><table><thead><tr><th>Linha</th><th>Nome</th><th>Documento</th><th>Matrícula</th><th>Setor</th><th>Gestor</th><th>Validação</th><th>Ação</th></tr></thead><tbody>${preview.map(e=>`<tr><td>${e.line}</td><td>${safe(e.raw.name)}</td><td>${safe(e.raw.cpf)}</td><td>${safe(e.raw.mat)}</td><td>${safe(e.raw.sector)}</td><td>${safe(e.managerName||'Não definido')}</td><td>${e.errors.length?`<span class="employee-import-error">${safe(e.errors.join('; '))}</span>`:'<span class="badge badge-green">Válido</span>'}</td><td><button type="button" class="btn btn-secondary btn-sm" data-import-line="${e.line}">Corrigir</button></td></tr>`).join('')}</tbody></table></div>`;
     $('employeeImportConfirm').disabled=!good.length;
   }
-  function openImport(){if(!auth().canEdit('employees'))return;imported=[];importedFile='';$('employeeImportFile').value='';renderImport();$('employeeImportDialog').showModal();}
+  async function openImport(){
+    if(!auth().canEdit('employees'))return;
+    try {
+      const {data,error}=await client().rpc('hr_import_sector_catalog_v55');
+      if(error)throw error;
+      importManagerCatalog=Array.isArray(data)?data:[];
+      imported=[];importedFile='';$('employeeImportFile').value='';renderImport();$('employeeImportDialog').showModal();
+    } catch(error){alert('Não foi possível carregar os gestores dos setores: '+error.message);}
+  }
   function closeImport(){$('employeeImportDialog').close();}
   function downloadTemplate(){
     const blob=new Blob(['\uFEFF'+headers.join(';')+'\r\n'],{type:'text/csv;charset=utf-8'});
@@ -137,7 +149,11 @@
   }
   async function confirmImport(){
     if(!auth().canEdit('employees'))return;
+    const catalog=await client().rpc('hr_import_sector_catalog_v55');
+    if(catalog.error){alert('Não foi possível confirmar os gestores dos setores: '+catalog.error.message);return;}
+    importManagerCatalog=Array.isArray(catalog.data)?catalog.data:[];
     validateImport();const valid=imported.filter(x=>!x.errors.length);
+    renderImport();
     if(!valid.length)return;
     if(!confirm(`Importar ${valid.length} funcionário(s) válido(s)? ${imported.length-valid.length} linha(s) com erro serão ignoradas.`))return;
     const button=$('employeeImportConfirm');button.disabled=true;button.textContent='Importando...';

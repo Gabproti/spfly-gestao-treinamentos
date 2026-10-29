@@ -13,7 +13,13 @@
   const isAdmin = () => access?.access_role === 'admin';
   const nameOf = id => data.employees.find(e => Number(e.id) === Number(id))?.name || `Funcionário #${id}`;
   const sectorOf = id => data.employees.find(e => Number(e.id) === Number(id))?.sector || '—';
-  const actionNames = {approve:'Aprovar',start_selection:'Iniciar seleção',record_hires:'Registrar contratação',approve_immediate:'Aprovar gestão imediata',accept_manager:'Aceitar transferência',approve_final:'Aprovado',reject:'Reprovar',cancel:'Cancelar',requested:'Solicitação registrada',manager_step_skipped:'Aceite repetido dispensado'};
+  const actionNames = {approve:'Aprovar',start_selection:'Iniciar seleção',record_hires:'Registrar contratação',approve_immediate:'Aprovar gestão imediata',accept_manager:'Aceitar transferência / promoção',approve_final:'Aprovado',reject:'Reprovar',cancel:'Cancelar',requested:'Solicitação registrada',manager_step_skipped:'Aceite repetido dispensado'};
+  function maskWorkTime(value) {
+    const digits=String(value||'').replace(/\D/g,'').slice(0,8);
+    const first=digits.slice(0,2)+(digits.length>2?':'+digits.slice(2,4):'');
+    const second=digits.length>4?' às '+digits.slice(4,6)+(digits.length>6?':'+digits.slice(6,8):''):'';
+    return first+second;
+  }
 
   function configure(nextClient,nextAccess) { client=nextClient; access=nextAccess; }
   function message(text, error=false) { const el=$('managerMessage'); el.textContent=text; el.className=error?'manager-error':'muted'; }
@@ -55,7 +61,7 @@
       ['Funcionários vinculados',(data.employees||[]).filter(e=>!isAdmin()||e.manager_id).length,'team'],
       ['Vagas pendentes',requests.filter(r=>r.kind==='hire'&&pending(r)).reduce((n,r)=>n+r.quantity-r.filled_quantity,0),'hire'],
       ['Seleção em andamento',requests.filter(r=>r.kind==='hire'&&r.status==='selecting').length,'hire'],
-      ['Transferências pendentes',requests.filter(r=>r.kind==='transfer'&&pending(r)).length,'pending'],
+      ['Transferências / promoções pendentes',requests.filter(r=>r.kind==='transfer'&&pending(r)).length,'pending'],
       ['Cursos em andamento',courses.filter(c=>c.started_at&&!c.completed_at).length,'started'],
       ['Cursos concluídos',courses.filter(c=>c.completed_at).length,'finished']
     ];
@@ -93,10 +99,13 @@
     directoryHost.innerHTML=`<div class="card manager-directory-card"><div class="manager-directory-title"><div><h2>Gestores e funcionários vinculados</h2><p class="muted">Consulte as equipes e altere vínculos quando necessário.</p></div><span id="managerDirectoryCount" class="muted"></span></div><div class="manager-filters"><input id="managerDirectorySearch" type="search" placeholder="Buscar gestor ou funcionário" aria-label="Buscar gestor ou funcionário" oninput="SPFLY_MANAGER.filterDirectory()"><select id="managerDirectorySector" aria-label="Filtrar por setor" onchange="SPFLY_MANAGER.filterDirectory()"><option value="">Todos os setores</option>${sectorNames.map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select></div><div id="managerDirectory" class="manager-directory-list"></div></div>`;
     box.innerHTML=`<div class="manager-admin-settings"><div class="card" id="managerTeamEditor"><h2>Vínculo de equipe</h2><p class="muted">Cada funcionário possui um gestor responsável. Selecione uma pessoa para vincular, trocar ou remover o gestor.</p><div class="manager-filters"><input id="managerTeamSearch" type="search" placeholder="Buscar funcionário" oninput="SPFLY_MANAGER.filterTeam()"><select id="managerTeamEmployee"><option value="">Selecione o funcionário</option>${people.map(e=>`<option value="${Number(e.id)}">${safe(e.name)} · ${safe(e.sector)}</option>`).join('')}</select><select id="managerTeamManager"><option value="">Sem gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveTeam()">Salvar vínculo</button></div><p class="muted" id="managerCurrentLink"></p></div>
       <div class="card"><h2>Setor do gestor</h2><p class="muted">Defina o setor responsável. Funcionários novos ou transferidos são vinculados automaticamente somente quando houver um único gestor ativo nesse setor.</p><div class="manager-filters"><select id="managerSectorOwner"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><select id="managerSectorValue"><option value="">Sem setor definido</option>${(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveManagerSector()">Salvar setor</button></div></div>
+      <div class="card"><h2>Gestor responsável por setor</h2><p class="muted">Defina o gestor usado na importação e na vinculação automática de novos funcionários. Se não houver indicação, somente um gestor ativo no setor será escolhido automaticamente.</p><div class="manager-filters"><select id="managerDefaultSector"><option value="">Selecione o setor</option>${(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select><select id="managerDefaultOwner"><option value="">Sem gestor padrão</option></select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveSectorManager()">Salvar gestor</button></div><div id="managerSectorDefaults" class="muted manager-sector-defaults"></div></div>
       <div class="card"><h2>Gestão imediata</h2><p class="muted">Defina quem aprova a primeira etapa das transferências solicitadas por cada gestor. Sem responsável definido, a etapa cabe ao administrador.</p><div class="manager-filters"><select id="managerSupervisorOwner"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><select id="managerSupervisor"><option value="">Administrador aprova</option>${(data.approvers||[]).map(a=>`<option value="${safe(a.id)}">${safe(a.name)} · ${a.role==='admin'?'Admin':'Gestor'}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveSupervisor()">Salvar responsável</button></div></div></div>`;
     $('managerTeamEmployee').onchange=syncTeam;
     $('managerSupervisorOwner').onchange=syncSupervisor;
     $('managerSectorOwner').onchange=syncManagerSector;
+    $('managerDefaultSector').onchange=syncSectorManager;
+    syncSectorManager();
     $('managerDirectorySearch').value=directoryFilters.search;
     $('managerDirectorySector').value=directoryFilters.sector;
     renderDirectory();
@@ -164,6 +173,22 @@
   function syncManagerSector() {
     $('managerSectorValue').value=data.managers.find(m=>m.id===$('managerSectorOwner').value)?.sector||'';
   }
+  function syncSectorManager() {
+    const sector=$('managerDefaultSector').value;
+    const eligible=(data.managers||[]).filter(m=>m.sector===sector);
+    $('managerDefaultOwner').innerHTML='<option value="">Sem gestor padrão</option>'+eligible.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('');
+    $('managerDefaultOwner').value=(data.sector_managers||[]).find(row=>row.sector===sector)?.manager_id||'';
+    $('managerSectorDefaults').textContent=(data.sector_managers||[]).map(row=>`${row.sector}: ${(data.managers||[]).find(m=>m.id===row.manager_id)?.name||'Gestor não encontrado'}`).join(' · ')||'Nenhum gestor padrão definido.';
+  }
+  async function saveSectorManager() {
+    const sector=$('managerDefaultSector').value,manager=$('managerDefaultOwner').value||null;
+    if(!isAdmin()||!sector)return message('Selecione o setor.',true);
+    try {
+      const {error}=await client.rpc('hr_set_sector_manager_v55',{target_sector:sector,target_manager:manager});
+      if(error)throw error;
+      await refresh();message('Gestor responsável pelo setor atualizado.');
+    } catch(error){message('Não foi possível salvar o gestor do setor: '+error.message,true);}
+  }
   async function saveManagerSector() {
     const manager=$('managerSectorOwner').value, sector=$('managerSectorValue').value||null;
     if (!isAdmin()||!manager) return message('Selecione o gestor.',true);
@@ -197,11 +222,13 @@
     const fields=form.elements;
     const employee=kind==='transfer'?Number(fields.employee.value):null;
     const args={next_kind:kind,target_employee:employee,next_sector:fields.sector.value,
-      next_position:kind==='hire'?fields.position.value:'',next_quantity:kind==='hire'?Number(fields.quantity.value):1,
-      next_reason:fields.reason.value.trim()};
+      next_position:fields.position.value.trim(),next_quantity:kind==='hire'?Number(fields.quantity.value):1,
+      next_reason:fields.reason.value.trim(),next_request_type:kind==='hire'?fields.requestType.value:null,
+      next_work_days:kind==='hire'?fields.workDays.value.trim():null,
+      next_work_schedule:kind==='hire'?fields.workSchedule.value.trim():null};
     const button=form.querySelector('button[type=submit]'); button.disabled=true;
     try {
-      const {data:id,error}=await client.rpc('hr_submit_request',args);
+      const {data:id,error}=await client.rpc('hr_submit_request_v55',args);
       if (error) throw error;
       form.reset(); await refresh(); message(`Solicitação #${id} registrada.`);
     } catch(error) { message('Não foi possível registrar a solicitação: '+error.message,true); }
@@ -231,7 +258,7 @@
     const hire=r.kind==='hire';
     const stages=hire
       ? ['Requisição de Vagas','Aprovação','Seleção','Preenchimento de Vagas','Requisição Concluída']
-      : ['Requisição de Transferência','Aprovação da Gestão Imediata','Aceite do Gestor Atual','Aprovação do RH','Transferência Concluída'];
+      : ['Requisição de Transferência / Promoção','Aprovação da Gestão Imediata','Aceite do Gestor Atual','Aprovação do RH','Movimentação Concluída'];
     const positions=hire
       ? {requested:2,approved:3,selecting:4,completed:5}
       : {requested:2,immediate_approved:3,manager_accepted:4,completed:5};
@@ -239,19 +266,26 @@
     const stopEvent=stopped?(r.events||[]).findLast(event=>event.action===(r.status==='rejected'?'reject':'cancel')):null;
     const reached=positions[stopped?(stopEvent?.previous_status||'requested'):r.status]??2;
     const skipped=!hire&&Boolean(r.current_manager_skipped)&&reached>=4;
-    return `<div class="manager-transfer-timeline-wrap"><ol class="manager-transfer-timeline" aria-label="Andamento da ${hire?'requisição de vagas':'transferência'}">${stages.map((label,index)=>{
+    const eventActions=hire?['requested','approve','start_selection','record_hires','record_hires']
+      :['requested','approve_immediate','accept_manager','approve_final','approve_final'];
+    return `<div class="manager-transfer-timeline-wrap"><ol class="manager-transfer-timeline" aria-label="Andamento da ${hire?'requisição de vagas':'transferência / promoção'}">${stages.map((label,index)=>{
       const step=index+1;
       const state=skipped&&step===3?'skipped':step<reached||reached===5?'done':step===reached?'current':'pending';
       const text=state==='skipped'?'Dispensada':stopped&&step===reached?(r.status==='rejected'?'Reprovada':'Cancelada'):state==='done'?'Concluída':state==='current'?'Atual':'Pendente';
-      return `<li class="manager-transfer-step manager-transfer-${state}${stopped&&step===reached?' manager-transfer-stopped':''}"><span class="manager-transfer-dot" aria-hidden="true">${state==='done'?'✓':state==='skipped'?'–':step}</span><span class="manager-transfer-label">${label}</span><span class="manager-transfer-state">${text}</span></li>`;
+      const event=stopped&&step===reached?stopEvent:(r.events||[]).findLast(item=>item.action===eventActions[index]);
+      return `<li class="manager-transfer-step manager-transfer-${state}${stopped&&step===reached?' manager-transfer-stopped':''}"><span class="manager-transfer-dot" aria-hidden="true">${state==='done'?'✓':state==='skipped'?'–':step}</span><time class="manager-transfer-time">${event?safe(date(event.created_at)):'&nbsp;'}</time><span class="manager-transfer-label">${label}</span><span class="manager-transfer-state">${text}</span></li>`;
     }).join('')}</ol></div>`;
+  }
+  function requestHistory(r) {
+    const events=r.events||[];
+    return `<details class="manager-request-history"><summary>Histórico de aprovações (${events.length})</summary><ol>${events.map(event=>`<li><time>${safe(date(event.created_at))}</time><strong>${safe(actionNames[event.action]||event.action)}</strong><span>${safe(event.actor_name||'Responsável não informado')}</span>${event.note?`<p>${safe(event.note)}</p>`:''}</li>`).join('')}</ol></details>`;
   }
   function renderRequests() {
     const selected=$('managerRequestFilter').value;
     const rows=(data.requests||[]).filter(r=>!selected||selected===r.kind||
       selected==='pending'&&!['completed','rejected','cancelled'].includes(r.status)||
       selected==='completed'&&r.status==='completed');
-    $('managerRequests').innerHTML=rows.length?rows.map(r=>`<article class="manager-request"><div class="manager-request-head"><div><strong>#${r.id} · ${r.kind==='hire'?'Requisição de vagas':'Transferência'}</strong><div class="muted">${safe(r.kind==='transfer'?nameOf(r.employee_id):r.position_name)} · ${safe(r.target_sector)} · ${date(r.created_at)}</div></div><span class="badge ${r.status==='completed'?'badge-green':r.status==='rejected'||r.status==='cancelled'?'badge-red':''}">${safe(statusNames[r.status]||r.status)}</span></div><p>${safe(r.reason)}</p>${r.kind==='hire'?`<p><strong>Vagas:</strong> ${r.filled_quantity} preenchida(s) de ${r.quantity} · ${r.quantity-r.filled_quantity} restante(s)</p>`:`<p><strong>Setor:</strong> ${safe(r.current_sector)} → ${safe(r.target_sector)}</p>`}${requestTimeline(r)}<div class="actions">${possibleActions(r).map(action=>`<button type="button" class="btn ${action==='reject'||action==='cancel'?'btn-secondary':'btn-primary'}" data-request="${r.id}" data-action="${action}">${safe(actionNames[action])}</button>`).join('')}</div></article>`).join(''):'<p class="muted">Nenhuma solicitação para este filtro.</p>';
+    $('managerRequests').innerHTML=rows.length?rows.map(r=>`<article class="manager-request"><div class="manager-request-head"><div><strong>#${r.id} · ${r.kind==='hire'?'Requisição de vagas':'Transferência / Promoção'}</strong><div class="muted">${safe(r.kind==='transfer'?nameOf(r.employee_id):r.position_name)} · ${safe(r.target_sector)} · ${safe(date(r.created_at))}</div><div class="muted">Solicitante: ${safe(r.requester_name||'Não informado')} · Setor: ${safe(r.requester_sector||'Não informado')}</div></div><span class="badge ${r.status==='completed'?'badge-green':r.status==='rejected'||r.status==='cancelled'?'badge-red':''}">${safe(statusNames[r.status]||r.status)}</span></div><p>${safe(r.reason)}</p>${r.kind==='hire'?`<p><strong>Tipo:</strong> ${safe(r.request_type||'Não informado')} · <strong>Dias:</strong> ${safe(r.work_days||'Não informado')} · <strong>Horário:</strong> ${safe(r.work_schedule||'Não informado')}</p><p><strong>Vagas:</strong> ${r.filled_quantity} preenchida(s) de ${r.quantity} · ${r.quantity-r.filled_quantity} restante(s)</p>`:`<p><strong>Setor:</strong> ${safe(r.current_sector)} → ${safe(r.target_sector)} · <strong>Cargo:</strong> ${safe(r.position_name)} → ${safe(r.destination_position||'Não informado')}</p>`}${requestTimeline(r)}${requestHistory(r)}<div class="actions">${possibleActions(r).map(action=>`<button type="button" class="btn ${action==='reject'||action==='cancel'?'btn-secondary':'btn-primary'}" data-request="${r.id}" data-action="${action}">${safe(actionNames[action])}</button>`).join('')}</div></article>`).join(''):'<p class="muted">Nenhuma solicitação para este filtro.</p>';
   }
   async function advance(id,action) {
     let note=null,filled=null;
@@ -306,8 +340,16 @@
   }
   document.addEventListener('DOMContentLoaded',()=>{
     syncTeamVisibility();
+    $('managerHireForm').elements.workSchedule.addEventListener('input',event=>{
+      const masked=maskWorkTime(event.target.value);
+      if(event.target.value!==masked) event.target.value=masked;
+    });
     $('managerHireForm').addEventListener('submit',event=>{event.preventDefault();submit('hire',event.currentTarget);});
     $('managerTransferForm').addEventListener('submit',event=>{event.preventDefault();submit('transfer',event.currentTarget);});
+    $('managerTransferForm').elements.employee.addEventListener('change',event=>{
+      const person=(data.employees||[]).find(e=>String(e.id)===event.target.value);
+      $('managerTransferForm').elements.position.value=person?.role||'';
+    });
     $('pageManager').addEventListener('click',event=>{
       const unlink=event.target.closest('[data-unlink-employee]');
       if(unlink) return unlinkTeam(unlink.dataset.unlinkEmployee);
@@ -326,5 +368,5 @@
       }
     });
   });
-  window.SPFLY_MANAGER={configure,refresh,render,renderCourses,filterTeam,filterDirectory,filterTransferEmployees,saveTeam,saveSupervisor,saveManagerSector,toggleTeam};
+  window.SPFLY_MANAGER={configure,refresh,render,renderCourses,filterTeam,filterDirectory,filterTransferEmployees,saveTeam,saveSupervisor,saveManagerSector,saveSectorManager,toggleTeam};
 })();

@@ -329,16 +329,16 @@
     const missing = list.filter(course => !course.min_study_minutes || !courseProgress(enrollment.id,course.id)?.completed_at || Number(courseProgress(enrollment.id,course.id)?.study_seconds||0) < course.min_study_minutes*60);
     const cert = officialCertificate(enrollment.id);
     const canIssueNew = !cert || (manager() && cert.status==='invalidated');
-    const canIssue = list.length > 0 && missing.length === 0 && canIssueNew;
+    const canIssue = manager() && list.length > 0 && missing.length === 0 && canIssueNew;
     const canIssueAdmin = manager() && list.length > 0 && missingCompletion.length === 0 && missing.length > 0 && canIssueNew;
-    return `<div class="card cap-official-panel"><div class="cap-section-head"><div><h3>Certificado oficial da trilha</h3><p class="muted">Emissão após conclusão dos cursos obrigatórios e validação do tempo de estudo pelo servidor.</p></div>${cert?badge(cert.status==='valid'?'Certificado disponível':'Invalidado',cert.status==='valid'?'green':'red'):badge(canIssue?'Pronto para emitir':canIssueAdmin?'Emissão administrativa disponível':'Aguardando requisitos',canIssue?'green':'orange')}</div>
+    return `<div class="card cap-official-panel"><div class="cap-section-head"><div><h3>Certificado oficial da trilha</h3><p class="muted">${manager()?'O RH libera a emissão após conferir os cursos obrigatórios.':'A emissão será liberada pelo RH após a conferência dos requisitos.'}</p></div>${cert?badge(cert.status==='valid'?'Certificado disponível':'Invalidado',cert.status==='valid'?'green':'red'):badge(canIssue?'Pronto para o RH emitir':canIssueAdmin?'Emissão administrativa disponível':'Aguardando requisitos',canIssue?'green':'orange')}</div>
       <p>${list.length-missing.length} de ${list.length} curso(s) obrigatório(s) apto(s). ${missing.length?`Pendências: ${safe(missing.map(course=>course.name).join(', '))}.`:''}</p>
       ${cert?`<p class="muted">Código: <strong>${safe(cert.code)}</strong> · Emissão: ${fmtTime(cert.issued_at)}</p>`:''}
       ${cert?.status==='invalidated'?`<div class="cap-rejection-reason"><strong>Motivo da invalidação:</strong> ${safe(cert.invalidation_reason||'Não informado')}</div>`:''}
       <div class="cap-course-actions">${canIssue?`<button type="button" class="btn btn-primary" data-cap-action="issue-official" data-id="${safe(enrollment.id)}">Emitir certificado oficial</button>`:''}${canIssueAdmin?`<button type="button" class="btn btn-primary" data-cap-action="issue-official-admin" data-id="${safe(enrollment.id)}">Emitir sem tempo mínimo</button>`:''}${cert?.status==='valid'?`<button type="button" class="btn btn-secondary" data-cap-action="preview-official" data-id="${safe(cert.id)}">Visualizar certificado</button><button type="button" class="btn btn-secondary" data-cap-action="download-official" data-id="${safe(cert.id)}">Baixar certificado PDF</button>`:''}${manager() && cert?.status==='valid'?`<button type="button" class="btn btn-danger" data-cap-action="invalidate-official" data-id="${safe(cert.id)}">Invalidar</button>`:''}</div></div>`;
   }
   async function issueOfficial(enrollmentId,adminOverride = false) {
-    if (busy) return;
+    if (busy || !manager()) return;
     if (adminOverride && (!manager() || !confirm('Emitir o certificado sem exigir o tempo mínimo de estudo? Todos os cursos obrigatórios precisam estar concluídos. Esta exceção ficará registrada.'))) return;
     busy=true;
     try {

@@ -1,0 +1,46 @@
+/* Menu lateral compacto: a área principal acompanha a largura do menu no desktop. */
+:root{--spfly-sidebar-compact:76px;--spfly-sidebar-open:272px}
+.sidebar{width:var(--spfly-sidebar-compact);height:100dvh;min-height:100vh;position:fixed;inset:0 auto 0 0;padding:0;z-index:30;display:flex;flex-direction:column;overflow:hidden;transition:width .23s ease;box-shadow:2px 0 12px #00000012}
+.sidebar.is-expanded{width:var(--spfly-sidebar-open)}
+.sidebar .brand{height:104px;min-height:104px;margin:0;padding:13px 12px;flex:0 0 auto;overflow:hidden}
+.sidebar .brand .spfly-logo,.sidebar .brand small{display:none}
+.sidebar .brand .sidebar-mark{display:block;width:42px;height:42px;object-fit:contain;flex:0 0 auto}
+.sidebar.is-expanded .brand .spfly-logo{display:block;max-width:220px;width:100%;height:auto}
+.sidebar.is-expanded .brand .sidebar-mark{display:none}
+.sidebar.is-expanded .brand small{display:block;white-space:nowrap}
+.sidebar .nav-section{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:8px 10px 14px;margin:0;scrollbar-width:none;-ms-overflow-style:none}
+.sidebar .nav-section::-webkit-scrollbar{display:none}
+.sidebar .nav-btn{height:52px;min-height:52px;padding:0 14px;gap:16px;white-space:nowrap;justify-content:flex-start}
+.sidebar .nav-icon{width:26px;height:26px;flex:0 0 26px}
+.sidebar:not(.is-expanded) .nav-btn{justify-content:center;padding:0}
+.sidebar:not(.is-expanded) .nav-label,.sidebar:not(.is-expanded) .nav-chevron,.sidebar:not(.is-expanded) .subnav{display:none!important}
+.sidebar .sidebar-footer{position:relative;left:auto;right:auto;bottom:auto;flex:0 0 auto;padding:10px 13px 13px;overflow:hidden}
+.sidebar:not(.is-expanded) .sidebar-profile{justify-content:center;padding-bottom:7px}
+.sidebar:not(.is-expanded) .sidebar-profile>span:last-child,.sidebar:not(.is-expanded) .sidebar-logout span{display:none}
+.sidebar:not(.is-expanded) .sidebar-logout{width:100%;justify-content:center;padding:7px 0}
+.sidebar.is-expanded .sidebar-footer{padding:14px 19px 18px}
+.sidebar.is-expanded .sidebar-profile>span:last-child,.sidebar.is-expanded .sidebar-logout span{display:block;white-space:nowrap}
+.sidebar .sidebar-touch-toggle{display:none;border:0;background:none;color:#fff;cursor:pointer;width:44px;height:38px;border-radius:8px;font-size:22px}
+.sidebar .sidebar-touch-toggle:hover,.sidebar .sidebar-touch-toggle:focus-visible{background:#ffffff22}
+.main{margin-left:var(--spfly-sidebar-compact);width:calc(100% - var(--spfly-sidebar-compact));min-width:0;transition:margin-left .23s ease,width .23s ease}
+.app.sidebar-expanded .main{margin-left:var(--spfly-sidebar-open);width:calc(100% - var(--spfly-sidebar-open))}
+@media(max-width:700px){
+  .app.authenticated{display:flex}
+  .sidebar{position:fixed;width:var(--spfly-sidebar-compact);height:100dvh;padding:0;overflow:hidden}
+  .sidebar.is-expanded{width:min(var(--spfly-sidebar-open),calc(100vw - 24px))}
+  .sidebar:before,.sidebar:after,.sidebar-footer{display:block}
+  .sidebar .brand{min-height:104px;height:104px;margin:0;padding:8px}
+  .sidebar .sidebar-touch-toggle{display:block;position:absolute;right:6px;top:4px;z-index:3}
+  .sidebar:not(.is-expanded) .sidebar-touch-toggle{right:16px;top:76px;width:44px;height:26px;font-size:18px}
+  .sidebar.is-expanded .brand{padding-right:40px}
+  .sidebar .nav-section{display:block;overflow-y:auto;overflow-x:hidden;padding:6px 10px 14px}
+  .sidebar .nav-btn{display:flex;min-width:0;width:100%;height:48px;min-height:48px;padding:0 12px;font-size:14px}
+  .sidebar:not(.is-expanded) .nav-btn{padding:0}
+  .sidebar .nav-icon{width:24px;height:24px;flex-basis:24px}
+  .sidebar .nav-chevron{display:inline}
+  .sidebar.is-expanded .subnav.open{display:block}
+  .main,.app.sidebar-expanded .main{margin-left:var(--spfly-sidebar-compact);width:calc(100% - var(--spfly-sidebar-compact))}
+}
+@media(max-width:440px){:root{--spfly-sidebar-compact:62px}.sidebar .nav-section{padding-left:6px;padding-right:6px}.sidebar .brand .sidebar-mark{width:34px;height:34px}}
+@media(prefers-reduced-motion:reduce){.sidebar,.main{transition:none}}
+@media print{.sidebar{display:none!important}.main,.app.sidebar-expanded .main{margin:0!important;width:100%!important}}
