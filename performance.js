@@ -53,9 +53,18 @@
     }
   }
   function renderOverview() {
-    const done = assessments.filter(a => a.status === 'finalized').length;
-    const drafts = assessments.length-done;
-    $('perfOverview').innerHTML = `<div class="perf-summary"><div><strong>${models.filter(m=>m.active).length}</strong><span>modelos ativos</span></div><div><strong>${competencies.filter(c=>c.active).length}</strong><span>competências ativas</span></div><div><strong>${drafts}</strong><span>rascunhos</span></div><div><strong>${done}</strong><span>finalizadas</span></div></div><div class="actions">${canManage()?'<button class="btn btn-secondary" onclick="showPage(\'pagePerfCompetencies\')">Competências</button><button class="btn btn-secondary" onclick="showPage(\'pagePerfModels\')">Modelos</button>':''}<button class="btn btn-secondary" onclick="showPage('pagePerfHistory')">Ver histórico</button></div>`;
+    const finalized = assessments.filter(a => a.status === 'finalized');
+    const drafts = assessments.length-finalized.length;
+    const byModel = new Map();
+    for (const assessment of finalized) {
+      const name = assessment.model_name || 'Sem modelo';
+      byModel.set(name, (byModel.get(name) || 0) + 1);
+    }
+    const modelRows = [...byModel].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0], 'pt-BR'));
+    const recent = [...assessments].sort((a,b) => String(b.evaluation_date || '').localeCompare(String(a.evaluation_date || '')) || String(b.created_at || '').localeCompare(String(a.created_at || ''))).slice(0,5);
+    const modelChart = modelRows.length ? modelRows.map(([name,count]) => `<div class="perf-chart-row"><div class="perf-chart-label"><span>${esc(name)}</span><strong>${count}</strong></div><div class="perf-chart-track"><span style="width:${Math.max(4, count/finalized.length*100)}%"></span></div></div>`).join('') : '<p class="perf-dashboard-empty">As avaliações finalizadas aparecerão aqui por modelo.</p>';
+    const recentList = recent.length ? recent.map(a => `<div class="perf-recent-row"><div><strong>${esc(a.employee_name || 'Colaborador não informado')}</strong><span>${esc(a.model_name || 'Sem modelo')} · ${dateBR(a.evaluation_date)}</span></div><span class="badge ${a.status==='finalized'?'badge-green':'badge-orange'}">${a.status==='finalized'?'Finalizada':'Rascunho'}</span></div>`).join('') : '<p class="perf-dashboard-empty">Nenhuma avaliação cadastrada até agora.</p>';
+    $('perfOverview').innerHTML = `<div class="perf-summary"><div><strong>${models.filter(m=>m.active).length}</strong><span>modelos ativos</span></div><div><strong>${competencies.filter(c=>c.active).length}</strong><span>competências ativas</span></div><div><strong>${drafts}</strong><span>rascunhos</span></div><div><strong>${finalized.length}</strong><span>finalizadas</span></div></div><div class="actions">${canManage()?'<button class="btn btn-secondary" onclick="showPage(\'pagePerfCompetencies\')">Competências</button><button class="btn btn-secondary" onclick="showPage(\'pagePerfModels\')">Modelos</button>':''}<button class="btn btn-secondary" onclick="showPage('pagePerfHistory')">Ver histórico</button></div><div class="perf-dashboard-grid"><section class="perf-dashboard-panel"><h2>Finalizadas por modelo</h2><p class="muted">Distribuição das avaliações concluídas.</p>${modelChart}</section><section class="perf-dashboard-panel"><h2>Avaliações recentes</h2><p class="muted">Últimos registros por data da avaliação.</p>${recentList}</section></div>`;
   }
   function renderCompetencies() {
     $('perfCompetencyList').innerHTML = competencies.length ? `<div class="table-scroll"><table><thead><tr><th>Competência</th><th>Significado</th><th>Status</th><th>Ações</th></tr></thead><tbody>${competencies.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.meaning)}</td><td><span class="badge ${c.active?'badge-green':'badge-red'}">${c.active?'Ativo':'Inativo'}</span></td><td>${canManage()?`<div class="perf-row-actions"><button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.editCompetency('${c.id}')">Editar</button>${c.active?`<button class="btn btn-secondary btn-sm" onclick="SPFLY_PERF.inactivateCompetency('${c.id}')">Inativar</button>`:''}</div>`:'—'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Nenhuma competência cadastrada.</div>';

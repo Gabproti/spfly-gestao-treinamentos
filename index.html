@@ -198,6 +198,7 @@ body.dark .dashboard-page-head h1,body.dark .dashboard-calendar .calendar-head s
 .access-permissions{display:grid;gap:8px;width:100%;margin-top:10px}.permission-row{display:grid;grid-template-columns:minmax(120px,1fr) auto auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}.permission-row label{display:flex;gap:5px;align-items:center;font-size:13px}.permission-row input{accent-color:var(--orange)}.permission-row input:disabled{opacity:.4}.access-controls .access-permissions{max-width:600px}@media(max-width:700px){.permission-row{grid-template-columns:1fr 1fr}.permission-row strong{grid-column:1/-1}}
 /* Lista compacta de acessos: os detalhes de edição abrem somente quando solicitados. */
 .access-account-actions{order:4;display:flex;gap:10px;flex-wrap:wrap;flex-basis:100%;padding-top:12px;border-top:1px solid var(--border)}.access-action-message{order:5;flex-basis:100%;color:#b12d20;font-size:13px}.access-action-message:empty{display:none}.access-reset-result{order:6;flex-basis:100%;margin-top:0}.access-reset-result[hidden]{display:none}
+.access-email-editor{display:flex;align-items:end;gap:10px;flex-basis:100%;flex-wrap:wrap;padding-bottom:6px}.access-email-editor label{display:grid;gap:5px;flex:1 1 260px;font-size:12px;font-weight:700}.access-email-editor input{height:42px;min-width:0;width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--surface);color:inherit}.access-action-message.access-action-success{color:#16864c}body.dark .access-action-message.access-action-success{color:#7fe0a9}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .training-header-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.training-header-actions .btn-danger{border:1px solid #eab2b2}.training-header-actions .btn-danger:hover{background:#ffe1e1}.training-removed-note{padding:12px 14px;margin-bottom:14px;background:#fff8e8;border:1px solid #f1d9a0;border-radius:8px;color:#735a1e;font-size:13px}
 .access-directory{max-width:1100px;margin-top:24px}.access-directory-head{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.access-directory-head h2{margin:0 0 4px}.access-directory-tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.access-directory-tools input,.access-directory-tools select{height:42px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:inherit;padding:9px 12px}.access-directory-tools input{min-width:min(300px,75vw)}.access-directory-tools small{color:var(--muted);white-space:nowrap}.access-list-head,.access-row-head{display:grid;grid-template-columns:minmax(170px,1.25fr) minmax(105px,.65fr) minmax(220px,2fr) minmax(105px,.65fr) auto;gap:14px;align-items:center}.access-list-head{padding:9px 15px;color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.04em}.access-directory .access-row{padding:0;margin:0;border:0;border-top:1px solid var(--border);border-radius:0;background:var(--surface);gap:0}.access-directory .access-row:last-child{border-bottom:1px solid var(--border)}.access-directory .access-row-head{padding:13px 15px;min-height:72px}.access-identity{min-width:0}.access-identity strong,.access-identity small{display:block;overflow-wrap:anywhere}.access-identity strong{font-size:14px}.access-identity small{font-size:12px;color:var(--muted);margin-top:3px}.access-role-pill{display:inline-block;width:max-content;max-width:100%;padding:6px 9px;background:var(--light);border:1px solid var(--border);border-radius:99px;font-size:12px;font-weight:700}.access-screen-summary{display:flex;gap:5px;flex-wrap:wrap;color:var(--muted);font-size:12px}.access-screen-chip{display:inline-block;padding:5px 7px;border-radius:6px;background:var(--light);border:1px solid var(--border);color:var(--muted)}.access-screen-chip.can-edit{background:#fff1e9;border-color:#ffd5c0;color:#ac4517}.access-status{display:flex;flex-direction:column;gap:5px;align-items:flex-start}.access-edit-button{white-space:nowrap;padding:9px 11px!important;font-size:12px}.access-directory .access-controls{padding:16px;background:var(--light);border-top:1px solid var(--border);align-items:flex-start}.access-directory .access-controls select{min-width:180px}.access-directory .access-controls .access-permissions{max-width:100%;flex-basis:100%;order:2}.access-directory .access-controls>button{order:3}.access-empty{padding:24px;text-align:center;color:var(--muted);border:1px solid var(--border);border-radius:8px}
@@ -261,7 +262,7 @@ body.dark .dashboard-calendar .dot-black{box-shadow:0 0 0 1px #c7d0d7}
 </style>
 <link rel="stylesheet" href="capacitation.css?v=49">
 <link rel="preload" as="image" href="spfly_print_logo.png">
-<link rel="stylesheet" href="performance.css?v=38">
+<link rel="stylesheet" href="performance.css?v=58">
 <link rel="stylesheet" href="efficacy.css?v=35">
 <link rel="stylesheet" href="training-print.css?v=45">
 <link rel="stylesheet" href="manager.css?v=56">
@@ -1234,10 +1235,10 @@ applyTheme();
 <script src="capacitation.js?v=55"></script>
 <script src="vendor-pdf-lib.min.js"></script>
 <script src="official-certificate-pdf.js?v=55"></script>
-<script src="performance.js?v=38"></script>
+<script src="performance.js?v=58"></script>
 <script src="efficacy.js?v=35"></script>
 <script src="training-print.js?v=45"></script>
-<script src="auth.js?v=57"></script>
+<script src="auth.js?v=58"></script>
 <script src="manager.js?v=56"></script>
 <script src="employee-tools.js?v=55"></script>
 <script src="course-hours.js?v=55.1"></script>

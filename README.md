@@ -1,4 +1,12 @@
-# SPFLY Admin — V48
+# SPFLY Admin — prévia V58
+
+## Prévia V58 — avaliações e e-mail de acesso
+
+Na tela de Avaliações de Desempenho, os dados já carregados agora compõem dois quadros: avaliações finalizadas por modelo e registros recentes. Os contadores e atalhos existentes permanecem. Quando não há avaliações, os quadros mostram mensagens informativas.
+
+Em Acessos, o administrador pode alterar o e-mail de login de outra conta ativa. A função `invite-admin` valida formato e duplicidade, altera o e-mail no Supabase Auth e no cadastro `admin_users`, e tenta desfazer a alteração no Auth se o segundo passo falhar. A operação mantém o mesmo ID, perfil e vínculos do usuário. Não há migração SQL; a função atualizada precisa ser implantada antes de publicar `auth.js` e `index.html`.
+
+Prévia local sem gravação: `node build-preview-v58.cjs`, `node build-dashboard-preview-v58.cjs` e `node preview-server-v58.cjs`. Abra `http://127.0.0.1:8768/preview-dashboard-v58.html` para Avaliações ou `http://127.0.0.1:8768/preview-v58.html` para Acessos. Ambas usam dados fictícios.
 
 ## Transferências e filtro de cursos (V48)
 

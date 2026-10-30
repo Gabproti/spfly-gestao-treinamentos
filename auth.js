@@ -229,8 +229,8 @@
   }
 
   async function renderAdmins() {
-    const invokeAccessAction = async (action, targetId) => {
-      const { data, error } = await client.functions.invoke('invite-admin', { body: { action, targetId } });
+    const invokeAccessAction = async (action, targetId, fields = {}) => {
+      const { data, error } = await client.functions.invoke('invite-admin', { body: { action, targetId, ...fields } });
       if (error || data?.error) {
         const details = error?.context?.json ? await error.context.json().catch(() => null) : null;
         throw new Error(data?.error || details?.error || error?.message || 'Erro desconhecido.');
@@ -364,11 +364,48 @@
       passwordResult.className = 'created-user-result access-reset-result';
       passwordResult.hidden = true;
       if (admin.active && admin.id !== currentUser?.id) {
+        const emailEditor = document.createElement('div');
+        emailEditor.className = 'access-email-editor';
+        const emailLabel = document.createElement('label');
+        emailLabel.textContent = 'E-mail de login';
+        const emailInput = document.createElement('input');
+        emailInput.type = 'email'; emailInput.maxLength = 254; emailInput.required = true;
+        emailInput.value = admin.email;
+        emailInput.setAttribute('aria-label', 'Novo e-mail de login de ' + (admin.full_name?.trim() || admin.email));
+        const changeEmail = document.createElement('button');
+        changeEmail.type = 'button'; changeEmail.className = 'btn btn-secondary';
+        changeEmail.textContent = 'Alterar e-mail';
+        changeEmail.addEventListener('click', async () => {
+          const nextEmail = emailInput.value.trim().toLowerCase();
+          if (!emailInput.reportValidity()) return;
+          if (nextEmail === admin.email.toLowerCase()) { actionMessage.textContent = 'Informe um e-mail diferente do atual.'; return; }
+          if (!confirm(`Alterar o e-mail de login de ${admin.email} para ${nextEmail}? A pessoa deverá usar o novo endereço para entrar no portal.`)) return;
+          changeEmail.disabled = true; changeEmail.textContent = 'Alterando...'; actionMessage.textContent = '';
+          actionMessage.classList.remove('access-action-success');
+          try {
+            const result = await invokeAccessAction('update-user-email', admin.id, { email: nextEmail });
+            email.textContent = result.email;
+            admin.email = result.email;
+            emailInput.value = result.email;
+            row.dataset.search = row.dataset.search.replace(/\S+@\S+/, result.email);
+            role.setAttribute('aria-label', 'Perfil de ' + result.email);
+            employeeLink.setAttribute('aria-label', 'Funcionário vinculado a ' + result.email);
+            actionMessage.textContent = 'E-mail de login atualizado.';
+            actionMessage.classList.add('access-action-success');
+          } catch (actionError) {
+            actionMessage.textContent = 'Não foi possível alterar o e-mail: ' + actionError.message;
+            actionMessage.classList.remove('access-action-success');
+          } finally { changeEmail.disabled = false; changeEmail.textContent = 'Alterar e-mail'; }
+        });
+        emailLabel.append(emailInput);
+        emailEditor.append(emailLabel, changeEmail);
+        actions.append(emailEditor);
         const reset = document.createElement('button');
         reset.type = 'button'; reset.className = 'btn btn-secondary'; reset.textContent = 'Redefinir senha';
         reset.addEventListener('click', async () => {
           if (!confirm(`Redefinir a senha de ${admin.full_name?.trim() || admin.email} para a senha inicial? A pessoa deverá trocá-la no próximo acesso.`)) return;
           reset.disabled = true; reset.textContent = 'Redefinindo...'; actionMessage.textContent = '';
+          actionMessage.classList.remove('access-action-success');
           passwordResult.hidden = true; passwordResult.replaceChildren();
           try {
             const result = await invokeAccessAction('reset-user-password', admin.id);
@@ -390,6 +427,7 @@
         deactivate.addEventListener('click', async () => {
           if (!confirm(`Inativar o acesso de ${admin.full_name?.trim() || admin.email}? Essa pessoa não poderá entrar no portal.`)) return;
           deactivate.disabled = true; deactivate.textContent = 'Inativando...'; actionMessage.textContent = '';
+          actionMessage.classList.remove('access-action-success');
           try {
             await invokeAccessAction('deactivate-user', admin.id);
             await renderAdmins();
