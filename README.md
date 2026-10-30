@@ -238,12 +238,24 @@ O administrador pode definir o setor de cada gestor na Visão do Gestor. Em uma 
 
 A migração `supabase/migration-v54-manager-sectors-tracks.sql` foi aplicada ao projeto `spfly-treinamentos` e a interface V54 publicada no portal.
 
-## V55 — prévia local para revisão
+## V55 — vagas, relatórios e menu lateral
 
 Abra `preview-v55.html` para ver, com dados fictícios, os campos de vagas e transferência/promoção, o gestor responsável por setor, o histórico de aprovações e o relatório de horas. O arquivo não grava dados nem acessa o Supabase.
 
-Na aplicação, `index.html`, `manager.js`, `manager.css`, `employee-tools.js`, `course-hours.js` e `capacitation.js` implementam os novos fluxos. A migração preparada está em `supabase/migration-v55-hr-manager-reports-certificate.sql`. Ela deve ser validada e aplicada no projeto correto **antes** da publicação da interface. A assinatura gráfica do certificado aguarda a imagem autorizada pelo RH; a prévia identifica essa pendência.
+Na aplicação, `index.html`, `manager.js`, `manager.css`, `employee-tools.js`, `course-hours.js` e `capacitation.js` implementam os novos fluxos. A migração `supabase/migration-v55-hr-manager-reports-certificate.sql` foi aplicada ao projeto `spfly-treinamentos` e a interface V55 foi publicada no GitHub Pages. A assinatura gráfica do certificado aguarda a imagem autorizada pelo RH.
 
 Revisão da prévia: requisição de vagas com **dias de trabalho** separados do **horário** (máscara `08:00 às 17:00`); timeline com data e hora logo abaixo de cada círculo; relatório com indicadores, gráficos de barras, totais completos e botão para imprimir um extrato dos registros filtrados. O extrato é gerado no navegador, sem nova tabela no banco.
 
-Menu lateral em revisão local: `sidebar.css` e `sidebar.js` mantêm o menu fixo, compacto com ícones, expansão ao passar o mouse ou receber foco e rolagem sem barra aparente. A área principal acompanha a largura no desktop; em telas de toque, o botão ☰ abre o menu. O submenu de Relatórios e as permissões de navegação existentes permanecem. A prévia independente está em `preview-sidebar-v55.html` e usa dados fictícios.
+O menu lateral em `sidebar.css` e `sidebar.js` fica fixo, compacto com ícones, expande ao passar o mouse ou receber foco e mantém rolagem sem barra aparente. A área principal acompanha a largura no desktop; em telas de toque, o botão ☰ abre o menu. O submenu de Relatórios e as permissões de navegação existentes permanecem.
+
+## V56 — manutenção de gestores
+
+Na Visão do Gestor, o administrador pode editar o nome e o setor de um gestor e excluí-lo logicamente. Ao salvar o setor ou escolher seu responsável, todos os funcionários já cadastrados nesse setor passam a ter o gestor selecionado, inclusive quem tinha outro vínculo. Novos funcionários e mudanças de setor continuam seguindo o responsável definido. Ao trocar ou excluir um gestor, a equipe do setor anterior passa ao gestor padrão válido, ao único gestor ativo remanescente, ou fica sem gestor quando a escolha é ambígua. A exclusão é bloqueada enquanto o gestor participa de solicitações pendentes; registros históricos permanecem intactos.
+
+A migração `supabase/migration-v56-manager-maintenance.sql` foi aplicada ao projeto `spfly-treinamentos` e a interface V56 publicada no GitHub Pages.
+
+## V57 — manutenção de acessos
+
+Em Acessos, o administrador pode inativar uma conta ativa ou redefinir sua senha para a senha inicial já configurada no servidor. A troca de senha é obrigatória no acesso seguinte. As opções não aparecem para a própria conta nem para contas inativas. A inativação mantém o registro; para gestores, reutiliza a rotina V56 que remove os vínculos atuais e conserva o histórico. A função impede inativar o último administrador ativo.
+
+Arquivos: `index.html`, `auth.js` e `supabase/functions/invite-admin/index.ts`. A senha inicial continua somente no segredo `SPFLY_INITIAL_PASSWORD` do Supabase. Nenhuma migração de banco é necessária. A implantação exige publicar a função Edge antes da interface.

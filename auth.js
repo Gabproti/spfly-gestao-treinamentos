@@ -229,6 +229,14 @@
   }
 
   async function renderAdmins() {
+    const invokeAccessAction = async (action, targetId) => {
+      const { data, error } = await client.functions.invoke('invite-admin', { body: { action, targetId } });
+      if (error || data?.error) {
+        const details = error?.context?.json ? await error.context.json().catch(() => null) : null;
+        throw new Error(data?.error || details?.error || error?.message || 'Erro desconhecido.');
+      }
+      return data;
+    };
     const container = document.getElementById('adminList');
     const search = document.getElementById('accessSearch');
     const filter = document.getElementById('accessRoleFilter');
@@ -289,7 +297,7 @@
       if (admin.must_change_password) {
         const pending = document.createElement('small');
         pending.className = 'pending-password';
-        pending.textContent = 'Primeiro acesso pendente';
+        pending.textContent = 'Troca de senha pendente';
         status.append(pending);
       }
       const toggle = document.createElement('button');
@@ -347,7 +355,53 @@
         if (saveError) { alert('Não foi possível salvar o acesso: ' + saveError.message); save.disabled = false; save.textContent = 'Salvar acesso'; return; }
         await renderAdmins();
       });
-      controls.append(role, checks, employeeLink, save);
+      const actions = document.createElement('div');
+      actions.className = 'access-account-actions';
+      const actionMessage = document.createElement('div');
+      actionMessage.className = 'access-action-message';
+      actionMessage.setAttribute('role', 'status');
+      const passwordResult = document.createElement('div');
+      passwordResult.className = 'created-user-result access-reset-result';
+      passwordResult.hidden = true;
+      if (admin.active && admin.id !== currentUser?.id) {
+        const reset = document.createElement('button');
+        reset.type = 'button'; reset.className = 'btn btn-secondary'; reset.textContent = 'Redefinir senha';
+        reset.addEventListener('click', async () => {
+          if (!confirm(`Redefinir a senha de ${admin.full_name?.trim() || admin.email} para a senha inicial? A pessoa deverá trocá-la no próximo acesso.`)) return;
+          reset.disabled = true; reset.textContent = 'Redefinindo...'; actionMessage.textContent = '';
+          passwordResult.hidden = true; passwordResult.replaceChildren();
+          try {
+            const result = await invokeAccessAction('reset-user-password', admin.id);
+            const title = document.createElement('strong'); title.textContent = `Senha inicial redefinida para ${admin.email}`;
+            const password = document.createElement('code'); password.textContent = result.initialPassword;
+            const note = document.createElement('p'); note.textContent = 'Compartilhe apenas com esta pessoa. A troca será obrigatória no próximo acesso.';
+            passwordResult.append(title, password, note); passwordResult.hidden = false;
+            if (!admin.must_change_password) {
+              const pending = document.createElement('small'); pending.className = 'pending-password';
+              pending.textContent = 'Troca de senha pendente'; status.append(pending);
+            }
+            admin.must_change_password = true;
+          } catch (actionError) {
+            actionMessage.textContent = 'Não foi possível redefinir a senha: ' + actionError.message;
+          } finally { reset.disabled = false; reset.textContent = 'Redefinir senha'; }
+        });
+        const deactivate = document.createElement('button');
+        deactivate.type = 'button'; deactivate.className = 'btn btn-secondary'; deactivate.textContent = 'Inativar acesso';
+        deactivate.addEventListener('click', async () => {
+          if (!confirm(`Inativar o acesso de ${admin.full_name?.trim() || admin.email}? Essa pessoa não poderá entrar no portal.`)) return;
+          deactivate.disabled = true; deactivate.textContent = 'Inativando...'; actionMessage.textContent = '';
+          try {
+            await invokeAccessAction('deactivate-user', admin.id);
+            await renderAdmins();
+            window.SPFLY_MANAGER?.refresh?.();
+          } catch (actionError) {
+            actionMessage.textContent = 'Não foi possível inativar o acesso: ' + actionError.message;
+            deactivate.disabled = false; deactivate.textContent = 'Inativar acesso';
+          }
+        });
+        actions.append(reset, deactivate);
+      }
+      controls.append(role, checks, employeeLink, save, actions, actionMessage, passwordResult);
       row.append(header, controls);
       container.append(row);
       row.dataset.search = [admin.full_name, admin.email, roleLabel.textContent,
