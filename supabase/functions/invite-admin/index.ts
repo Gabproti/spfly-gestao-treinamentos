@@ -36,7 +36,7 @@ export default {
       return Response.json({ ok: true })
     }
 
-    if (!['create-user', 'deactivate-user', 'reset-user-password'].includes(String(body.action))) {
+    if (!['create-user', 'deactivate-user', 'reset-user-password', 'update-user-email'].includes(String(body.action))) {
       return errorResponse('Ação inválida.', 400)
     }
     const { data: admin, error: adminError } = await ctx.supabase
@@ -46,7 +46,7 @@ export default {
       return errorResponse('Somente administradores podem gerenciar acessos.', 403)
     }
 
-    if (body.action === 'deactivate-user' || body.action === 'reset-user-password') {
+    if (body.action === 'deactivate-user' || body.action === 'reset-user-password' || body.action === 'update-user-email') {
       const targetId = String(body.targetId || '').toLowerCase()
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId)) {
         return errorResponse('Usuário inválido.', 400)
@@ -56,6 +56,33 @@ export default {
         .select('id, email, active, access_role, must_change_password').eq('id', targetId).maybeSingle()
       if (targetError || !target) return errorResponse('Conta não encontrada.', 404)
       if (!target.active) return errorResponse('Esta conta já está inativa.', 400)
+
+      if (body.action === 'update-user-email') {
+        const nextEmail = String(body.email || '').trim().toLowerCase()
+        if (nextEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+          return errorResponse('Informe um e-mail válido.', 400)
+        }
+        if (nextEmail === target.email.toLowerCase()) return errorResponse('Este já é o e-mail da conta.', 400)
+        const { data: existing, error: lookupError } = await ctx.supabaseAdmin.from('admin_users')
+          .select('id').eq('email', nextEmail).neq('id', targetId).maybeSingle()
+        if (lookupError) return errorResponse('Não foi possível conferir o e-mail informado.', 503)
+        if (existing) return errorResponse('Este e-mail já pertence a outro acesso.', 400)
+        const { error: authError } = await ctx.supabaseAdmin.auth.admin.updateUserById(targetId, {
+          email: nextEmail, email_confirm: true,
+        })
+        if (authError) return errorResponse('Não foi possível alterar o e-mail de login: ' + authError.message, 400)
+        const { data: profile, error: profileError } = await ctx.supabaseAdmin.from('admin_users')
+          .update({ email: nextEmail }).eq('id', targetId).eq('active', true).select('id').maybeSingle()
+        if (profileError || !profile) {
+          const { error: rollbackError } = await ctx.supabaseAdmin.auth.admin.updateUserById(targetId, {
+            email: target.email, email_confirm: true,
+          })
+          return errorResponse(rollbackError
+            ? 'E-mail de login alterado, mas o cadastro não foi atualizado. Contate o suporte para reconciliar a conta.'
+            : 'Não foi possível atualizar o cadastro; a alteração do login foi desfeita.', 500)
+        }
+        return Response.json({ ok: true, email: nextEmail })
+      }
 
       if (body.action === 'deactivate-user') {
         if (target.access_role === 'admin') {
