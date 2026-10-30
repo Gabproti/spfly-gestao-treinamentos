@@ -13,6 +13,7 @@
   const isAdmin = () => access?.access_role === 'admin';
   const nameOf = id => data.employees.find(e => Number(e.id) === Number(id))?.name || `Funcionário #${id}`;
   const sectorOf = id => data.employees.find(e => Number(e.id) === Number(id))?.sector || '—';
+  const sameSector = (left,right) => String(left||'').trim().toLocaleLowerCase('pt-BR')===String(right||'').trim().toLocaleLowerCase('pt-BR');
   const actionNames = {approve:'Aprovar',start_selection:'Iniciar seleção',record_hires:'Registrar contratação',approve_immediate:'Aprovar gestão imediata',accept_manager:'Aceitar transferência / promoção',approve_final:'Aprovado',reject:'Reprovar',cancel:'Cancelar',requested:'Solicitação registrada',manager_step_skipped:'Aceite repetido dispensado'};
   function maskWorkTime(value) {
     const digits=String(value||'').replace(/\D/g,'').slice(0,8);
@@ -30,8 +31,8 @@
       const {data:result,error}=await client.rpc('hr_dashboard');
       if (error) throw error;
       if (isAdmin() && result) {
-        const directory=await client.from('admin_users').select('id,full_name,employee_id,manager_sector,active').eq('access_role','gestor');
-        if (!directory.error) result.managerDirectory=directory.data||[];
+        const directory=await client.from('admin_users').select('id,email,full_name,employee_id,manager_sector,active').eq('access_role','gestor');
+        if (!directory.error) result.managerDirectory=(directory.data||[]).filter(profile=>profile.active);
       }
       data=result || data;
       message(''); render();
@@ -98,8 +99,8 @@
     const sectorNames=[...new Set([...(data.sectors||[]),...people.map(e=>e.sector)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
     directoryHost.innerHTML=`<div class="card manager-directory-card"><div class="manager-directory-title"><div><h2>Gestores e funcionários vinculados</h2><p class="muted">Consulte as equipes e altere vínculos quando necessário.</p></div><span id="managerDirectoryCount" class="muted"></span></div><div class="manager-filters"><input id="managerDirectorySearch" type="search" placeholder="Buscar gestor ou funcionário" aria-label="Buscar gestor ou funcionário" oninput="SPFLY_MANAGER.filterDirectory()"><select id="managerDirectorySector" aria-label="Filtrar por setor" onchange="SPFLY_MANAGER.filterDirectory()"><option value="">Todos os setores</option>${sectorNames.map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select></div><div id="managerDirectory" class="manager-directory-list"></div></div>`;
     box.innerHTML=`<div class="manager-admin-settings"><div class="card" id="managerTeamEditor"><h2>Vínculo de equipe</h2><p class="muted">Cada funcionário possui um gestor responsável. Selecione uma pessoa para vincular, trocar ou remover o gestor.</p><div class="manager-filters"><input id="managerTeamSearch" type="search" placeholder="Buscar funcionário" oninput="SPFLY_MANAGER.filterTeam()"><select id="managerTeamEmployee"><option value="">Selecione o funcionário</option>${people.map(e=>`<option value="${Number(e.id)}">${safe(e.name)} · ${safe(e.sector)}</option>`).join('')}</select><select id="managerTeamManager"><option value="">Sem gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveTeam()">Salvar vínculo</button></div><p class="muted" id="managerCurrentLink"></p></div>
-      <div class="card"><h2>Setor do gestor</h2><p class="muted">Defina o setor responsável. Funcionários novos ou transferidos são vinculados automaticamente somente quando houver um único gestor ativo nesse setor.</p><div class="manager-filters"><select id="managerSectorOwner"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><select id="managerSectorValue"><option value="">Sem setor definido</option>${(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveManagerSector()">Salvar setor</button></div></div>
-      <div class="card"><h2>Gestor responsável por setor</h2><p class="muted">Defina o gestor usado na importação e na vinculação automática de novos funcionários. Se não houver indicação, somente um gestor ativo no setor será escolhido automaticamente.</p><div class="manager-filters"><select id="managerDefaultSector"><option value="">Selecione o setor</option>${(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select><select id="managerDefaultOwner"><option value="">Sem gestor padrão</option></select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveSectorManager()">Salvar gestor</button></div><div id="managerSectorDefaults" class="muted manager-sector-defaults"></div></div>
+      <div class="card" id="managerProfileEditor"><h2>Cadastro do gestor</h2><p class="muted">Edite o nome e o setor. Ao salvar, todos os funcionários do setor serão vinculados a este gestor.</p><div class="manager-filters"><select id="managerSectorOwner" aria-label="Gestor a editar"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><input id="managerEditName" type="text" maxlength="160" placeholder="Nome do gestor" aria-label="Nome do gestor"><select id="managerSectorValue" aria-label="Setor do gestor"><option value="">Sem setor definido</option>${(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveManagerSector()">Salvar gestor</button><button class="btn btn-secondary" type="button" onclick="SPFLY_MANAGER.archiveManager()">Excluir gestor</button></div><p id="managerProfileEmail" class="muted"></p></div>
+      <div class="card"><h2>Gestor responsável por setor</h2><p class="muted">Ao escolher o responsável, todos os funcionários já cadastrados no setor serão vinculados a ele. Novos funcionários e transferências seguirão a mesma escolha.</p><div class="manager-filters"><select id="managerDefaultSector"><option value="">Selecione o setor</option>${(data.sectors||[]).map(s=>`<option value="${safe(s)}">${safe(s)}</option>`).join('')}</select><select id="managerDefaultOwner"><option value="">Sem gestor padrão</option></select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveSectorManager()">Salvar gestor</button></div><div id="managerSectorDefaults" class="muted manager-sector-defaults"></div></div>
       <div class="card"><h2>Gestão imediata</h2><p class="muted">Defina quem aprova a primeira etapa das transferências solicitadas por cada gestor. Sem responsável definido, a etapa cabe ao administrador.</p><div class="manager-filters"><select id="managerSupervisorOwner"><option value="">Selecione o gestor</option>${managers.map(m=>`<option value="${safe(m.id)}">${safe(m.name)}</option>`).join('')}</select><select id="managerSupervisor"><option value="">Administrador aprova</option>${(data.approvers||[]).map(a=>`<option value="${safe(a.id)}">${safe(a.name)} · ${a.role==='admin'?'Admin':'Gestor'}</option>`).join('')}</select><button class="btn btn-primary" type="button" onclick="SPFLY_MANAGER.saveSupervisor()">Salvar responsável</button></div></div></div>`;
     $('managerTeamEmployee').onchange=syncTeam;
     $('managerSupervisorOwner').onchange=syncSupervisor;
@@ -132,7 +133,7 @@
       if (!managerMatch&&!matching.length) return '';
       const shown=managerMatch?team:matching;
       const expanded=open.has(String(m.id))||(!managerMatch&&Boolean(matching.length));
-      return `<details class="manager-directory-row" data-manager-id="${safe(m.id)}" ${expanded?'open':''}><summary><strong>${safe(m.name)}</strong><span>${safe(m.sector)}</span><span>${team.length} funcionário(s)</span><span class="badge ${m.active?'badge-green':'badge-red'}">${m.active?'Ativo':'Inativo'}</span></summary><div class="manager-directory-people">${shown.length?shown.map(e=>`<div class="manager-directory-person"><span><strong>${safe(e.name)}</strong><small>${safe(e.sector)} · ${safe(e.role||'Cargo não informado')}</small></span><span class="manager-directory-actions"><button class="btn btn-secondary" type="button" data-manage-employee="${Number(e.id)}">Alterar vínculo</button><button class="btn btn-secondary" type="button" data-unlink-employee="${Number(e.id)}">Remover vínculo</button></span></div>`).join(''):'<p class="muted">Nenhum funcionário vinculado.</p>'}</div></details>`;
+      return `<details class="manager-directory-row" data-manager-id="${safe(m.id)}" ${expanded?'open':''}><summary><strong>${safe(m.name)}</strong><span>${safe(m.sector)}</span><span>${team.length} funcionário(s)</span><span class="badge ${m.active?'badge-green':'badge-red'}">${m.active?'Ativo':'Inativo'}</span></summary><div class="manager-directory-people">${m.active?`<div class="manager-directory-actions manager-directory-profile-actions"><button class="btn btn-secondary" type="button" data-edit-manager="${safe(m.id)}">Editar gestor</button><button class="btn btn-secondary" type="button" data-archive-manager="${safe(m.id)}">Excluir gestor</button></div>`:''}${shown.length?shown.map(e=>`<div class="manager-directory-person"><span><strong>${safe(e.name)}</strong><small>${safe(e.sector)} · ${safe(e.role||'Cargo não informado')}</small></span><span class="manager-directory-actions"><button class="btn btn-secondary" type="button" data-manage-employee="${Number(e.id)}">Alterar vínculo</button><button class="btn btn-secondary" type="button" data-unlink-employee="${Number(e.id)}">Remover vínculo</button></span></div>`).join(''):'<p class="muted">Nenhum funcionário vinculado.</p>'}</div></details>`;
     }).join('');
     const unlinked=employees.filter(e=>!e.manager_id&&matches(e));
     const unlinkedTotal=employees.filter(e=>!e.manager_id).length;
@@ -171,7 +172,11 @@
     $('managerSupervisor').value=data.managers.find(m=>m.id===$('managerSupervisorOwner').value)?.supervisor_id||'';
   }
   function syncManagerSector() {
-    $('managerSectorValue').value=data.managers.find(m=>m.id===$('managerSectorOwner').value)?.sector||'';
+    const manager=data.managers.find(m=>m.id===$('managerSectorOwner').value);
+    const profile=(data.managerDirectory||[]).find(m=>m.id===manager?.id);
+    $('managerSectorValue').value=manager?.sector||'';
+    $('managerEditName').value=profile?.full_name||manager?.name||'';
+    $('managerProfileEmail').textContent=profile?.email ? 'Acesso: '+profile.email : '';
   }
   function syncSectorManager() {
     const sector=$('managerDefaultSector').value;
@@ -183,20 +188,43 @@
   async function saveSectorManager() {
     const sector=$('managerDefaultSector').value,manager=$('managerDefaultOwner').value||null;
     if(!isAdmin()||!sector)return message('Selecione o setor.',true);
+    const total=(data.employees||[]).filter(e=>sameSector(e.sector,sector)).length;
+    if (total && !confirm(`Atualizar o gestor de ${total} funcionário(s) do setor ${sector}?`)) return;
     try {
       const {error}=await client.rpc('hr_set_sector_manager_v55',{target_sector:sector,target_manager:manager});
       if(error)throw error;
-      await refresh();message('Gestor responsável pelo setor atualizado.');
+      await refresh();message(`Gestor responsável pelo setor atualizado. ${total} funcionário(s) sincronizado(s).`);
     } catch(error){message('Não foi possível salvar o gestor do setor: '+error.message,true);}
   }
   async function saveManagerSector() {
     const manager=$('managerSectorOwner').value, sector=$('managerSectorValue').value||null;
+    const name=$('managerEditName').value.trim();
     if (!isAdmin()||!manager) return message('Selecione o gestor.',true);
+    if (name.length<2) return message('Informe o nome do gestor.',true);
+    const total=(data.employees||[]).filter(e=>sameSector(e.sector,sector)).length;
+    if (sector && total && !confirm(`Vincular os ${total} funcionário(s) do setor ${sector} a ${name}? Os vínculos atuais desse setor serão atualizados.`)) return;
     try {
-      const {error}=await client.rpc('hr_set_manager_sector',{target_manager:manager,next_sector:sector});
+      const {data:linked,error}=await client.rpc('hr_update_manager_v56',{target_manager:manager,next_name:name,next_sector:sector});
       if (error) throw error;
-      await refresh(); message('Setor do gestor atualizado.');
-    } catch(error) { message('Não foi possível salvar o setor: '+error.message,true); }
+      await refresh(); message(`Gestor atualizado. ${Number(linked)||0} funcionário(s) vinculado(s) no setor.`);
+    } catch(error) { message('Não foi possível salvar o gestor: '+error.message,true); }
+  }
+  function editManager(managerId) {
+    $('managerSectorOwner').value=managerId;
+    syncManagerSector();
+    $('managerProfileEditor').scrollIntoView({behavior:'smooth',block:'start'});
+    $('managerEditName').focus();
+  }
+  async function archiveManager(managerId) {
+    const id=managerId||$('managerSectorOwner').value;
+    const profile=(data.managerDirectory||[]).find(m=>m.id===id);
+    if (!isAdmin()||!profile?.active) return message('Selecione um gestor ativo.',true);
+    if (!confirm(`Excluir o cadastro de gestor de ${profile.full_name||profile.name||profile.email}? O acesso será desativado e os vínculos da equipe serão atualizados.`)) return;
+    try {
+      const {error}=await client.rpc('hr_archive_manager_v56',{target_manager:id});
+      if (error) throw error;
+      await refresh(); message('Gestor excluído. Histórico preservado e equipe atualizada.');
+    } catch(error) { message('Não foi possível excluir o gestor: '+error.message,true); }
   }
   async function saveTeam() {
     const id=Number($('managerTeamEmployee').value), manager=$('managerTeamManager').value;
@@ -351,6 +379,10 @@
       $('managerTransferForm').elements.position.value=person?.role||'';
     });
     $('pageManager').addEventListener('click',event=>{
+      const archive=event.target.closest('[data-archive-manager]');
+      if(archive) return archiveManager(archive.dataset.archiveManager);
+      const managerEdit=event.target.closest('[data-edit-manager]');
+      if(managerEdit) return editManager(managerEdit.dataset.editManager);
       const unlink=event.target.closest('[data-unlink-employee]');
       if(unlink) return unlinkTeam(unlink.dataset.unlinkEmployee);
       const employee=event.target.closest('[data-manage-employee]');
@@ -368,5 +400,5 @@
       }
     });
   });
-  window.SPFLY_MANAGER={configure,refresh,render,renderCourses,filterTeam,filterDirectory,filterTransferEmployees,saveTeam,saveSupervisor,saveManagerSector,saveSectorManager,toggleTeam};
+  window.SPFLY_MANAGER={configure,refresh,render,renderCourses,filterTeam,filterDirectory,filterTransferEmployees,saveTeam,saveSupervisor,saveManagerSector,saveSectorManager,archiveManager,toggleTeam};
 })();

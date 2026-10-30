@@ -63,6 +63,8 @@ body.dark .manager-transfer-skipped .manager-transfer-dot{color:#ff985f}
 .manager-directory-person:last-child{border-bottom:0}
 .manager-directory-person small{display:block;color:var(--muted);margin-top:3px}
 .manager-directory-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.manager-directory-profile-actions{padding:6px 0;border-bottom:1px solid var(--border)}
+.manager-directory-profile-actions .btn{padding:7px 10px;font-size:12px}
 .manager-directory-person .btn{padding:7px 10px;font-size:12px;white-space:nowrap}
 @media(max-width:1300px){.manager-admin-settings{grid-template-columns:1fr}}
 @media(max-width:1100px){.manager-team-card .manager-table-wrap{max-height:320px}}
