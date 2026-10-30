@@ -36,12 +36,56 @@ export default {
       return Response.json({ ok: true })
     }
 
-    if (body.action !== 'create-user') return errorResponse('Ação inválida.', 400)
+    if (!['create-user', 'deactivate-user', 'reset-user-password'].includes(String(body.action))) {
+      return errorResponse('Ação inválida.', 400)
+    }
     const { data: admin, error: adminError } = await ctx.supabase
       .from('admin_users').select('id, access_role, must_change_password')
       .eq('id', callerId).eq('active', true).maybeSingle()
     if (adminError || admin?.access_role !== 'admin' || admin.must_change_password) {
-      return errorResponse('Somente administradores podem criar usuários.', 403)
+      return errorResponse('Somente administradores podem gerenciar acessos.', 403)
+    }
+
+    if (body.action === 'deactivate-user' || body.action === 'reset-user-password') {
+      const targetId = String(body.targetId || '').toLowerCase()
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId)) {
+        return errorResponse('Usuário inválido.', 400)
+      }
+      if (targetId === callerId) return errorResponse('Você não pode alterar seu próprio acesso por esta opção.', 400)
+      const { data: target, error: targetError } = await ctx.supabaseAdmin.from('admin_users')
+        .select('id, email, active, access_role, must_change_password').eq('id', targetId).maybeSingle()
+      if (targetError || !target) return errorResponse('Conta não encontrada.', 404)
+      if (!target.active) return errorResponse('Esta conta já está inativa.', 400)
+
+      if (body.action === 'deactivate-user') {
+        if (target.access_role === 'admin') {
+          const { count, error: countError } = await ctx.supabaseAdmin.from('admin_users')
+            .select('id', { count: 'exact', head: true }).eq('access_role', 'admin').eq('active', true)
+          if (countError || count === null) return errorResponse('Não foi possível conferir os administradores ativos.', 503)
+          if (count <= 1) return errorResponse('É necessário manter ao menos um administrador ativo.', 400)
+        }
+        if (target.access_role === 'gestor') {
+          const { error: archiveError } = await ctx.supabase.rpc('hr_archive_manager_v56', { target_manager: targetId })
+          if (archiveError) return errorResponse(archiveError.message, 400)
+        } else {
+          const { data: updated, error: updateError } = await ctx.supabaseAdmin.from('admin_users')
+            .update({ active: false }).eq('id', targetId).eq('active', true).select('id').maybeSingle()
+          if (updateError || !updated) return errorResponse('Não foi possível inativar a conta.', 500)
+        }
+        return Response.json({ ok: true })
+      }
+
+      const initialPassword = Deno.env.get('SPFLY_INITIAL_PASSWORD')
+      if (!initialPassword || initialPassword.length < 6) return errorResponse('Senha inicial não configurada no servidor.', 503)
+      const { error: flagError } = await ctx.supabaseAdmin.from('admin_users')
+        .update({ must_change_password: true }).eq('id', targetId).eq('active', true)
+      if (flagError) return errorResponse('Não foi possível preparar a troca de senha.', 500)
+      const { error: passwordError } = await ctx.supabaseAdmin.auth.admin.updateUserById(targetId, { password: initialPassword })
+      if (passwordError) {
+        await ctx.supabaseAdmin.from('admin_users').update({ must_change_password: target.must_change_password }).eq('id', targetId)
+        return errorResponse('Não foi possível redefinir a senha.', 500)
+      }
+      return Response.json({ ok: true, initialPassword })
     }
 
     const email = String(body.email || '').trim().toLowerCase()
